@@ -416,8 +416,16 @@ def _canonical_row(row: Mapping[str, object]) -> dict[str, object]:
     return {str(k): v for k, v in sorted(row.items())}
 
 
-def open_store(path: Path | str = ":memory:") -> Persistence:
-    store = Persistence(path)
+def open_store(path_or_url: Path | str = ":memory:") -> Persistence:
+    path_str = str(path_or_url)
+    if path_str.startswith("postgresql://") or path_str.startswith("postgres://"):
+        from settleiq.persistence.postgres import PostgresPersistence
+
+        pg_store: Any = PostgresPersistence(path_str)
+        pg_store.migrate()
+        return pg_store
+
+    store = Persistence(path_str)
     store.migrate()
     return store
 
