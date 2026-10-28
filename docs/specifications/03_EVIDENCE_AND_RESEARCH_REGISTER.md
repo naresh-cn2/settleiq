@@ -243,7 +243,7 @@ The log's standing constraints are reproduced here because they are the origin o
 5. No claim that published pricing is a sufficient competitive advantage.
 6. No statement that SettleIQ is commercially viable.
 
-Items 1–3 have since been superseded by the OWNER's frame decision of 2026-10-27 and the five verified engineering decisions recorded in `12_DECISIONS_AND_OPEN_QUESTIONS.md`. Items 4–6 remain binding and are restated as SETTLEIQ-REQ-001 in the master specification. This document does not revoke them.
+Items 1–3 have since been superseded by the OWNER's frame decision of 2026-10-27 and the five **RECOMMENDED, still-unratified** engineering decisions recorded in `12_DECISIONS_AND_OPEN_QUESTIONS.md`. Items 4–6 remain binding and are restated as SETTLEIQ-REQ-001 in the master specification. This document does not revoke them.
 
 ### 5.4 Buyer and willingness-to-pay evidence
 

@@ -187,8 +187,10 @@ Each non-goal is binding with its reason. A proposal that would satisfy a non-go
 
 **Unresolved requirements — none may be closed by assertion:**
 
-* The exact `numeric` scale policy (OQ-02).
-* Whether the discrepancy taxonomy is closed-with-UNKNOWN or open (OQ-03).
-* Tie-breaking when two candidate matches are equally plausible (OQ-01).
-* Residual allocation when fees do not divide exactly across charges (OQ-02, `07`).
-* The scale target for performance work (OQ-04).
+**Resolved by recommendation in `16` §B, awaiting OWNER ratification:** ambiguous-match handling (B.1), residual allocation (B.2), currency exponent validation and `numeric` scale policy (B.3), discrepancy taxonomy closure (B.4), rule precedence (B.5), severity derivation (B.6), performance target (B.7), synthetic vs. real-data scope (B.8).
+
+**Still genuinely open and not resolvable by the specification author:**
+
+* Amount-band boundaries for the severity matrix (OQ-10) — a business judgement for the OWNER.
+* The reference machine declaration for the benchmark (OQ-11) — must be declared before any benchmark runs.
+* Whether pre-M5 runs must be backfilled into the journal once it exists (OQ-09) — a sequencing question.

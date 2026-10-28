@@ -21,7 +21,7 @@ This document defines the minimum complete investigation interface for SettleIQ:
 
 **SETTLEIQ-UI-R01 (OWNER-DEFINED):** The dashboard exists to make the end-to-end workflow visible: a typed discrepancy produced by the engine, investigated against its contributing records and provenance, and resolved or declared unresolvable with traceable evidence. It is the observation surface of the artifact, not decoration. A view that does not carry that workflow does not get built; a visual treatment that no functional requirement demands does not get built.
 
-**SETTLEIQ-UI-R02 (OWNER-DEFINED):** The dashboard shall contain exactly five views. A sixth view requires a named use case and an OWNER decision recorded in `12_DECISIONS_AND_OPEN_QUESTIONS.md`, on the same terms as a new entity in `06` (DATA-R10).
+**SETTLEIQ-UI-R02 (PROPOSED):** The dashboard shall contain exactly five views. A sixth view requires a named use case and an OWNER decision recorded in `12_DECISIONS_AND_OPEN_QUESTIONS.md`, on the same terms as a new entity in `06` (DATA-R10). **[Classification corrected 2026-10-28: this requirement was previously labelled OWNER-DEFINED, but it rests on the unratified Q4 decision and is therefore PROPOSED.]**
 
 ### Status convention
 

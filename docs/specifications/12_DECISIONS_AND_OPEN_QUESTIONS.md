@@ -17,6 +17,9 @@ Every entry carries one of:
 * **RECOMMENDED** — evidence-based recommendation; requires OWNER ratification.
 * **RATIFIED** — approved by the OWNER. **None yet.**
 * **OPEN** — insufficient evidence to recommend; the gap is stated.
+* **RESOLVED BY RECOMMENDATION** — analysed with competing options, evidence, acceptance criteria, and a recommendation recorded in `16_DECISION_REGISTER_AND_RESOLUTIONS.md` Part B. Binding on specification authoring, not on implementation. Requires OWNER ratification to become an implementation decision.
+
+**SETTLEIQ-DEC-R10 (OWNER-DEFINED):** Where any subordinate document still describes OQ-01…OQ-05 as open, unresolved, or "must be settled", **`16` governs** and that wording is stale. Subordinate documents cite `16` §B.<n>.
 
 Nothing in this document is an implementation decision unless marked RATIFIED. A recommendation is not an approval.
 
@@ -181,11 +184,27 @@ Basis: SETTLEIQ-REQ-IND-03. Every component is built and tested here.
 
 | ID | Question | Status | Why unresolved |
 |---|---|---|---|
-| OQ-01 | Exact tie-breaking rule when two candidate matches are equally plausible | OPEN | Depends on the rule taxonomy in `07`; the fail-closed principle (REQ-009) suggests reporting ambiguous rather than choosing, but the rule set may legitimately define precedence. Must be settled in `07`, not here. |
-| OQ-02 | Rounding convention for fee attribution when a payout's fees do not divide exactly across charges | OPEN | This is the FX/rounding carryover problem. Requires a decision on residual allocation (largest-remainder vs. deterministic last-item absorption) with tests either way. Belongs in `07`. |
-| OQ-03 | Whether the discrepancy taxonomy is open or closed | OPEN | A closed taxonomy is testable and exhaustive; an open one admits unmodelled breaks. Recommendation is closed-with-explicit-unknown, but it needs the taxonomy designed first. Belongs in `08`. |
-| OQ-04 | Scale target for the performance work | OPEN | Without a target, benchmarking is unfalsifiable. Must be a stated number (records per run) chosen against the CPU-vs-IO question in Q2. |
-| OQ-05 | Whether a real-data mode is ever in scope | OPEN | Not for the first build (REQ-002). Whether it is ever desirable is a question about the artifact's purpose and is deliberately not answered here. |
+| OQ-01 | Tie-breaking when two candidate matches are equally plausible | **RESOLVED BY RECOMMENDATION** | Emit `AMBIGUOUS` with the full candidate set; never tie-break; explicit recorded resolution. `16` §B.1 |
+| OQ-02 | Residual allocation when fees do not divide exactly across charges | **RESOLVED BY RECOMMENDATION** | Explicit `RESIDUAL` constituent, never allocated. `16` §B.2 |
+| OQ-03 | Discrepancy taxonomy open or closed | **RESOLVED BY RECOMMENDATION** | Closed with explicit `UNKNOWN`, enforced structurally. `16` §B.4 |
+| OQ-04 | Scale target for the performance work | **RESOLVED BY RECOMMENDATION** | Declared reference workload (50k charges / 5k payouts / 5k deposits, ≤60s) + median-of-5 methodology. `16` §B.7 |
+| OQ-05 | Whether a real-data mode is ever in scope | **RESOLVED BY RECOMMENDATION** | Synthetic only for the artifact; `DataProvenance` on the model; real mode is a later spec requiring authorisation. `16` §B.8 |
+
+### Resolved by recommendation in `16`, awaiting OWNER ratification
+
+| ID | Question | Status | Resolution |
+|---|---|---|---|
+| OQ-07 | Rule precedence evaluation order | **RESOLVED BY RECOMMENDATION** | All applicable rules evaluated; determinism beats ambiguity; disagreeing deterministic outcomes raise `RULE_CONFLICT`. `16` §B.5 |
+| OQ-08 | Discrepancy severity derivation | **RESOLVED BY RECOMMENDATION** | Declared versioned matrix over (type, amount band); an unknown pair raises rather than defaulting. `16` §B.6 |
+
+### Still genuinely open — not resolvable by the specification author
+
+| ID | Question | Status | Why open |
+|---|---|---|---|
+| OQ-09 | Whether pre-M5 runs must be backfilled into the journal once it exists | OPEN | A sequencing question; recorded in `15` §4 and `17` F-06 |
+| OQ-10 | Amount-band boundaries for the severity matrix | OPEN | A business judgement the OWNER should set; any value is a versioned change |
+| OQ-11 | Reference machine declaration for the benchmark | OPEN | Must be declared before any benchmark runs; `16` §B.7 |
+| OQ-12 | Whether a journal entry's stored timestamp is excluded from its digest preimage | OPEN | Implied by `06` DATA-R09 but not stated in `08`; must be stated explicitly in the M5 specification |
 
 ---
 

@@ -104,7 +104,7 @@ The constituents are:
 | Adjustment | A processor-initiated correction, correction of an error, or a reserve/rolling-hold movement |
 | FX conversion | Where the charge currency differs from the payout currency, the conversion of that constituent at an applicable rate |
 
-The gross-to-net bridge is the algebraic statement that the derivation closes. Illustratively — the authoritative rounding and residual convention is an open question (OQ-02) and is to be settled in `07_RECONCILIATION_ENGINE_SPEC.md`, not here:
+The gross-to-net bridge is the algebraic statement that the derivation closes. Illustratively — the authoritative rounding and residual convention is **resolved by recommendation** in `16_DECISION_REGISTER_AND_RESOLUTIONS.md` §B.2 (explicit `RESIDUAL` constituent, never allocated) and is owned by `07_RECONCILIATION_ENGINE_SPEC.md`, not settled here:
 
 ```
 payout = Σ charges        (in payout currency)

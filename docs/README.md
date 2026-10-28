@@ -24,6 +24,9 @@ SettleIQ is an **independent** payment settlement reconciliation and discrepancy
 | 13 | `13_ROADMAP_AND_ACCEPTANCE.md` | Milestones, dependency graph, release gates |
 | 14 | `14_EMPLOYMENT_EVIDENCE.md` | Skills-to-artifact mapping; what the project does **not** teach |
 | 15 | `15_RISKS_AND_NON_GOALS.md` | Risk register with verifiable mitigations; non-goals |
+| 16 | `16_DECISION_REGISTER_AND_RESOLUTIONS.md` | Architecture decision baseline; resolution of all eight outstanding engineering questions |
+| 17 | `17_TRACEABILITY_MATRIX_AND_CONSISTENCY.md` | Requirements-to-verification traceability; eight-class consistency findings |
+| 18 | `18_M1_IMPLEMENTATION_PLAN.md` | M1 file-level scope and acceptance criteria — **a plan, not an authorization** |
 
 **Research record** (`docs/research/`):
 
@@ -55,6 +58,10 @@ SettleIQ is an **independent** payment settlement reconciliation and discrepancy
 
 ## Authorization status
 
-The five engineering questions are **RECOMMENDED, awaiting OWNER ratification** (`12`). Ratification order matters: **Q5 (target role) before Q2 (language architecture)**, because Q2's conditional C++17 gate depends on it.
+The five engineering questions are **OWNER-PROPOSED, awaiting explicit ratification** (`16` Part A). Ratification order matters: **Q5 (target role) before Q2 (language architecture)**, because Q2's conditional C++17 gate depends on it.
+
+The OWNER has stated a baseline — Stripe-only · Python core · PostgreSQL · five views · financial systems/ledgering. **This is recorded as a proposal, not a ratification**, because approval was not explicitly given.
+
+Eight outstanding engineering questions are **resolved by recommendation** in `16` Part B. Five genuinely open items remain (OQ-09…OQ-12 plus two OWNER judgements).
 
 **No implementation is authorized. No code exists. Nothing is built. No test has run. No benchmark has been measured.**

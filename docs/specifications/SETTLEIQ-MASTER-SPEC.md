@@ -234,6 +234,9 @@ Each subordinate document is authoritative in its own domain and traces its requ
 | 13 | `13_ROADMAP_AND_ACCEPTANCE.md` | Milestones, dependency graph, acceptance gates, release criteria | REQ-015, REQ-016 |
 | 14 | `14_EMPLOYMENT_EVIDENCE.md` | Skills-to-artifact mapping, interview readiness, role emphasis | REQ-000 |
 | 15 | `15_RISKS_AND_NON_GOALS.md` | Risk register, explicit non-goals | REQ-001, REQ-016 |
+| 16 | `16_DECISION_REGISTER_AND_RESOLUTIONS.md` | Architecture decision baseline (Part A) and resolution of all outstanding engineering questions (Part B) | REQ-001, REQ-005, REQ-009, REQ-012 |
+| 17 | `17_TRACEABILITY_MATRIX_AND_CONSISTENCY.md` | Requirements-to-verification traceability; eight-class consistency findings | All |
+| 18 | `18_M1_IMPLEMENTATION_PLAN.md` | M1 file-level scope and acceptance criteria. **A plan, not an authorization** | REQ-003, 005, 006, 009, 012, 016 |
 
 This specification does not authorize implementation. It authorizes the next specification step, contingent on OWNER ratification of `12_DECISIONS_AND_OPEN_QUESTIONS.md`.
 
