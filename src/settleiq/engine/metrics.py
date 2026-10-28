@@ -64,6 +64,7 @@ class Metrics:
         return {
             "numerator": self.numerator,
             "denominator": self.denominator,
+            "rate": self.rate,
             "human_confirmed": self.human_confirmed,
             "ambiguous": self.ambiguous,
             "conflict": self.conflict,

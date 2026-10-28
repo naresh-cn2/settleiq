@@ -95,12 +95,22 @@ def _candidate(record: Mapping[str, object], kind: str) -> Candidate:
 
 
 def _raw(record: Mapping[str, object], kind: str) -> dict[str, object]:
+    """Canonical comparison view of a record.
+
+    A deposit carries its settlement reference inside its narration, not in a
+    `batch` field. Omitting that extraction would make the reference rule
+    inapplicable to deposits and leave them resolved only by amount — which is
+    exactly how two unrelated payouts of equal amounts create a false ambiguity.
+    """
     return {
         "kind": kind,
         "id": str(record.get("id", "")),
         "amount": str(record.get("amount", "")),
         "currency": str(record.get("currency", "")),
-        "reference": str(record.get("batch") or ""),
+        "reference": str(
+            record.get("batch")
+            or extract_reference(str(record.get("narration", "")))
+        ),
         "date": str(record.get("arrival_date") or record.get("posted") or ""),
     }
 
@@ -157,6 +167,9 @@ def reconcile(
 
     decompositions: list[Decomposition] = []
     discrepancies: list[Discrepancy] = []
+    # A payout/deposit pair whose amounts disagree is reported once, not once per
+    # direction, so the discrepancy count is not inflated.
+    reported_amount_breaks: set[str] = set()
     counts: dict[str, int] = {
         "eligible": 0,
         "deterministic": 0,
@@ -225,6 +238,12 @@ def reconcile(
             _check_matched_amount(
                 payout, decision.matched_candidate, parameters, discrepancies
             )
+            if decision.matched_candidate is not None:
+                reported_amount_breaks.add(
+                    _pair_key(
+                        str(payout.get("id", "")), decision.matched_candidate.candidate_id
+                    )
+                )
             continue
 
         counts[_key_for(decision.confidence)] += 1
@@ -254,9 +273,21 @@ def reconcile(
         counts["eligible"] += 1
         if decision.confidence is Confidence.DETERMINISTIC:
             counts["deterministic"] += 1
+            # The payout->deposit pass already checked this pair's amounts.
+            # Reporting the same break from both directions would inflate the
+            # discrepancy count, so the pair key is tracked and skipped.
+            pair = _pair_key(
+                decision.matched_candidate.candidate_id
+                if decision.matched_candidate
+                else "",
+                str(deposit.get("id", "")),
+            )
+            if pair in reported_amount_breaks:
+                continue
             _check_matched_amount_for_deposit(
                 decision.matched_candidate, deposit, parameters, discrepancies
             )
+            reported_amount_breaks.add(pair)
         else:
             counts[_key_for(decision.confidence)] += 1
             discrepancies.append(classify(decision))
@@ -429,6 +460,11 @@ def _check_matched_amount_for_deposit(
             age_days=0,
         )
     )
+
+
+def _pair_key(payout_id: str, deposit_id: str) -> str:
+    """Identify a payout/deposit pair independently of which side reported it."""
+    return f"{payout_id}::{deposit_id}"
 
 
 def _unknown_break(kind: str, record_id: str, rule_version: str) -> Discrepancy:

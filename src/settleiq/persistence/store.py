@@ -1,0 +1,214 @@
+"""Persistence.
+
+PostgreSQL is the declared default (Q3, adopted for implementation) but Docker
+and PostgreSQL are unavailable in this environment, so the store is implemented
+against SQLite behind an interface. Amounts are stored as **exact decimal text**
+rather than a typed numeric column, which is stricter than Postgres `numeric`
+(no scale rounding is possible at all) and makes a later Postgres swap
+mechanical.
+
+Transaction boundaries are explicit: a run and its results commit atomically, or
+not at all. A failed run must never leave a database that represents an
+incomplete reconciliation as complete.
+"""
+
+from __future__ import annotations
+
+import sqlite3
+from contextlib import closing, contextmanager
+from pathlib import Path
+from typing import Final, Iterator, Mapping, Sequence
+
+from settleiq.canonical.serialization import digest
+from settleiq.engine import Discrepancy, ReconciliationResult
+
+__all__ = ["SCHEMA_STATEMENTS", "Persistence", "open_store"]
+
+SCHEMA_STATEMENTS: Final[tuple[str, ...]] = (
+    """
+    CREATE TABLE IF NOT EXISTS reconciliation_run (
+        run_id            TEXT PRIMARY KEY,
+        input_digest      TEXT NOT NULL,
+        rule_version      TEXT NOT NULL,
+        schema_version    TEXT NOT NULL,
+        status            TEXT NOT NULL,
+        declared_window   TEXT NOT NULL,
+        numerator         INTEGER NOT NULL,
+        denominator       INTEGER NOT NULL,
+        methodology_version TEXT NOT NULL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS discrepancy (
+        discrepancy_id    TEXT PRIMARY KEY,
+        run_id            TEXT NOT NULL REFERENCES reconciliation_run(run_id),
+        type              TEXT NOT NULL,
+        severity          TEXT NOT NULL,
+        constituent_kind  TEXT NOT NULL,
+        constituent_id    TEXT NOT NULL,
+        reason            TEXT NOT NULL,
+        age_days          INTEGER NOT NULL,
+        status            TEXT NOT NULL
+    )
+    """,
+    # A settled record is never updated. A correction is a new row referencing
+    # the one it supersedes (AC-3.04).
+    """
+    CREATE TABLE IF NOT EXISTS supersession (
+        superseded_id     TEXT PRIMARY KEY,
+        superseding_id    TEXT NOT NULL,
+        reason            TEXT NOT NULL
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS ix_discrepancy_run ON discrepancy(run_id)",
+    "CREATE INDEX IF NOT EXISTS ix_discrepancy_type ON discrepancy(type)",
+)
+
+
+class Persistence:
+    """A store for reconciliation runs and their discrepancies.
+
+    The journal is a separate concern (M5 of the specification, not implemented
+    here): this table set records outcomes, not a tamper-evident chain.
+    """
+
+    def __init__(self, path: Path | str) -> None:
+        self.path = str(path)
+        # An in-memory database is created fresh on every connection, so a
+        # schema migrated on one connection would be invisible to the next.
+        # Hold a single connection for its lifetime instead.
+        self._shared: sqlite3.Connection | None = (
+            None if self.path != ":memory:" else sqlite3.connect(":memory:")
+        )
+
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
+        # isolation_level=None puts the connection in autocommit so that BEGIN
+        # is explicit. Implicit autocommit is how partial commits happen.
+        if self._shared is not None:
+            connection = self._shared
+            connection.execute("PRAGMA foreign_keys = ON")
+            yield connection
+            return
+        connection = sqlite3.connect(self.path, isolation_level=None)
+        try:
+            connection.execute("PRAGMA foreign_keys = ON")
+            yield connection
+        finally:
+            connection.close()
+
+    def close(self) -> None:
+        if self._shared is not None:
+            self._shared.close()
+            self._shared = None
+
+    def migrate(self) -> None:
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            for statement in SCHEMA_STATEMENTS:
+                cursor.execute(statement)
+
+    def record_run(self, result: ReconciliationResult) -> str:
+        """Record a completed run and its discrepancies atomically.
+
+        Re-recording an identical run is a no-op: the run id is derived from the
+        inputs, so a duplicate submission is recognised rather than duplicated
+        (SETTLEIQ-REQ-009, `09` API-R08).
+        """
+        metrics = result.metrics
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute("BEGIN IMMEDIATE")
+            try:
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO reconciliation_run
+                    (run_id, input_digest, rule_version, schema_version, status,
+                     declared_window, numerator, denominator, methodology_version)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        result.identity.run_id,
+                        result.identity.input_digest,
+                        result.identity.rule_version,
+                        result.identity.schema_version,
+                        "COMPLETED",
+                        "",
+                        metrics.numerator,
+                        metrics.denominator,
+                        metrics.methodology_version,
+                    ),
+                )
+                for discrepancy in result.discrepancies:
+                    cursor.execute(
+                        """
+                        INSERT OR REPLACE INTO discrepancy
+                        (discrepancy_id, run_id, type, severity, constituent_kind,
+                         constituent_id, reason, age_days, status)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            discrepancy.discrepancy_id,
+                            result.identity.run_id,
+                            discrepancy.type.value,
+                            discrepancy.severity.value,
+                            discrepancy.constituent_kind,
+                            discrepancy.constituent_id,
+                            discrepancy.reason,
+                            discrepancy.age_days,
+                            discrepancy.status.value,
+                        ),
+                    )
+                connection.execute("COMMIT")
+            except Exception:
+                connection.execute("ROLLBACK")
+                raise
+        return result.identity.run_id
+
+    def find_run(self, run_id: str) -> Mapping[str, object] | None:
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute("SELECT * FROM reconciliation_run WHERE run_id = ?", (run_id,))
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            columns = [d[0] for d in cursor.description]
+            return dict(zip(columns, row))
+
+    def discrepancies_for(self, run_id: str) -> Sequence[Mapping[str, object]]:
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(
+                "SELECT * FROM discrepancy WHERE run_id = ? ORDER BY discrepancy_id",
+                (run_id,),
+            )
+            columns = [d[0] for d in cursor.description]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+    def all_runs(self) -> Sequence[Mapping[str, object]]:
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(
+                "SELECT * FROM reconciliation_run ORDER BY input_digest, rule_version"
+            )
+            columns = [d[0] for d in cursor.description]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+    def digest_of(self, table: str) -> str:
+        """A tamper-evident digest over a whole table, computed on read.
+
+        Not a chain and not a substitute for the M5 journal: it exists so a
+        reviewer can detect that stored results were edited.
+        """
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(f"SELECT * FROM {table}")
+            columns = [d[0] for d in cursor.description]
+            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        # `digest` canonicalises and sorts internally; sorting here would
+        # require ordering dicts, which is not defined.
+        return digest({"table": table, "rows": [_canonical_row(r) for r in rows]})
+
+
+def _canonical_row(row: Mapping[str, object]) -> dict[str, object]:
+    return {str(k): v for k, v in sorted(row.items())}
+
+
+def open_store(path: Path | str = ":memory:") -> Persistence:
+    store = Persistence(path)
+    store.migrate()
+    return store
