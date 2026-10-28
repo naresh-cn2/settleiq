@@ -2,11 +2,11 @@
 
 **Document ID:** SETTLEIQ-MASTER-SPEC-001
 **Title:** SettleIQ Master Specification — Payment Settlement Reconciliation & Discrepancy Investigation Engine
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Status:** PROPOSED — specification only; no implementation claimed
 **Domain:** Master
-**Governing document:** PROJECT TOP 1 Master Blueprint; Pillar 2 Manager Charter
-**Date:** 2026-10-27 (Project Day 074, Week 11)
+**Governing document:** None. This document is the sole authority for SettleIQ's scope and requirements.
+**Date:** 2026-10-27, revised 2026-10-28 (v1.1.0 — project independence correction)
 **Canonical path:** `docs/specifications/SETTLEIQ-MASTER-SPEC.md`
 **Owner:** Bukya Naresh (CN2)
 
@@ -20,9 +20,19 @@ This document defines the governing frame, scope, requirements, and acceptance c
 
 This is a **specification-only document**. It describes intended scope and requirements, not implemented software. Nothing in this document constitutes an implementation, a tested component, or evidence that SettleIQ satisfies its objectives.
 
+### Project Independence — OWNER-DEFINED
+
+**SETTLEIQ-REQ-IND-01 (OWNER-DEFINED):** SettleIQ is an independent project. It owns its own product definition, architecture, technical decisions, specifications, implementation, tests, benchmarks, and engineering documentation.
+
+**SETTLEIQ-REQ-IND-02 (OWNER-DEFINED):** SettleIQ shall not inherit architecture, requirements, roadmaps, or implementation tasks from PROJECT-TOP1, STRATA-ENGINE, Forex-platform, crypto-platform, or any other repository. Those projects are separately owned and separately governed. SettleIQ's presence on a personal roadmap is progress tracking only and confers no engineering authority.
+
+**SETTLEIQ-REQ-IND-03 (OWNER-DEFINED):** SettleIQ shall not import implementation from another repository as a shortcut. Prior work may be consulted as reference material, but every line SettleIQ runs must be SettleIQ's own, with its own tests and its own evidence. Where a pattern is borrowed, the justification must be a requirements-based technical reason recorded in `12_DECISIONS_AND_OPEN_QUESTIONS.md`, never "it exists elsewhere."
+
+**SETTLEIQ-REQ-IND-04 (OWNER-DEFINED):** No external governance document shall be cited as authority for a SettleIQ requirement. Principles adopted from elsewhere must be restated here as SettleIQ's own requirements, owned and testable within this repository.
+
 ### Purpose Classification — OWNER-DEFINED
 
-SettleIQ exists to produce **verifiable employment evidence**. Its customer is a hiring manager evaluating candidates for financial-systems, ledgering, or backend engineering roles. This frame was selected by the OWNER on 2026-10-27 after research established that the alternative frame — commercial product differentiation — was not supportable on available evidence.
+SettleIQ exists to produce **verifiable employment evidence**. Its audience is a hiring manager evaluating candidates for financial-systems, ledgering, or backend engineering roles. This frame was selected by the OWNER on 2026-10-27 after research established that the alternative frame — commercial product differentiation — was not supportable on available evidence. An employment-first frame does not cap technical ambition: SettleIQ may still lead to client work or a commercial product later, and no requirement here prohibits that. What is prohibited is making product decisions on an unproven market gap.
 
 **SETTLEIQ-REQ-000 (OWNER-DEFINED):** SettleIQ shall not be positioned, marketed, documented, or described as a commercially competitive product, a superior alternative to named competitors, or a fill for a proven market gap. Every artifact this project produces must be defensible as engineering evidence rather than as commercial positioning.
 
@@ -30,13 +40,13 @@ SettleIQ exists to produce **verifiable employment evidence**. Its customer is a
 
 Requirements are classified as:
 
-* **OWNER-DEFINED** — established by the OWNER or by governing PROJECT TOP 1 law. These may only change by explicit OWNER decision.
+* **OWNER-DEFINED** — established by the OWNER. These may only change by explicit OWNER decision.
 * **PROPOSED** — recommended by this specification. Not binding until ratified by the OWNER.
 * **IMPLEMENTED / VALIDATED** — reserved for statements backed by executed tests with recorded output. **No requirement in this document carries these states.** Nothing is implemented.
 
 ### Relationship to Verified Research
 
-This specification rests on a primary-source verification log (`docs/research/02_verification_log.md`) in which claims carried forward from subordinate research agents were re-checked against original sources. 16 claims were verified verbatim, several were found unverified, and one prior conclusion was contradicted by its own source. The classification states below reflect that log, not the original agent reports.
+This specification rests on a primary-source verification log (`docs/research/02_verification_log.md`) in which claims carried forward from subordinate research agents were re-checked against original sources. 16 claims were verified verbatim, several were found unverified, and one prior conclusion was contradicted by its own source. The classification states below reflect that log, not the original agent reports. Research is preserved as evidence; it is **not** a source of engineering requirements.
 
 ---
 
@@ -59,6 +69,8 @@ Research completed 2026-10-27 (primary-source verified) established the followin
 | No vendor publishes a measurement methodology for its headline auto-match rate; Numeric's own blog advises buyers to weigh "controls, explainability, and data quality over headline match-rate claims" | A |
 
 The first and last rows describe a real engineering problem and a real missing practice. The middle rows establish that the differentiators this project might otherwise have claimed are **occupied**. SettleIQ therefore competes on nothing and asserts no market position. It demonstrates capability.
+
+**Verification status of this table — important, and deliberately unflattering:** the rows in this table were established during the M1 research pass with cited source URLs, but they were **not re-fetched and re-confirmed during the M2b primary-source verification pass**. They are therefore *research-pass verified*, not *independently re-verified here*. The claims that WERE re-fetched and confirmed verbatim are recorded in `docs/research/02_verification_log.md` (§1, V1–V26) and in `03_EVIDENCE_AND_RESEARCH_REGISTER.md`. Three claims carried in the original research were checked and found absent, and one prior conclusion was contradicted by its own source; those are recorded as NOT VERIFIED and CONTRADICTED respectively. Where this table and the verification log differ, **the verification log governs**.
 
 ### 1.3 What SettleIQ Is Not
 
@@ -105,17 +117,19 @@ The first and last rows describe a real engineering problem and a real missing p
 
 ### 2.4 Measurement Practice — OWNER-DEFINED (the centerpiece)
 
-**SETTLEIQ-REQ-013:** SettleIQ shall publish its own auto-match rate **with an explicit, documented measurement methodology**: the denominator definition (what counts as an eligible record), the population (which records were in scope), the time window, and the treatment of AI-assisted or human-confirmed matches.
+**SETTLEIQ-REQ-013:** SettleIQ shall publish its own auto-match rate **with an explicit, documented measurement methodology**: the denominator definition (what counts as an eligible record), the population (which records were in scope), the observation window, and the treatment of AI-assisted or human-confirmed matches.
+
+**Determinism interaction (OWNER-DEFINED, resolving a conflict):** the observation window shall be a **declared input** to the run, recorded in the run's input digest and rule version — never a wall-clock range sampled from ambient time. A rate computed over an ambient time window is not reproducible and would break REQ-012. The window is therefore *specified by the operator, hashed with the inputs, and reproducible*, and the methodology states that explicitly. Any report that shows a window without showing how it was declared is defective.
 
 **SETTLEIQ-REQ-014:** The rate shall be computed and reported by the system from recorded instrumented counts. It shall not be stated in prose anywhere in the repository.
 
 **Rationale (PROPOSED, evidence-backed):** No competitor examined publishes such a methodology, and Numeric's own documentation advises buyers to weigh controls and explainability "over headline match-rate claims" (Class A, verified). SettleIQ does not claim competitors lack this practice — it **demonstrates the practice on itself**, on data a third party can inspect. This converts the verified research finding into a demonstrable property without making any competitive assertion.
 
-### 2.5 Quality and Finish — OWNER-DEFINED (PROJECT TOP 1 law)
+### 2.5 Quality and Finish — OWNER-DEFINED
 
-**SETTLEIQ-REQ-015:** Per the Scalability & Future-Proofing Law, SettleIQ shall not be a disposable slice. Every component shall be modular, tested, documented, and runnable in Docker, with a documented evolutionary path.
+**SETTLEIQ-REQ-015:** SettleIQ shall not be a disposable slice. Every component shall be modular, tested, documented, and runnable in Docker, with a documented evolutionary path. This is stated as SettleIQ's own requirement, owned and enforced within this repository.
 
-**SETTLEIQ-REQ-016:** Per RSK-04, no completion claim shall be made without executed test output. "Checkbox theater" is a named project risk; this project is a place it could recur.
+**SETTLEIQ-REQ-016:** No completion claim shall be made without executed test output. A component described in prose as working, without a recorded passing test, is a defect. "Checkbox theater" is a named SettleIQ risk.
 
 ---
 
@@ -134,7 +148,7 @@ Not binding. Subject to ratification and to the architecture specification.
 | Metrics & Reporting | Instrumented counts, methodology-defined rate computation, reproducible reports | PROPOSED |
 | API | REST + OpenAPI over the above; read-only references for investigation | PROPOSED |
 
-**Reuse posture (PROPOSED, evidence-backed):** The typed-discrepancy pattern, Decimal money discipline, and provenance-sidecar pattern already exist and are tested in `Forex-platform`. The append-only journal, checkpointed recovery, and RBAC patterns exist in `crypto-platform`. Reuse those patterns through re-implementation under SettleIQ's own contracts — do not vendor them across repository boundaries, and do not claim their test coverage as SettleIQ's own.
+**Reuse posture (OWNER-DEFINED, see SETTLEIQ-REQ-IND-03):** Cases where patterns from other software might inform SettleIQ are illustrative only and carry no engineering authority. Every component is SettleIQ's own implementation with its own tests. The append-only hash-chained store, the typed discrepancy taxonomy, and the exact-decimal arithmetic core are all built here, tested here, and evidenced here. No test coverage, benchmark result, or correctness property from another repository is ever cited as SettleIQ's evidence.
 
 ---
 
@@ -146,7 +160,7 @@ The artifact's value is that a stranger can verify it. The contract, in order:
 2. A single command runs the full test suite (unit, property-based Decimal invariants, determinism, fault injection) and emits recorded output.
 3. A worked discrepancy investigation runs end to end against a dataset with **known, injected defects**: a phantom charge, an amount break, a fee misattribution, a mid-payout refund, and an FX rounding carryover. The engine must classify each correctly, and the expected classification is asserted, not narrated.
 4. The metrics report computes the auto-match rate with its stated denominator from instrumented counts, and the same figure reproduces across runs.
-5. A benchmark runs the hot path in Python and C++17 and reports ns/op, allocations, and honest limits of the comparison.
+5. **Conditional, not mandatory:** if and only if a compute-bound workload has been identified and measured, a benchmark compares a Python baseline against a C++17 implementation and reports ns/op, allocations, correctness equivalence, and the honest limits of the comparison. If no such workload exists, no benchmark is produced and none is claimed. The four gating conditions are recorded in `12_DECISIONS_AND_OPEN_QUESTIONS.md` §Q2.
 
 **SETTLEIQ-REQ-017 (OWNER-DEFINED):** The demonstration shall fail loudly. A test that cannot run, a benchmark that cannot reproduce, or an investigation that cannot classify an injected defect is reported as such. Documentation shall never describe capability that the demonstration does not execute.
 
@@ -159,13 +173,13 @@ Each milestone is closed only by executed output recorded in the repository. No 
 | # | Milestone | Acceptance evidence | Target role evidence |
 |---|---|---|---|
 | M1 | Canonical data model + Decimal invariants, property-tested | Property test suite output; invariant violations fail the build | Ledgering, Quant Dev |
-| M2 | Source adapters + Stripe/Adyen-shaped generators with injected defects | Golden-file tests; defect generator tests | Data Infra, Backend |
+| M2 | Source adapters + **Stripe-shaped** generators with injected defects (Stripe-only per Q1; the frozen `SourceAdapter` interface is the deliverable, not the adapter count) | Golden-file tests; defect generator tests | Data Infra, Backend |
 | M3 | Settlement decomposer + charge-level reconciliation | Worked decomposition test with exact expected totals | Financial Systems |
 | M4 | Matching engine + typed discrepancy taxonomy | Injected-defect classification suite, all classes asserted | Financial Systems, Backend |
 | M5 | Append-only hash-chained audit journal, digests computed and verified | Tamper-injection test proves verification detects modification; determinism test proves byte-identical output | Backend, Financial Systems |
 | M6 | Metrics with published methodology | Reproducible report across runs; denominator documented in code | All |
-| M7 | REST + OpenAPI + investigation dashboard | Contract tests; running UI against live engine | Backend, AI-eng |
-| M8 | Python-vs-C++17 benchmark with honest limits | Benchmark output; stated comparison caveats | Quant Dev, HFT |
+| M7 | REST + OpenAPI + investigation dashboard | Contract tests; running UI against live engine | Backend |
+| M8 | **Conditional.** Python-vs-C++17 benchmark, only if the four Q2 gating conditions are satisfied | Benchmark output; stated caveats; correctness-equivalence proof. **If the conditions are not satisfied, this milestone is deleted, not deferred, and its absence is stated rather than hidden** | Quant Dev, HFT |
 | M9 | Docker + single-command reproduction | Clean-clone reproduction by a third party | All |
 
 **Explicitly excluded from milestones:** buyer interviews, pricing experiments, GTM artifacts, and any competitive-claim document. These belong to a different frame and that frame was closed on 2026-10-27.
@@ -180,48 +194,61 @@ Each milestone is closed only by executed output recorded in the repository. No 
 | SR-02 | Computed hashes replaced by fabricated / patterned values | Critical | REQ-011; tamper-injection test must detect modification |
 | SR-03 | Float money entering via a dependency or JSON boundary | High | Property tests on Decimal; CI gate rejects float on monetary paths |
 | SR-04 | Scope expanding back into commercial positioning | High | REQ-001 binding; this document is the guard |
-| SR-05 | Abandonment mid-build (PROJECT TOP 1 Anti-Abandonment Invariant) | High | Milestones are small and independently closing; each produces evidence |
+| SR-05 | Abandonment mid-build: a large unfinished codebase with no demonstrable evidence | High | Milestones are small and independently closing; each produces recordable evidence before the next begins |
 | SR-06 | Multi-source research restated as fact without verification | Medium | Verification log discipline (`docs/research/`) applies to all claims |
 | SR-07 | Xero-style regulatory constraint blocks a planned integration | Medium | Bank/processor-direct connections; GL-mediated integration is not assumed available |
 
 ---
 
-## 7. Alignment Register — PROJECT TOP 1
+## 7. External Tracking and Independence Note
 
-| Governing item | SettleIQ's relationship |
-|---|---|
-| Pillar 2, Goal 2 — Build & Package Sellable Solution Vertical Slice | SettleIQ is the vertical slice. **Commercial lane unproven**; do not report it as satisfying the revenue lane until buyer evidence exists. |
-| Pillar 2, Goal 4 — High-Trajectory Career Pipeline & Systems Engineer CV / Outcome 4 | Primary satisfied lane. Milestones M1–M9 map directly onto target-role evidence. |
-| Pillar 2, Outcome 3 — Sellable Problem-Solution Product Asset & Pre-Build Dossier | Partial. The pre-build dossier is satisfied by this specification plus the research record. The "sellable" qualifier is **not** evidenced. |
-| Unified Product Asset Law (Single-Asset Multi-Channel Rule) | Satisfied on the career-proof, portfolio, and IP-compounding lanes. **Not** satisfied on direct-revenue or client-services lanes on current evidence. Stating otherwise would violate RSK-04. |
-| Scalability & Future-Proofing Law | REQ-015. |
-| Zero Live Trading Capital Law | Not applicable; SettleIQ moves no capital. |
-| RSK-04 — Checkbox theater | SR-01, SR-02. |
+SettleIQ may be listed on a personal roadmap for progress tracking. That relationship is administrative and one-directional:
+
+* The roadmap records that SettleIQ exists and roughly what phase it is in.
+* The roadmap confers no engineering authority over SettleIQ.
+* This repository's specifications are the sole authority for SettleIQ's scope, architecture, and requirements.
+* Progress reported externally must match the repository's own milestone state. If the repository says nothing is implemented, external reporting must say the same.
+
+Reporting SettleIQ against an external goal is permitted and useful. Subordinating SettleIQ's engineering to that goal is prohibited by SETTLEIQ-REQ-IND-01 and IND-02.
 
 ---
 
-## 8. Subordinate Documents — required, not yet authored
+## 8. Subordinate Document Hierarchy — specification system of record
 
-| Document | Purpose | Prerequisite |
+Each subordinate document is authoritative in its own domain and traces its requirements back to this specification. **Nothing below is implemented.**
+
+| # | Document | Domain of authority | Master requirements it elaborates |
+|---|---|---|---|
+| 01 | `01_OBJECTIVES_AND_BOUNDARIES.md` | Objectives, scope boundaries, independence, success criteria | REQ-IND-01…04, REQ-000, REQ-001 |
+| 02 | `02_PROBLEM_AND_USE_CASES.md` | Problem statement, actors, use cases, in-scope / out-of-scope | REQ-002, REQ-006 |
+| 03 | `03_EVIDENCE_AND_RESEARCH_REGISTER.md` | Research record, evidence classes, verified vs. unverified claims | REQ-001, verification discipline |
+| 04 | `04_REQUIREMENTS_AND_NON_GOALS.md` | Full requirement register, priorities, non-goals | REQ-000…016 |
+| 05 | `05_ARCHITECTURE.md` | Components, boundaries, interfaces, deployment view | REQ-004, REQ-015 |
+| 06 | `06_DATA_MODEL_AND_PERSISTENCE.md` | Canonical types, Decimal rules, schema, migrations, transaction boundaries | REQ-005, REQ-006 |
+| 07 | `07_RECONCILIATION_ENGINE_SPEC.md` | Decomposition, matching rules, determinism, confidence classes, fail-closed behaviour | REQ-005…009, REQ-012 |
+| 08 | `08_DISCREPANCY_AND_AUDIT_SPEC.md` | Typed taxonomy, ageing, provenance, hash-chained journal, tamper detection | REQ-007…011 |
+| 09 | `09_API_AND_INTEGRATION_SPEC.md` | REST/OpenAPI contracts, source-adapter interfaces | REQ-003 |
+| 10 | `10_DASHBOARD_SPEC.md` | Minimum complete investigation interface, functional requirements | REQ-003 |
+| 11 | `11_TESTING_AND_PERFORMANCE_SPEC.md` | Test taxonomy, property tests, correctness gates, benchmark methodology | REQ-004, REQ-012, REQ-016 |
+| 12 | `12_DECISIONS_AND_OPEN_QUESTIONS.md` | The five engineering decisions with recommendations, ADRs, unresolved items | — |
+| 13 | `13_ROADMAP_AND_ACCEPTANCE.md` | Milestones, dependency graph, acceptance gates, release criteria | REQ-015, REQ-016 |
+| 14 | `14_EMPLOYMENT_EVIDENCE.md` | Skills-to-artifact mapping, interview readiness, role emphasis | REQ-000 |
+| 15 | `15_RISKS_AND_NON_GOALS.md` | Risk register, explicit non-goals | REQ-001, REQ-016 |
+
+This specification does not authorize implementation. It authorizes the next specification step, contingent on OWNER ratification of `12_DECISIONS_AND_OPEN_QUESTIONS.md`.
+
+---
+
+## 9. Open Questions — resolved by recommendation in `12_DECISIONS_AND_OPEN_QUESTIONS.md`
+
+Five engineering questions require OWNER ratification before implementation. Evidence-based recommendations are recorded in `12_DECISIONS_AND_OPEN_QUESTIONS.md`, with rationale, alternatives considered, and the cost of each choice. **They are recommendations, not approvals.** No question is marked resolved until the OWNER ratifies it.
+
+| # | Question | Recommendation status |
 |---|---|---|
-| `03_DATA_MODEL_AND_CONTRACTS.md` | Canonical types, Decimal rules, settlement schema, data contracts | This spec ratified |
-| `04_RECONCILIATION_ENGINE.md` | Decomposition, matching rules, determinism, confidence classes | Ratified |
-| `05_DISCREPANCY_INVESTIGATION_SPEC.md` | Typed taxonomy, ageing, root-cause, resolution workflow | Ratified |
-| `06_AUDIT_AND_INTEGRITY_SPEC.md` | Hash-chaining, digest computation/verification, tamper tests | Ratified |
-| `07_API_AND_INTEGRATION_SPEC.md` | REST/OpenAPI, adapter contracts | Ratified |
-| `08_TESTING_AND_VALIDATION_SPEC.md` | Property tests, golden files, fault injection, metric methodology | Ratified |
-| `09_ACCEPTANCE_CRITERIA.md` | Milestone closure conditions | Ratified |
+| Q1 | Processor scope: Stripe-only vs. Stripe + Adyen | RECOMMENDED, awaiting ratification |
+| Q2 | Language architecture: Python core plus optional C++17 benchmark | RECOMMENDED, awaiting ratification |
+| Q3 | Persistence: PostgreSQL vs. alternatives, and reproducibility | RECOMMENDED, awaiting ratification |
+| Q4 | Dashboard scope: minimum complete investigation interface | RECOMMENDED, awaiting ratification |
+| Q5 | Target employment role and skill emphasis | RECOMMENDED, awaiting ratification |
 
-This specification does not authorize implementation. It authorizes the next specification step, contingent on OWNER ratification.
-
----
-
-## 9. Open Questions for the OWNER
-
-1. **Primary processor shape.** Stripe-shaped is the best-documented (verified limitations available). Adyen-shaped adds net-of-costs gross-to-net bridging. One or both for M2?
-2. **Language split.** Python core with a C++17 hot-path benchmark (M8) is the proposal. Confirm.
-3. **Persistence.** Postgres is proposed for the ledger/audit store. Confirm against the single-command reproduction requirement.
-4. **Dashboard scope.** Minimum viable: discrepancy queue + investigation detail + metrics. Confirm.
-5. **Target-role emphasis.** If one role is to be prioritised (ledgering vs. backend vs. quant dev), milestone ordering should follow it. Currently M1–M9 is balanced.
-
-No implementation shall begin until these are answered.
+No implementation shall begin until these are ratified.
