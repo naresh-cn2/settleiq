@@ -65,3 +65,4 @@ Workloads were generated via `benchmarks/benchmark_engine.py` using synthetic ba
    - For batch sizes exceeding 500,000 records, horizontal partitioning by currency or processor account is recommended.
 2. **Database Sizing:**
    - A standard PostgreSQL RDS/Cloud SQL instance (`db-custom-2-4096`) will sustain the insert rate of run summaries and discrepancy details without connection exhaustion.
+
