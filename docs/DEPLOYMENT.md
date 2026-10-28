@@ -91,3 +91,4 @@ docker exec -t settleiq-postgres pg_restore -U settleiq -d settleiq_db --clean -
 * **Mutating API Protection**: When `SETTLEIQ_API_KEY` is set, all mutating requests (`POST /v1/*`) require header `X-API-Key`.
 * **Payload Size Limit**: Request bodies exceeding 10MB are rejected with HTTP 413.
 * **Security Headers**: All HTTP responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and strict Content Security Policy.
+

@@ -50,3 +50,4 @@ volumes:
 networks:
   settleiq-network:
     driver: bridge
+

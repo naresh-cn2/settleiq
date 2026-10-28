@@ -58,9 +58,17 @@ class StripeSourceAdapter:
         except Exception as exc:
             raise SourceAdapterError(f"Malformed Stripe JSON payload: {exc}") from exc
 
-        records = data if isinstance(data, list) else data.get("data", [data]) if isinstance(data, dict) else None
+        records = (
+            data
+            if isinstance(data, list)
+            else data.get("data", [data])
+            if isinstance(data, dict)
+            else None
+        )
         if records is None or not isinstance(records, list):
-            raise SourceAdapterError("Stripe payload must be a list of records or an object with a 'data' array")
+            raise SourceAdapterError(
+                "Stripe payload must be a list of records or an object with a 'data' array"
+            )
 
         charges: list[Charge] = []
         fees: list[Fee] = []
@@ -265,7 +273,10 @@ class StripeSourceAdapter:
     ) -> None:
         curr = self._parse_currency(item)
         money_amt = self._parse_amount(item, curr)
-        arrival = str(item.get("arrival_date") or item.get("created") or "").strip() or "1970-01-01T00:00:00Z"
+        arrival = (
+            str(item.get("arrival_date") or item.get("created") or "").strip()
+            or "1970-01-01T00:00:00Z"
+        )
         batch_id = str(item.get("batch_id") or item.get("batch") or "")
         ref = str(item.get("payout_reference") or item.get("reference") or rec_id)
 
@@ -321,7 +332,10 @@ class StripeSourceAdapter:
     ) -> None:
         curr = self._parse_currency(item)
         money_amt = self._parse_amount(item, curr)
-        posted = str(item.get("posted_at") or item.get("posted") or "").strip() or "1970-01-01T00:00:00Z"
+        posted = (
+            str(item.get("posted_at") or item.get("posted") or "").strip()
+            or "1970-01-01T00:00:00Z"
+        )
         narr = str(item.get("narration") or item.get("description") or "STRIPE PAYOUT")
         last3 = str(item.get("bank_account_last3") or "999")
 

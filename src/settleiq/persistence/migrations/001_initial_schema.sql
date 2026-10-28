@@ -67,3 +67,4 @@ CREATE INDEX IF NOT EXISTS ix_journal_sequence ON journal_entry(sequence);
 INSERT INTO schema_migration (version, name)
 VALUES (1, '001_initial_schema')
 ON CONFLICT (version) DO NOTHING;
+

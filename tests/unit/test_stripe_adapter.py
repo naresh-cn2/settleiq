@@ -13,7 +13,6 @@ Validates the concrete StripeSourceAdapter against realistic financial scenarios
 from __future__ import annotations
 
 import json
-from decimal import Decimal
 
 import pytest
 
@@ -197,7 +196,9 @@ def test_fail_closed_on_duplicate_ids(adapter: StripeSourceAdapter) -> None:
 def test_fail_closed_on_missing_required_fields(adapter: StripeSourceAdapter) -> None:
     # Missing id
     with pytest.raises(SourceAdapterError, match="missing required 'id'"):
-        adapter.normalize(b'[{"amount": 100, "currency": "usd"}]', provenance=DataProvenance.SYNTHETIC)
+        adapter.normalize(
+            b'[{"amount": 100, "currency": "usd"}]', provenance=DataProvenance.SYNTHETIC
+        )
 
     # Missing currency
     with pytest.raises(SourceAdapterError, match="missing required 'currency'"):
@@ -205,7 +206,9 @@ def test_fail_closed_on_missing_required_fields(adapter: StripeSourceAdapter) ->
 
     # Missing amount
     with pytest.raises(SourceAdapterError, match="missing required 'amount'"):
-        adapter.normalize(b'[{"id": "ch_1", "currency": "usd"}]', provenance=DataProvenance.SYNTHETIC)
+        adapter.normalize(
+            b'[{"id": "ch_1", "currency": "usd"}]', provenance=DataProvenance.SYNTHETIC
+        )
 
     # Refund missing charge reference
     with pytest.raises(SourceAdapterError, match="missing required 'charge' reference"):

@@ -20,7 +20,7 @@ from collections.abc import Iterator, Mapping, Sequence
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 
 from settleiq.canonical.serialization import digest
 from settleiq.engine import ReconciliationResult

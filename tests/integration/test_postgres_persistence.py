@@ -16,7 +16,6 @@ import pytest
 from settleiq.engine import RunParameters, reconcile
 from settleiq.fixtures.generator import generate
 from settleiq.persistence.postgres import MIGRATIONS_DIR, PostgresPersistence
-from settleiq.persistence.store import open_store
 from settleiq.validation import validate_records
 
 

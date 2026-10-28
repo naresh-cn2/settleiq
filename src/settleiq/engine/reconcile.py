@@ -182,12 +182,23 @@ def reconcile(
         "rejected": 0,
     }
 
+    # Pre-index all constituent records by batch for O(N) decomposition
+    records_by_batch: dict[str, list[Mapping[str, object]]] = {}
+    for entry in all_records:
+        rec = entry.get("record") if isinstance(entry, Mapping) else entry
+        b = str(rec.get("batch") or extract_reference(str(rec.get("narration", ""))))
+        records_by_batch.setdefault(b, []).append(entry)
+
     # --- 1. decompose every payout and verify the composition closes
     payout_by_reference: dict[str, Mapping[str, object]] = {}
     for payout in payouts:
         reference = str(payout.get("batch", ""))
         payout_by_reference[reference] = payout
-        decomposition = decompose(payout, all_records, rule_version=registry.version)
+        decomposition = decompose(
+            payout,
+            records_by_batch.get(reference, ()),
+            rule_version=registry.version,
+        )
         decompositions.append(decomposition)
         counts["eligible"] += len(decomposition.constituents)
 
@@ -225,10 +236,47 @@ def reconcile(
             counts["eligible"] += 1
             counts["phantom_processor"] = counts.get("phantom_processor", 0) + 1
 
+    # Check if registry consists only of standard reference and amount rules
+    is_standard_rules = (
+        len(registry.rules) == 2
+        and {r.rule_id for r in registry.rules} == {"R-EXACT-REFERENCE", "R-EXACT-AMOUNT"}
+    )
+
     # --- 3. payout -> bank deposit, with a declared settlement window
     deposit_candidates = [_candidate(d, "deposit") for d in deposits]
+    deposits_by_ref: dict[str, list[Candidate]] = {}
+    deposits_by_amt_curr: dict[tuple[str, str], list[Candidate]] = {}
+    deposit_order: dict[int, int] = {}
+    if is_standard_rules:
+        for idx, c in enumerate(deposit_candidates):
+            deposit_order[id(c)] = idx
+            if c.reference:
+                deposits_by_ref.setdefault(c.reference, []).append(c)
+            if c.amount and c.currency:
+                deposits_by_amt_curr.setdefault((c.amount, c.currency), []).append(c)
+
     for payout in payouts:
-        decision = evaluate(_raw(payout, "payout"), deposit_candidates, registry)
+        constituent = _raw(payout, "payout")
+        if is_standard_rules:
+            ref = str(constituent.get("reference", ""))
+            amt = str(constituent.get("amount", ""))
+            curr = str(constituent.get("currency", ""))
+            pool: dict[int, Candidate] = {}
+            if ref and ref in deposits_by_ref:
+                for c in deposits_by_ref[ref]:
+                    pool[id(c)] = c
+            if amt and curr and (amt, curr) in deposits_by_amt_curr:
+                for c in deposits_by_amt_curr[(amt, curr)]:
+                    pool[id(c)] = c
+            candidates_to_eval = (
+                [c for _, c in sorted(pool.items(), key=lambda item: deposit_order[item[0]])]
+                if pool
+                else ()
+            )
+        else:
+            candidates_to_eval = deposit_candidates
+
+        decision = evaluate(constituent, candidates_to_eval, registry)
         counts["eligible"] += 1
 
         if decision.confidence is Confidence.DETERMINISTIC:
@@ -253,6 +301,17 @@ def reconcile(
     # --- 4. a deposit whose reference matches no payout
     payout_references = {str(p.get("batch", "")) for p in payouts}
     payout_candidates = [_candidate(p, "payout") for p in payouts]
+    payouts_by_ref: dict[str, list[Candidate]] = {}
+    payouts_by_amt_curr: dict[tuple[str, str], list[Candidate]] = {}
+    payout_order: dict[int, int] = {}
+    if is_standard_rules:
+        for idx, c in enumerate(payout_candidates):
+            payout_order[id(c)] = idx
+            if c.reference:
+                payouts_by_ref.setdefault(c.reference, []).append(c)
+            if c.amount and c.currency:
+                payouts_by_amt_curr.setdefault((c.amount, c.currency), []).append(c)
+
     for deposit in deposits:
         reference = extract_reference(str(deposit.get("narration", "")))
         if reference not in payout_references:
@@ -270,7 +329,27 @@ def reconcile(
 
         # The deposit also has candidates of its own. Two payouts sharing a
         # reference is an ambiguity the deposit must report, not resolve.
-        decision = evaluate(_raw(deposit, "deposit"), payout_candidates, registry)
+        constituent = _raw(deposit, "deposit")
+        if is_standard_rules:
+            ref = str(constituent.get("reference", ""))
+            amt = str(constituent.get("amount", ""))
+            curr = str(constituent.get("currency", ""))
+            pool_p: dict[int, Candidate] = {}
+            if ref and ref in payouts_by_ref:
+                for c in payouts_by_ref[ref]:
+                    pool_p[id(c)] = c
+            if amt and curr and (amt, curr) in payouts_by_amt_curr:
+                for c in payouts_by_amt_curr[(amt, curr)]:
+                    pool_p[id(c)] = c
+            candidates_to_eval_p = (
+                [c for _, c in sorted(pool_p.items(), key=lambda item: payout_order[item[0]])]
+                if pool_p
+                else ()
+            )
+        else:
+            candidates_to_eval_p = payout_candidates
+
+        decision = evaluate(constituent, candidates_to_eval_p, registry)
         counts["eligible"] += 1
         if decision.confidence is Confidence.DETERMINISTIC:
             counts["deterministic"] += 1

@@ -7,8 +7,11 @@ work they can trigger, inspect, and reproduce.
 
 from __future__ import annotations
 
+import hmac
 import logging
 import os
+import time
+from collections import defaultdict
 from pathlib import Path
 from typing import Annotated, Final
 
@@ -31,6 +34,11 @@ API_PREFIX: Final[str] = f"/v{API_VERSION}"
 
 STATIC_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "static"
 ASSETS_DIR: Final[Path] = STATIC_DIR / "assets"
+
+# Rate limiting in-memory state: IP -> list of request timestamps
+_RATE_LIMIT_WINDOW_SECS: Final[float] = 60.0
+_MAX_REQUESTS_PER_WINDOW: Final[int] = int(os.environ.get("SETTLEIQ_RATE_LIMIT", "120"))
+_IP_REQUEST_TIMESTAMPS: dict[str, list[float]] = defaultdict(list)
 
 app = FastAPI(
     title="SettleIQ",
@@ -59,6 +67,28 @@ app.add_middleware(
 
 @app.middleware("http")
 async def security_and_limits_middleware(request: Request, call_next) -> Response:  # noqa: ANN001
+    now = time.time()
+    client_ip = request.client.host if request.client else "127.0.0.1"
+
+    # Rate limiting: Sliding-window check
+    if _MAX_REQUESTS_PER_WINDOW > 0:
+        timestamps = _IP_REQUEST_TIMESTAMPS[client_ip]
+        # Evict timestamps outside the window
+        cutoff = now - _RATE_LIMIT_WINDOW_SECS
+        _IP_REQUEST_TIMESTAMPS[client_ip] = [ts for ts in timestamps if ts > cutoff]
+
+        if len(_IP_REQUEST_TIMESTAMPS[client_ip]) >= _MAX_REQUESTS_PER_WINDOW:
+            return Response(
+                content=(
+                    '{"error":"rate_limit_exceeded","detail":"Too many requests.'
+                    ' Please retry later."}'
+                ),
+                status_code=429,
+                media_type="application/json",
+                headers={"Retry-After": "60"},
+            )
+        _IP_REQUEST_TIMESTAMPS[client_ip].append(now)
+
     # Resource limit: Reject bodies larger than 10MB
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > 10 * 1024 * 1024:
@@ -68,15 +98,15 @@ async def security_and_limits_middleware(request: Request, call_next) -> Respons
             media_type="application/json",
         )
 
-    # Auth boundary: If SETTLEIQ_API_KEY is configured, require it on mutating API endpoints
+    # Auth boundary: Constant-time comparison for API key
     api_key_required = os.environ.get("SETTLEIQ_API_KEY")
     if (
         api_key_required
         and request.url.path.startswith(f"{API_PREFIX}/")
         and request.method in ("POST", "PUT", "PATCH", "DELETE")
     ):
-        client_key = request.headers.get("X-API-Key")
-        if client_key != api_key_required:
+        client_key = request.headers.get("X-API-Key", "")
+        if not hmac.compare_digest(client_key.encode("utf-8"), api_key_required.encode("utf-8")):
             return Response(
                 content='{"error":"unauthorized","detail":"Invalid or missing API key"}',
                 status_code=401,

@@ -6,7 +6,7 @@
 
 # --- Stage 1: Frontend Build ---
 FROM node:20-alpine AS frontend-builder
-WORKDIR /build
+WORKDIR /app/frontend
 
 COPY frontend/package*.json ./
 RUN npm ci
@@ -52,3 +52,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 CMD ["uvicorn", "settleiq.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+

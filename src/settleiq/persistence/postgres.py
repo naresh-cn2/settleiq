@@ -14,10 +14,11 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import closing, contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Final, Iterator, Mapping, Protocol, Sequence
+from typing import Any, Final, Protocol
 
 from settleiq.canonical.serialization import digest
 from settleiq.engine import ReconciliationResult
@@ -110,7 +111,7 @@ class PostgresPersistence:
         """Persist a completed run and discrepancies atomically in PostgreSQL."""
         metrics = result.metrics
         run_id = result.identity.run_id
-        now_ts = recorded_at or datetime.now(timezone.utc).isoformat()
+        now_ts = recorded_at or datetime.now(UTC).isoformat()
 
         with self._connect() as conn, closing(conn.cursor()) as cursor:
             try:
@@ -174,7 +175,8 @@ class PostgresPersistence:
                         sort_keys=True,
                     )
                     cursor.execute(
-                        "SELECT sequence, entry_digest FROM journal_entry ORDER BY sequence DESC LIMIT 1"
+                        "SELECT sequence, entry_digest FROM journal_entry "
+                        "ORDER BY sequence DESC LIMIT 1"
                     )
                     row = cursor.fetchone()
                     prev_digest = str(row[1]) if row else ("0" * 64)
@@ -290,7 +292,7 @@ class PostgresPersistence:
         recorded_at: str | None = None,
     ) -> Mapping[str, object] | None:
         """Atomically persist a resolution and audit journal entry in PostgreSQL."""
-        ts = recorded_at or datetime.now(timezone.utc).isoformat()
+        ts = recorded_at or datetime.now(UTC).isoformat()
         res_id = f"res_{discrepancy_id}_{int(time.time() * 1000)}"
 
         with self._connect() as conn, closing(conn.cursor()) as cursor:
@@ -346,7 +348,8 @@ class PostgresPersistence:
                         sort_keys=True,
                     )
                     cursor.execute(
-                        "SELECT sequence, entry_digest FROM journal_entry ORDER BY sequence DESC LIMIT 1"
+                        "SELECT sequence, entry_digest FROM journal_entry "
+                        "ORDER BY sequence DESC LIMIT 1"
                     )
                     last_entry = cursor.fetchone()
                     prev_digest = str(last_entry[1]) if last_entry else ("0" * 64)
