@@ -125,7 +125,11 @@ class Money:
 
     @classmethod
     def zero(cls, currency: CurrencyCode | str) -> Money:
-        return cls("0", currency)
+        """Zero at the currency's own exponent, so it renders consistently."""
+        if isinstance(currency, str):
+            currency = CurrencyCode.parse(currency)
+        quantum = Decimal(1).scaleb(-currency.exponent)
+        return cls(Decimal(0).quantize(quantum), currency)
 
     # ------------------------------------------------------------------ accessors
 

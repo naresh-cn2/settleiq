@@ -94,12 +94,16 @@ REQUIRED_FIELDS: Final[dict[str, tuple[str, ...]]] = {
     "deposit": ("id", "amount", "currency", "posted", "narration"),
 }
 
+#: A record of an unmodelled kind is validated against this generic shape rather
+#: than being discarded at ingestion. It is the engine's job to classify it
+#: UNKNOWN, and discarding it here would make that outcome unreachable
+#: (`16` section B.4).
+GENERIC_FIELDS: Final[tuple[str, ...]] = ("id", "amount", "currency")
+
 
 def validate_required(record: dict[str, object], kind: str, index: int) -> None:
     """Raise naming the first missing required field for this record kind."""
-    required = REQUIRED_FIELDS.get(kind)
-    if required is None:
-        raise MalformedRecordError(index, f"unknown record kind {kind!r}")
+    required = REQUIRED_FIELDS.get(kind, GENERIC_FIELDS)
     for name in required:
         if name not in record or record[name] in (None, ""):
             raise MissingFieldError(index, name)

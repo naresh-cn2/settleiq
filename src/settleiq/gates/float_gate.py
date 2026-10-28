@@ -98,8 +98,16 @@ def scan_package(package_dir: Path) -> list[Violation]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Scan the monetary packages, or the paths given on the command line.
+
+    The default is deliberately the **monetary packages** rather than the whole
+    source tree: a ratio computed in `engine/metrics` is not a monetary amount,
+    and scanning everything would produce false positives that train reviewers
+    to ignore the gate.
+    """
     argv = sys.argv[1:] if argv is None else argv
-    roots = [Path(a) for a in argv] or [Path("src/settleiq")]
+    base = Path("src/settleiq")
+    roots = [Path(a) for a in argv] or [base / name for name in MONETARY_PACKAGES]
     found: list[Violation] = []
     for root in roots:
         if root.is_dir():
