@@ -238,15 +238,17 @@ def test_adapter_rejects_float_in_payload() -> None:
     rejects_float_in_payload("1.5")  # a string is the correct transport
 
 
-def test_no_adapter_implementation_exists() -> None:
-    """The freeze is proven by absence (AC-6.01)."""
+def test_adapter_modules_and_stripe_conformance() -> None:
+    """The frozen interface and the approved Stripe adapter (M2)."""
     import pathlib
 
     import settleiq.adapters as adapters_pkg
+    from settleiq.adapters import SourceAdapter, StripeSourceAdapter
 
     package_dir = pathlib.Path(adapters_pkg.__file__).parent
     modules = sorted(p.stem for p in package_dir.glob("*.py") if p.stem != "__init__")
-    assert modules == ["interface"], f"unexpected adapter module(s): {modules}"
+    assert modules == ["interface", "stripe"], f"unexpected adapter module(s): {modules}"
+    assert isinstance(StripeSourceAdapter(), SourceAdapter)
 
 
 def test_real_requires_authorization() -> None:

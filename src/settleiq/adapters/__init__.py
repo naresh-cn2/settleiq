@@ -16,12 +16,15 @@ from .interface import (
     rejects_float_in_payload,
     to_decimal,
 )
+from .stripe import STRIPE_API_VERSION, StripeSourceAdapter
 
 __all__ = [
     "ADAPTER_INTERFACE_VERSION",
+    "STRIPE_API_VERSION",
     "NormalizedBatch",
     "SourceAdapter",
     "SourceAdapterError",
+    "StripeSourceAdapter",
     "money",
     "rejects_float_in_payload",
     "to_decimal",
