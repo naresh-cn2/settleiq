@@ -48,9 +48,7 @@ def _float_annotations(tree: ast.AST) -> list[tuple[int, str]]:
     found: list[tuple[int, str]] = []
     for node in ast.walk(tree):
         annotation = None
-        if isinstance(node, ast.AnnAssign):
-            annotation = node.annotation
-        elif isinstance(node, ast.arg):
+        if isinstance(node, (ast.AnnAssign, ast.arg)):
             annotation = node.annotation
         if annotation is None:
             continue
@@ -67,9 +65,12 @@ def _float_annotations(tree: ast.AST) -> list[tuple[int, str]]:
 def _float_calls(tree: ast.AST) -> list[tuple[int, str]]:
     found: list[tuple[int, str]] = []
     for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            if node.func.id == "float":
-                found.append((node.lineno or 0, "call to float()"))
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "float"
+        ):
+            found.append((node.lineno or 0, "call to float()"))
     return found
 
 

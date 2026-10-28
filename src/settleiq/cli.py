@@ -210,7 +210,8 @@ def main(argv: list[str] | None = None) -> int:
         if not report.intact:
             print("journal verification FAILED")
             return 1
-        print(f"journal verified: {report.entries_verified} entries, head {journal.head()[1][:24]}...")
+        head_prefix = journal.head()[1][:24]
+        print(f"journal verified: {report.entries_verified} entries, head {head_prefix}...")
         _ = store
         return 0
 

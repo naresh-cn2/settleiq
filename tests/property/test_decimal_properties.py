@@ -7,13 +7,13 @@ is reproducible from the repository alone (SETTLEIQ-M1-001 AC-7.03).
 
 from __future__ import annotations
 
-import random
 from decimal import Decimal
 
 import pytest
 
 from settleiq.money import CurrencyCode, CurrencyPrecisionExceeded, FloatProhibited, Money
 from settleiq.testing.generators import PROPERTY_SEED, amounts, seeded
+
 
 # P-DEC-01 — addition is exact within the declared precision.
 def test_addition_is_exact() -> None:

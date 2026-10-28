@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Final, Protocol, runtime_checkable
 
-from settleiq.money import Money
 from settleiq.model.entities import (
     Adjustment,
     BankDeposit,
@@ -26,6 +25,7 @@ from settleiq.model.entities import (
     SettlementBatch,
 )
 from settleiq.model.provenance import DataProvenance, require_synthetic_or_authorized
+from settleiq.money import Money
 
 __all__ = [
     "ADAPTER_INTERFACE_VERSION",

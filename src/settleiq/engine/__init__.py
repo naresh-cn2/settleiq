@@ -20,11 +20,11 @@ from .metrics import (
 )
 from .reconcile import ReconciliationResult, RunParameters, reconcile
 from .rules import (
+    RULE_VERSION,
     Candidate,
     Confidence,
     MatchDecision,
     MatchRule,
-    RULE_VERSION,
     RuleRegistry,
     default_registry,
     evaluate,

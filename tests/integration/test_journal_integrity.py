@@ -9,14 +9,13 @@ property (SETTLEIQ-08 §5.4, T-01…T-07).
 from __future__ import annotations
 
 import json
-import sqlite3
 
 import pytest
 
 from settleiq.engine import RunParameters, reconcile
 from settleiq.fixtures.generator import generate
-from settleiq.journal import GENESIS_DIGEST, TamperType, Journal, open_journal
-from settleiq.persistence.store import Persistence, open_store
+from settleiq.journal import GENESIS_DIGEST, Journal, TamperType, open_journal
+from settleiq.persistence.store import open_store
 from settleiq.validation import validate_records
 
 WINDOW = RunParameters("2026-10-01", "2026-10-31")
@@ -62,7 +61,8 @@ def test_digest_is_reproducible_from_payload(tmp_path) -> None:
     entry = journal.append({"a": 1, "b": "x"}, recorded_at="2026-10-28T00:00:00Z")
     from settleiq.canonical.serialization import digest as d
 
-    expected = d({"prev": GENESIS_DIGEST, "payload": json.dumps({"a": 1, "b": "x"}, sort_keys=True, separators=(",", ":"))})
+    payload_str = json.dumps({"a": 1, "b": "x"}, sort_keys=True, separators=(",", ":"))
+    expected = d({"prev": GENESIS_DIGEST, "payload": payload_str})
     assert entry.entry_digest == expected
 
 
@@ -102,7 +102,10 @@ def test_a_hand_written_digest_is_detected(tmp_path) -> None:
     )
     report = journal.verify()
     assert not report.intact
-    assert any(kind in (TAMPER.HANDSHAKE_DIGEST, TAMPER.PAYLOAD_MODIFIED) for _, kind, _ in report.findings)
+    assert any(
+        kind in (TAMPER.HANDSHAKE_DIGEST, TAMPER.PAYLOAD_MODIFIED)
+        for _, kind, _ in report.findings
+    )
 
 
 # ---------------------------------------------------------------- T-05 reorder
@@ -110,7 +113,10 @@ def test_reordering_entries_is_detected(journal: Journal) -> None:
     _mutate(journal, "UPDATE journal_entry SET sequence = 99 WHERE sequence = 2")
     report = journal.verify()
     assert not report.intact
-    assert any(kind in (TAMPER.ENTRY_REORDERED, TAMPER.CHAIN_BREAK) for _, kind, _ in report.findings)
+    assert any(
+        kind in (TAMPER.ENTRY_REORDERED, TAMPER.CHAIN_BREAK)
+        for _, kind, _ in report.findings
+    )
 
 
 # ---------------------------------------------------------------- T-06 duplicate
@@ -240,9 +246,8 @@ def test_recorded_at_is_excluded_from_the_preimage(tmp_path) -> None:
     journal = open_journal(tmp_path / "clock.sqlite3")
     first = journal.append({"k": "v"}, recorded_at="2026-10-28T00:00:00Z")
 
-    without_clock = digest(
-        {"prev": GENESIS_DIGEST, "payload": json.dumps({"k": "v"}, sort_keys=True, separators=(",", ":"))}
-    )
+    payload_kv = json.dumps({"k": "v"}, sort_keys=True, separators=(",", ":"))
+    without_clock = digest({"prev": GENESIS_DIGEST, "payload": payload_kv})
     with_clock = digest(
         {
             "prev": GENESIS_DIGEST,

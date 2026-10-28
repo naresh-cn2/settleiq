@@ -21,6 +21,7 @@ from settleiq.money import (
     get_context,
 )
 
+
 # AC-1.01 — immutable, explicit currency, rejects binary float.
 def test_rejects_float_construction() -> None:
     with pytest.raises(FloatProhibited):

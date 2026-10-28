@@ -11,8 +11,9 @@ compatible with REQ-012.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Final, Mapping, Sequence
+from typing import Final
 
 from settleiq.engine.decompose import Decomposition, decompose, extract_reference
 from settleiq.engine.discrepancy import Discrepancy, classify, classify_break
@@ -324,7 +325,9 @@ def reconcile(
     )
 
 
-def _composition_break(decomposition: Decomposition, parameters: RunParameters, registry: RuleRegistry):
+def _composition_break(
+    decomposition: Decomposition, parameters: RunParameters, registry: RuleRegistry
+) -> list[Discrepancy]:
     from settleiq.engine.discrepancy import Discrepancy, DiscrepancyType, severity_for
 
     return Discrepancy(

@@ -17,9 +17,10 @@ Fail-closed throughout (SETTLEIQ-REQ-009).
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Final, Mapping, Sequence
+from typing import Final
 
 from settleiq.canonical.serialization import digest
 from settleiq.money import Money

@@ -11,13 +11,14 @@ break (`16` section B.2).
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Final, Mapping, Sequence
+from typing import Final
 
 from settleiq.canonical.serialization import digest
-from settleiq.money import CurrencyMismatch, Money
 from settleiq.model.entities import Residual
+from settleiq.money import CurrencyMismatch, Money
 
 __all__ = [
     "Constituent",

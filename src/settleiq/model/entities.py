@@ -11,14 +11,14 @@ model rather than in the engine.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from decimal import Decimal
+from collections.abc import Mapping
+from dataclasses import dataclass
 from enum import Enum
-from typing import Final, Mapping, NewType
+from typing import NewType
 
-from settleiq.canonical.serialization import canonical_bytes, digest
-from settleiq.money import Money
+from settleiq.canonical.serialization import digest
 from settleiq.model.provenance import DataProvenance
+from settleiq.money import Money
 
 __all__ = [
     "Adjustment",

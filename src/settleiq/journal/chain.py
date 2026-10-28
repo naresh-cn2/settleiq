@@ -39,12 +39,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Iterator, Mapping, Sequence
+from typing import Final
 
-from settleiq.canonical.serialization import canonical_bytes, digest
+from settleiq.canonical.serialization import digest
 
 __all__ = [
     "GENESIS_DIGEST",
@@ -300,7 +301,7 @@ class Journal:
 
         sequences = [entry.sequence for entry in stored]
         if sequences != sorted(set(sequences)):
-            for index, sequence in enumerate(sequences):
+            for _index, sequence in enumerate(sequences):
                 if sequence != expected_sequence:
                     findings.append(
                         (sequence, TamperType.ENTRY_REORDERED, "sequence out of order")

@@ -15,15 +15,18 @@ incomplete reconciliation as complete.
 from __future__ import annotations
 
 import sqlite3
+import time
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import closing, contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Final, Iterator, Mapping, Sequence
+from typing import Final
 
 from settleiq.canonical.serialization import digest
-from settleiq.engine import Discrepancy, ReconciliationResult
-from settleiq.journal.chain import Journal, open_journal
+from settleiq.engine import ReconciliationResult
+from settleiq.journal.chain import Journal
 
-__all__ = ["SCHEMA_STATEMENTS", "Persistence", "open_store"]
+__all__ = ["ALLOWED_TABLES", "SCHEMA_STATEMENTS", "Persistence", "open_store"]
 
 SCHEMA_STATEMENTS: Final[tuple[str, ...]] = (
     """
@@ -52,6 +55,18 @@ SCHEMA_STATEMENTS: Final[tuple[str, ...]] = (
         status            TEXT NOT NULL
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS discrepancy_resolution (
+        resolution_id     TEXT PRIMARY KEY,
+        discrepancy_id    TEXT NOT NULL REFERENCES discrepancy(discrepancy_id),
+        run_id            TEXT NOT NULL,
+        status            TEXT NOT NULL,
+        reason            TEXT NOT NULL,
+        selected_candidate TEXT,
+        resolved_by       TEXT NOT NULL,
+        resolved_at       TEXT NOT NULL
+    )
+    """,
     # A settled record is never updated. A correction is a new row referencing
     # the one it supersedes (AC-3.04).
     """
@@ -63,7 +78,19 @@ SCHEMA_STATEMENTS: Final[tuple[str, ...]] = (
     """,
     "CREATE INDEX IF NOT EXISTS ix_discrepancy_run ON discrepancy(run_id)",
     "CREATE INDEX IF NOT EXISTS ix_discrepancy_type ON discrepancy(type)",
+    (
+        "CREATE INDEX IF NOT EXISTS ix_resolution_discrepancy "
+        "ON discrepancy_resolution(discrepancy_id)"
+    ),
 )
+
+ALLOWED_TABLES: Final[frozenset[str]] = frozenset({
+    "reconciliation_run",
+    "discrepancy",
+    "discrepancy_resolution",
+    "supersession",
+    "journal_entry",
+})
 
 
 class Persistence:
@@ -202,7 +229,11 @@ class Persistence:
             if row is None:
                 return None
             columns = [d[0] for d in cursor.description]
-            return dict(zip(columns, row))
+            run = dict(zip(columns, row, strict=False))
+            num = run.get("numerator", 0)
+            den = run.get("denominator", 0)
+            run["rate"] = (num / den) if den else 0.0
+            return run
 
     def discrepancies_for(self, run_id: str) -> Sequence[Mapping[str, object]]:
         with self._connect() as connection, closing(connection.cursor()) as cursor:
@@ -211,7 +242,144 @@ class Persistence:
                 (run_id,),
             )
             columns = [d[0] for d in cursor.description]
-            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
+
+    def find_discrepancy(self, discrepancy_id: str) -> Mapping[str, object] | None:
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(
+                "SELECT * FROM discrepancy WHERE discrepancy_id = ?",
+                (discrepancy_id,),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            columns = [d[0] for d in cursor.description]
+            disc = dict(zip(columns, row, strict=False))
+
+            cursor.execute(
+                "SELECT resolution_id, discrepancy_id, run_id, status, reason, "
+                "selected_candidate, resolved_by, resolved_at FROM discrepancy_resolution "
+                "WHERE discrepancy_id = ? ORDER BY resolved_at ASC",
+                (discrepancy_id,),
+            )
+            res_cols = [d[0] for d in cursor.description]
+            disc["resolution_history"] = [
+                dict(zip(res_cols, r, strict=False)) for r in cursor.fetchall()
+            ]
+            return disc
+
+    def all_discrepancies(
+        self,
+        *,
+        run_id: str | None = None,
+        type: str | None = None,
+        severity: str | None = None,
+    ) -> Sequence[Mapping[str, object]]:
+        query = "SELECT * FROM discrepancy"
+        params: list[object] = []
+        clauses: list[str] = []
+        if run_id:
+            clauses.append("run_id = ?")
+            params.append(run_id)
+        if type:
+            clauses.append("type = ?")
+            params.append(type)
+        if severity:
+            clauses.append("severity = ?")
+            params.append(severity)
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY age_days DESC, discrepancy_id ASC"
+
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(query, tuple(params))
+            columns = [d[0] for d in cursor.description]
+            return [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
+
+    def resolve_discrepancy(
+        self,
+        discrepancy_id: str,
+        *,
+        reason: str,
+        selected_candidate: str | None = None,
+        resolved_by: str = "investigator",
+        journal: Journal | None = None,
+        recorded_at: str | None = None,
+    ) -> Mapping[str, object] | None:
+        """Persist a resolution and atomically record the audit event in the journal.
+
+        Both the database update and journal append commit within the same
+        transaction to ensure durable consistency across both stores.
+        """
+        ts = recorded_at or datetime.now(UTC).isoformat()
+        res_id = f"res_{discrepancy_id}_{int(time.time() * 1000)}"
+
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute("BEGIN IMMEDIATE")
+            try:
+                cursor.execute(
+                    "SELECT run_id, type, severity, constituent_kind, constituent_id, "
+                    "reason, age_days, status FROM discrepancy WHERE discrepancy_id = ?",
+                    (discrepancy_id,),
+                )
+                row = cursor.fetchone()
+                if row is None:
+                    cursor.execute("ROLLBACK")
+                    return None
+
+                run_id = str(row[0])
+
+                # Insert resolution record into discrepancy_resolution
+                cursor.execute(
+                    """
+                    INSERT INTO discrepancy_resolution
+                    (resolution_id, discrepancy_id, run_id, status, reason,
+                     selected_candidate, resolved_by, resolved_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        res_id,
+                        discrepancy_id,
+                        run_id,
+                        "RESOLVED",
+                        reason,
+                        selected_candidate,
+                        resolved_by,
+                        ts,
+                    ),
+                )
+
+                # Update the discrepancy status
+                cursor.execute(
+                    "UPDATE discrepancy SET status = 'RESOLVED' WHERE discrepancy_id = ?",
+                    (discrepancy_id,),
+                )
+
+                # Atomically append audit event to the journal within the same transaction
+                if journal is not None and journal.path == self.path:
+                    journal.migrate_within(cursor)
+                    journal.append_within(
+                        connection,
+                        cursor,
+                        {
+                            "kind": "DiscrepancyResolved",
+                            "resolution_id": res_id,
+                            "discrepancy_id": discrepancy_id,
+                            "run_id": run_id,
+                            "status": "RESOLVED",
+                            "reason": reason,
+                            "selected_candidate": selected_candidate,
+                            "resolved_by": resolved_by,
+                            "recorded_at": ts,
+                        },
+                    )
+
+                connection.execute("COMMIT")
+            except Exception:
+                cursor.execute("ROLLBACK")
+                raise
+
+        return self.find_discrepancy(discrepancy_id)
 
     def all_runs(self) -> Sequence[Mapping[str, object]]:
         with self._connect() as connection, closing(connection.cursor()) as cursor:
@@ -219,7 +387,12 @@ class Persistence:
                 "SELECT * FROM reconciliation_run ORDER BY input_digest, rule_version"
             )
             columns = [d[0] for d in cursor.description]
-            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+            runs = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
+            for r in runs:
+                den = r.get("denominator", 0)
+                num = r.get("numerator", 0)
+                r["rate"] = (num / den) if den else 0.0
+            return runs
 
     def digest_of(self, table: str) -> str:
         """A tamper-evident digest over a whole table, computed on read.
@@ -227,10 +400,13 @@ class Persistence:
         Not a chain and not a substitute for the M5 journal: it exists so a
         reviewer can detect that stored results were edited.
         """
+        if table not in ALLOWED_TABLES:
+            raise ValueError(f"Table {table!r} is not an allowed table")
+
         with self._connect() as connection, closing(connection.cursor()) as cursor:
             cursor.execute(f"SELECT * FROM {table}")
             columns = [d[0] for d in cursor.description]
-            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            rows = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
         # `digest` canonicalises and sorts internally; sorting here would
         # require ordering dicts, which is not defined.
         return digest({"table": table, "rows": [_canonical_row(r) for r in rows]})

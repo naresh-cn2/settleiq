@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from settleiq.gates.float_gate import scan, scan_package
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent

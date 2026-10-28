@@ -9,8 +9,9 @@ that the generated population is fully reproducible from the repository alone.
 from __future__ import annotations
 
 import random
+from collections.abc import Iterator
 from decimal import Decimal
-from typing import Final, Iterator
+from typing import Final
 
 from settleiq.money import CurrencyCode, CurrencyPrecisionExceeded, Money
 

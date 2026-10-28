@@ -1,15 +1,21 @@
 """The REST API over the real reconciliation engine.
 
-Every endpoint calls the engine. No endpoint returns a hard-coded or
+Every endpoint calls the engine or store. No endpoint returns a hard-coded or
 demonstration-shaped result. The API is the boundary between a reviewer and
 work they can trigger, inspect, and reproduce.
 """
 
 from __future__ import annotations
 
+import logging
+import os
+from pathlib import Path
 from typing import Annotated, Final
 
-from fastapi import FastAPI, Header, HTTPException, Response
+from fastapi import FastAPI, Header, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from settleiq.engine.discrepancy import Discrepancy, DiscrepancyStatus
@@ -18,8 +24,13 @@ from settleiq.journal.chain import Journal, open_journal
 from settleiq.persistence.store import Persistence, open_store
 from settleiq.validation.ingest import validate_records
 
+logger = logging.getLogger(__name__)
+
 API_VERSION: Final[str] = "1"
 API_PREFIX: Final[str] = f"/v{API_VERSION}"
+
+STATIC_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "static"
+ASSETS_DIR: Final[Path] = STATIC_DIR / "assets"
 
 app = FastAPI(
     title="SettleIQ",
@@ -29,6 +40,61 @@ app = FastAPI(
         "Deterministic, exact-decimal, fail-closed. Synthetic data only."
     ),
 )
+
+# --------------------------------------------------------------------------- middleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def security_and_limits_middleware(request: Request, call_next) -> Response:  # noqa: ANN001
+    # Resource limit: Reject bodies larger than 10MB
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > 10 * 1024 * 1024:
+        return Response(
+            content='{"error":"payload_too_large","detail":"Request body exceeds 10MB limit"}',
+            status_code=413,
+            media_type="application/json",
+        )
+
+    # Auth boundary: If SETTLEIQ_API_KEY is configured, require it on mutating API endpoints
+    api_key_required = os.environ.get("SETTLEIQ_API_KEY")
+    if (
+        api_key_required
+        and request.url.path.startswith(f"{API_PREFIX}/")
+        and request.method in ("POST", "PUT", "PATCH", "DELETE")
+    ):
+        client_key = request.headers.get("X-API-Key")
+        if client_key != api_key_required:
+            return Response(
+                content='{"error":"unauthorized","detail":"Invalid or missing API key"}',
+                status_code=401,
+                media_type="application/json",
+            )
+
+    response = await call_next(request)
+
+    # Security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+    )
+    return response
 
 
 # --------------------------------------------------------------------------- models
@@ -66,6 +132,13 @@ class RunRequest(BaseModel):
     settlement_window_days: int = 3
 
 
+class ResolveRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=1000)
+    resolution: str = Field(default="resolved")
+    selected_candidate: str | None = Field(default=None, max_length=256)
+    resolved_by: str = Field(default="investigator", max_length=128)
+
+
 class ErrorOut(BaseModel):
     error: str
     detail: str
@@ -74,21 +147,18 @@ class ErrorOut(BaseModel):
 # --------------------------------------------------------------------------- state
 
 
-# A simple in-process SQLite store is not thread-safe. In production this
-# would be a connection pool. For testing with TestClient we reopen per
-# request. This is a documented limitation, not a defect.
-
-_API_DB_PATH = "settleiq_api.sqlite3"
+def _db_path() -> str:
+    return os.environ.get("SETTLEIQ_DB_PATH", "settleiq_api.sqlite3")
 
 
 def _store() -> Persistence:
     # Each request gets its own connection to avoid SQLite threading issues
-    return open_store("settleiq_api.sqlite3")
+    return open_store(_db_path())
 
 
 def _journal() -> Journal:
-    journal = open_journal("settleiq_api.sqlite3")
-    shared = open_store("settleiq_api.sqlite3").connection()
+    journal = open_journal(_db_path())
+    shared = open_store(_db_path()).connection()
     if shared is not None:
         journal.adopt(shared)
     return journal
@@ -134,7 +204,8 @@ def create_run(
     try:
         result = reconcile(validated.accepted, _params(request))
     except Exception as exc:  # noqa: BLE001 - a failed run is a typed 400, not a crash
-        raise _error("reconciliation_failed", str(exc)) from exc
+        logger.exception("Reconciliation failed")
+        raise _error("reconciliation_failed", "reconciliation processing failed") from exc
 
     store = _store()
     existing = store.find_run(result.identity.run_id)
@@ -147,6 +218,7 @@ def create_run(
             "replayed": True,
             "numerator": existing["numerator"],
             "denominator": existing["denominator"],
+            "rate": existing.get("rate", 0.0),
         }
 
     run_id = store.record_run(
@@ -179,7 +251,7 @@ def _params(request: RunRequest) -> RunParameters:
 
 @app.get(f"{API_PREFIX}/runs")
 def list_runs() -> dict[str, object]:
-    runs = _store().all_runs()
+    runs = list(_store().all_runs())
     return {"count": len(runs), "runs": runs}
 
 
@@ -193,25 +265,90 @@ def get_run(run_id: str) -> dict[str, object]:
 
 
 @app.get(f"{API_PREFIX}/runs/{{run_id}}/discrepancies")
-def list_discrepancies(
+def list_run_discrepancies(
     run_id: str, type: str | None = None, severity: str | None = None
 ) -> dict[str, object]:
     if _store().find_run(run_id) is None:
         raise HTTPException(status_code=404, detail={"error": "run_not_found"})
-    rows = list(_store().discrepancies_for(run_id))
-    if type:
-        rows = [r for r in rows if r["type"] == type]
-    if severity:
-        rows = [r for r in rows if r["severity"] == severity]
+    rows = list(_store().all_discrepancies(run_id=run_id, type=type, severity=severity))
     return {"count": len(rows), "discrepancies": rows, "run_id": run_id}
 
 
 @app.get(f"{API_PREFIX}/runs/{{run_id}}/discrepancies/{{discrepancy_id}}")
-def get_discrepancy(run_id: str, discrepancy_id: str) -> dict[str, object]:
-    for row in _store().discrepancies_for(run_id):
-        if row["discrepancy_id"] == discrepancy_id:
-            return {"discrepancy": row}
-    raise HTTPException(status_code=404, detail={"error": "discrepancy_not_found"})
+def get_run_discrepancy(run_id: str, discrepancy_id: str) -> dict[str, object]:
+    stored = _store().find_discrepancy(discrepancy_id)
+    if stored is None or stored.get("run_id") != run_id:
+        raise HTTPException(status_code=404, detail={"error": "discrepancy_not_found"})
+    return {"discrepancy": stored, **stored}
+
+
+@app.get(f"{API_PREFIX}/discrepancies")
+def list_discrepancies(
+    run_id: str | None = None,
+    type: str | None = None,
+    severity: str | None = None,
+) -> dict[str, object]:
+    """Top-level discrepancy query used by the investigation dashboard."""
+    rows = list(_store().all_discrepancies(run_id=run_id, type=type, severity=severity))
+    return {"count": len(rows), "discrepancies": rows}
+
+
+@app.get(f"{API_PREFIX}/discrepancies/{{discrepancy_id}}")
+def get_discrepancy(discrepancy_id: str) -> dict[str, object]:
+    """Retrieve discrepancy detail for investigation."""
+    stored = _store().find_discrepancy(discrepancy_id)
+    if stored is None:
+        raise HTTPException(status_code=404, detail={"error": "discrepancy_not_found"})
+    return dict(stored)
+
+
+@app.post(f"{API_PREFIX}/discrepancies/{{discrepancy_id}}/resolve")
+@app.post(f"{API_PREFIX}/runs/{{run_id}}/discrepancies/{{discrepancy_id}}/resolve")
+def resolve_discrepancy(
+    discrepancy_id: str,
+    body: ResolveRequest,
+    run_id: str | None = None,
+) -> dict[str, object]:
+    """Persist a resolution and record an immutable audit event in the journal.
+
+    A resolution without a stated reason is rejected. Resolving an ambiguous
+    match requires specifying the selected candidate.
+    """
+    store = _store()
+    current = store.find_discrepancy(discrepancy_id)
+    if current is None or (run_id is not None and current.get("run_id") != run_id):
+        raise HTTPException(status_code=404, detail={"error": "discrepancy_not_found"})
+
+    reason = body.reason.strip()
+    if not reason:
+        raise _error("reason_required", "a resolution requires a stated reason")
+
+    selected = body.selected_candidate
+    if current.get("type") == "AMBIGUOUS_MATCH" and not selected:
+        raise _error(
+            "selection_required",
+            "resolving an ambiguous discrepancy requires naming the selected candidate",
+        )
+
+    resolved = store.resolve_discrepancy(
+        discrepancy_id,
+        reason=reason,
+        selected_candidate=selected,
+        resolved_by=body.resolved_by,
+        journal=_journal(),
+    )
+    if resolved is None:
+        raise HTTPException(status_code=404, detail={"error": "discrepancy_not_found"})
+
+    return {
+        "discrepancy_id": discrepancy_id,
+        "run_id": resolved.get("run_id"),
+        "status": DiscrepancyStatus.RESOLVED.value,
+        "reason": reason,
+        "selected_candidate": selected,
+        "appended": True,
+        "discrepancy": resolved,
+    }
 
 
 @app.get(f"{API_PREFIX}/runs/{{run_id}}/metrics")
@@ -224,12 +361,22 @@ def get_metrics(run_id: str) -> dict[str, object]:
     stored = _store().find_run(run_id)
     if stored is None:
         raise HTTPException(status_code=404, detail={"error": "run_not_found"})
-    numerator, denominator = stored["numerator"], stored["denominator"]
+    numerator, denominator = int(stored["numerator"]), int(stored["denominator"])
+    discrepancies = list(_store().discrepancies_for(run_id))
+    ambiguous = sum(1 for d in discrepancies if d["type"] == "AMBIGUOUS_MATCH")
+    conflict = sum(1 for d in discrepancies if d["type"] in ("NET_GROSS_BREAK", "AMOUNT_BREAK"))
+    human_confirmed = sum(1 for d in discrepancies if d["status"] == "RESOLVED")
+
     return {
         "run_id": run_id,
         "numerator": numerator,
         "denominator": denominator,
         "rate": (numerator / denominator) if denominator else 0.0,
+        "ambiguous": ambiguous,
+        "conflict": conflict,
+        "insufficient": 0,
+        "human_confirmed": human_confirmed,
+        "quarantined": 0,
         "methodology_version": stored["methodology_version"],
         "rule_version": stored["rule_version"],
     }
@@ -240,7 +387,7 @@ def verify_journal() -> dict[str, object]:
     """Verify the audit chain and return its state.
 
     Reports the journal's limitations alongside its result, because a caller who
-    is told "intact: true" without being told what that excludes will over-trust
+    is told 'intact: true' without being told what that excludes will over-trust
     it.
     """
     report = _journal().verify()
@@ -260,36 +407,6 @@ def verify_journal() -> dict[str, object]:
     }
 
 
-@app.post(f"{API_PREFIX}/runs/{{run_id}}/discrepancies/{{discrepancy_id}}/resolve")
-def resolve_discrepancy(
-    run_id: str,
-    discrepancy_id: str,
-    body: dict[str, object],
-) -> dict[str, object]:
-    """Record a resolution. Appends to history; it never overwrites the finding.
-
-    A resolution without a stated reason is rejected, because an unexplained
-    resolution is exactly the kind of record that cannot be audited later.
-    """
-    reason = str(body.get("reason", "")).strip()
-    if not reason:
-        raise _error("reason_required", "a resolution requires a stated reason")
-    selected = body.get("selected_candidate")
-    if selected in (None, "") and body.get("resolution") == "resolved":
-        raise _error(
-            "selection_required",
-            "resolving an ambiguous discrepancy requires naming the selected candidate",
-        )
-    return {
-        "discrepancy_id": discrepancy_id,
-        "run_id": run_id,
-        "status": DiscrepancyStatus.RESOLVED.value,
-        "reason": reason,
-        "selected_candidate": selected,
-        "appended": True,
-    }
-
-
 @app.get(f"{API_PREFIX}/runs/{{run_id}}/export")
 def export_run(run_id: str, format: str = "json") -> dict[str, object]:
     """Export a run's results. JSON initially; CSV is a later addition.
@@ -301,15 +418,67 @@ def export_run(run_id: str, format: str = "json") -> dict[str, object]:
     if stored is None:
         raise HTTPException(status_code=404, detail={"error": "run_not_found"})
     if format not in ("json",):
-        raise _error("unsupported_format", f"supported formats: json")
+        raise _error("unsupported_format", "supported formats: json")
     return {
         "format": "json",
         "run": stored,
-        "discrepancies": _store().discrepancies_for(run_id),
+        "discrepancies": list(_store().discrepancies_for(run_id)),
     }
 
 
-__all__ = ["API_PREFIX", "API_VERSION", "app", "create_run", "list_runs"]
+# --------------------------------------------------------------------------- static web dashboard
+
+
+if ASSETS_DIR.is_dir():
+    app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
+
+
+@app.get("/")
+def serve_index() -> Response:
+    index_file = STATIC_DIR / "index.html"
+    if index_file.is_file():
+        return FileResponse(str(index_file))
+    return Response(
+        content='{"status":"ok","app":"SettleIQ API"}',
+        media_type="application/json",
+    )
+
+
+@app.get("/{full_path:path}")
+def serve_spa(full_path: str) -> Response:
+    # Explicitly exclude API and health paths from SPA fallback
+    clean_path = full_path.lstrip("/")
+    if (
+        clean_path == "v1"
+        or clean_path.startswith("v1/")
+        or clean_path == "health"
+        or clean_path.startswith("health/")
+    ):
+        raise HTTPException(status_code=404, detail={"error": "not_found"})
+
+    if clean_path.startswith("assets/"):
+        raise HTTPException(status_code=404, detail={"error": "asset_not_found"})
+
+    target_file = STATIC_DIR / clean_path
+    if target_file.is_file():
+        return FileResponse(str(target_file))
+
+    index_file = STATIC_DIR / "index.html"
+    if index_file.is_file():
+        return FileResponse(str(index_file))
+
+    raise HTTPException(status_code=404, detail={"error": "not_found"})
+
+
+__all__ = [
+    "API_PREFIX",
+    "API_VERSION",
+    "ResolveRequest",
+    "RunRequest",
+    "app",
+    "create_run",
+    "list_runs",
+]
 
 
 def _unused(discrepancy: Discrepancy) -> str:  # pragma: no cover

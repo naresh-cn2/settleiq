@@ -5,14 +5,12 @@ Acceptance criteria cite SETTLEIQ-M1-001 §4.
 
 from __future__ import annotations
 
-import decimal
 from decimal import Decimal
 
 import pytest
 
 from settleiq.adapters import ADAPTER_INTERFACE_VERSION, NormalizedBatch, SourceAdapterError
 from settleiq.canonical import digest
-from settleiq.money import Money
 from settleiq.model import (
     Charge,
     DataProvenance,
@@ -25,6 +23,7 @@ from settleiq.model import (
     is_real_data_authorized,
     require_synthetic_or_authorized,
 )
+from settleiq.money import Money
 from settleiq.validation import (
     MalformedRecordError,
     MissingFieldError,
@@ -208,7 +207,9 @@ def test_adapter_interface_is_implementable() -> None:
         source_version = "mock-1.0.0"
         schema_version = "0.1.0"
 
-        def normalize(self, payload: bytes, *, provenance: DataProvenance.SYNTHETICAlias) -> NormalizedBatch:
+        def normalize(
+            self, payload: bytes, *, provenance: DataProvenance.SYNTHETICAlias
+        ) -> NormalizedBatch:
             require_synthetic_or_authorized(provenance)
             return NormalizedBatch(
                 charges=(),

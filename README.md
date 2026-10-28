@@ -31,7 +31,7 @@ defect, and a static gate enforces it.
 pip install -e .
 python -m settleiq.cli run     # the full demonstration
 python -m settleiq.cli gate    # the money-safety static gate
-python -m pytest tests/        # 102 tests
+python -m pytest tests/        # 126 tests across unit, property, and integration
 ```
 
 `run` loads a deterministic synthetic dataset with seven **injected defects
@@ -41,6 +41,12 @@ is not met, so it is usable as a CI gate.
 
 Add `--json` for the machine-readable report, or `--database path.sqlite3` to
 persist runs.
+
+To run the web dashboard and REST API:
+```bash
+uvicorn settleiq.api.app:app --reload --port 8000
+```
+Open `http://localhost:8000/` in a browser to view the interactive dashboard.
 
 ## Environment status — read this
 
@@ -53,18 +59,24 @@ Two constraints in the current build environment are recorded rather than hidden
 
 ## What is verified, and what is not
 
-**Implemented and tested:** exact monetary arithmetic and the currency-exponent
-policy; the canonical data model; deterministic run identity; fail-closed
-ingestion validation; the frozen `SourceAdapter` interface; payout decomposition
-with an explicit residual; the deterministic matching engine including
-ambiguity, rule conflict, and amount/timing checks; the closed discrepancy
-taxonomy with `UNKNOWN`; metrics with a stated methodology; persistence with
-transaction integrity.
+**Implemented and verified:**
+* Exact monetary arithmetic and currency-exponent policy (`M1`).
+* Canonical data model and deterministic run identity (`M1`).
+* Fail-closed ingestion validation with typed quarantine reasons (`M1`).
+* Frozen `SourceAdapter` interface (`M2`).
+* Payout decomposition with explicit residual calculation (`M3`).
+* Deterministic matching engine and closed discrepancy taxonomy (`M4`).
+* Append-only hash-chained audit journal with verified tamper detection (`M5`).
+* SQLite persistence with transactional atomicity across database and journal (`M5`).
+* REST API with idempotent run execution, metrics with published methodology, and genuine discrepancy resolution with audit event logging (`M6`).
+* Five-view React web dashboard compiled and delivered by FastAPI (`M7`).
+* 126 automated tests passing across unit, property, and integration suites.
 
-**Not implemented:** the hash-chained tamper-evident audit journal (the
-specification's M5); the REST API (M6); the web dashboard (M7); the performance
-benchmark (M8, and conditional); Docker deployment (M9). No code exists for these
-and none is claimed.
+**Outstanding / remaining work:**
+* PostgreSQL migration and dialect handling (Phase 2).
+* Concrete Stripe source adapter implementation (Phase 5).
+* Docker containerized deployment (`M9`).
+* Large-scale performance validation benchmark (`M8`).
 
 ## Documentation
 

@@ -12,8 +12,8 @@ from decimal import Decimal
 from typing import Final
 
 from settleiq.canonical.serialization import digest
-from settleiq.money import CurrencyCode, Money, MoneyError
 from settleiq.model.provenance import DataProvenance
+from settleiq.money import CurrencyCode, Money, MoneyError
 
 __all__ = [
     "IngestionError",

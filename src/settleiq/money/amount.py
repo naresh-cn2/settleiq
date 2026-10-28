@@ -19,9 +19,9 @@ from __future__ import annotations
 
 import decimal
 from decimal import Decimal
-from typing import Final, Self
+from typing import Final
 
-from .context import DEFAULT_CONTEXT, ROUNDING_MODE_NAME, get_context
+from .context import DEFAULT_CONTEXT, get_context
 from .currency import CURRENCY_TABLE_VERSION, CurrencyCode
 from .errors import (
     CurrencyMismatch,

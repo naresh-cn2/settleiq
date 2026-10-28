@@ -13,8 +13,9 @@ The methodology deliberately separates:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Final, Mapping
+from typing import Final
 
 __all__ = [
     "DENOMINATOR_DEFINITION",

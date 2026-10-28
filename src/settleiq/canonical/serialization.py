@@ -8,8 +8,9 @@ address may appear in a preimage (SETTLEIQ-M1-001 AC-4.04).
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Iterable
 from decimal import Decimal
-from typing import Any, Iterable
+from typing import Any
 
 __all__ = ["canonical_bytes", "canonical_scalar", "digest", "sort_key"]
 
