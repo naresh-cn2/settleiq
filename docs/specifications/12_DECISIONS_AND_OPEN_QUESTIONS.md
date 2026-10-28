@@ -15,11 +15,18 @@
 Every entry carries one of:
 
 * **RECOMMENDED** — evidence-based recommendation; requires OWNER ratification.
-* **RATIFIED** — approved by the OWNER. **None yet.**
+* **ADOPTED FOR IMPLEMENTATION** — the OWNER has directed, in a written execution mandate, that this recommendation be used as the default starting point. This is **not** a claim that the decision was previously ratified: no decision in this set was ratified before 2026-10-28. It means the OWNER has authorised implementation against it, and any change is an OWNER decision.
+* **RATIFIED** — formally approved by the OWNER as a standing product decision. **None yet.**
 * **OPEN** — insufficient evidence to recommend; the gap is stated.
 * **RESOLVED BY RECOMMENDATION** — analysed with competing options, evidence, acceptance criteria, and a recommendation recorded in `16_DECISION_REGISTER_AND_RESOLUTIONS.md` Part B. Binding on specification authoring, not on implementation. Requires OWNER ratification to become an implementation decision.
 
 **SETTLEIQ-DEC-R10 (OWNER-DEFINED):** Where any subordinate document still describes OQ-01…OQ-05 as open, unresolved, or "must be settled", **`16` governs** and that wording is stale. Subordinate documents cite `16` §B.<n>.
+
+## 2026-10-28 — OWNER execution mandate
+
+On 2026-10-28 the OWNER issued a written mandate instructing autonomous implementation. It stated: *"Use the existing recommendations as the default starting point"* and listed the Stripe-shaped scope, Python core, PostgreSQL default, five dashboard views, financial-systems emphasis, ambiguity preservation, explicit residuals, explicit taxonomy, workload targets before performance claims, and synthetic demo data. It also stated: *"Do not misrepresent a recommendation as a previously approved owner decision."*
+
+Accordingly Q1–Q5 are recorded as **ADOPTED FOR IMPLEMENTATION by owner directive**, with the mandate's own caveat preserved. Implementation proceeds on that authority. No decision is recorded as having been ratified beforehand, because none was.
 
 Nothing in this document is an implementation decision unless marked RATIFIED. A recommendation is not an approval.
 
