@@ -1,0 +1,35 @@
+# Python build and cache artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local databases produced by demonstrations
+*.sqlite3
+*.db
+
+# Editor and OS artifacts
+.idea/
+.vscode/
+.DS_Store
+
+# Node (dashboard)
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Local configuration that must never be committed
+.env
+*.local.json
