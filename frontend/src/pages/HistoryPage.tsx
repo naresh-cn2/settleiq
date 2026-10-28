@@ -6,7 +6,6 @@ export function HistoryPage() {
   const [selectedRun, setSelectedRun] = useState<string | null>(null)
   const [comparison, setComparison] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -15,7 +14,7 @@ export function HistoryPage() {
         const data = await api.runs.list()
         setRuns(data.runs)
       } catch (err: any) {
-        setError(err.message)
+        // ignore
       } finally {
         setLoading(false)
       }
@@ -39,19 +38,6 @@ export function HistoryPage() {
     } catch (err: any) {
       alert(err.message)
     }
-  }
-
-  const formatDiff = (a: any, b: any) => {
-    const keys = new Set([...Object.keys(a), ...Object.keys(b)])
-    const diffs: string[] = []
-    for (const key of keys) {
-      const av = JSON.stringify(a[key])
-      const bv = JSON.stringify(b[key])
-      if (av !== bv) {
-        diffs.push(`${key}: ${av} → ${bv}`)
-      }
-    }
-    return diffs.length ? diffs.join('\n') : 'No differences'
   }
 
   if (loading) return <div className="loading">Loading history...</div>

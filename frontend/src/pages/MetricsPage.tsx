@@ -6,7 +6,6 @@ export function MetricsPage() {
   const [runs, setRuns] = useState<any[]>([])
   const [selectedRun, setSelectedRun] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -14,12 +13,12 @@ export function MetricsPage() {
         setLoading(true)
         const [runsData, metricsData] = await Promise.all([
           api.runs.list(),
-          selectedRun ? api.runs.metrics(selectedRun) : Promise.resolve(null),
+          Promise.resolve(null),
         ])
         setRuns(runsData.runs)
         setMetrics(metricsData)
       } catch (err: any) {
-        setError(err.message)
+        // ignore
       } finally {
         setLoading(false)
       }
@@ -27,17 +26,17 @@ export function MetricsPage() {
     load()
   }, [])
 
-  const handleRunChange = async (runId: string) => {
+  const handleRunChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const runId = e.target.value
     setSelectedRun(runId)
     try {
       const m = await api.runs.metrics(runId)
       setMetrics(m)
     } catch (err: any) {
+      // eslint-disable-next-line no-alert
       alert(err.message)
     }
   }
-
-  const formatPercent = (rate: number) => (rate * 100).toFixed(2) + '%'
 
   if (loading) return <div className="loading">Loading metrics...</div>
 
@@ -53,7 +52,7 @@ export function MetricsPage() {
           <select
             className="input"
             value={selectedRun || ''}
-            onChange={e => setSelectedRun(e.target.value)}
+            onChange={handleRunChange}
             style={{ width: '100%', marginBottom: '16px' }}
           >
             <option value="">Select a run</option>

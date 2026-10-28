@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { api } from '../api'
-import { Run } from './types'
 
 export function RunsPage() {
   const [runs, setRuns] = useState<any[]>([])
@@ -168,28 +166,26 @@ export function RunsPage() {
               </tr>
             </thead>
             <tbody>
-              {runs.map((run: any) => {
-                return (
-                  <tr key={run.run_id}>
-                    <td className="mono">{run.run_id.slice(0, 16)}...</td>
-                    <td className="mono">{run.input_digest?.slice(0, 16)}...</td>
-                    <td>{run.rule_version}</td>
-                    <td>{run.status}</td>
-                    <td className="mono">{run.numerator}</td>
-                    <td className="mono">{run.denominator}</td>
-                    <td>{(run.rate * 100).toFixed(2)}%</td>
-                    <td>{run.discrepancy_count}</td>
-                    <td>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => window.location.href = `/discrepancies?run_id=${run.run_id}`}
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
+              {runs.map((run: any) => (
+                <tr key={run.run_id}>
+                  <td className="mono">{run.run_id.slice(0, 16)}...</td>
+                  <td className="mono">{run.input_digest?.slice(0, 16)}...</td>
+                  <td>{run.rule_version}</td>
+                  <td>{run.status}</td>
+                  <td className="mono">{run.numerator}</td>
+                  <td className="mono">{run.denominator}</td>
+                  <td>{(run.rate * 100).toFixed(2)}%</td>
+                  <td>{run.discrepancy_count}</td>
+                  <td>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => window.location.href = `/discrepancies?run_id=${run.run_id}`}
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

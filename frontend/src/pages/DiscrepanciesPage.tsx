@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { api } from '../api'
 
 export function DiscrepanciesPage() {
@@ -86,27 +85,25 @@ export function DiscrepanciesPage() {
               </tr>
             </thead>
             <tbody>
-              {discrepancies.map((d: any) => {
-                return (
-                  <tr key={d.discrepancy_id}>
-                    <td className="mono text-truncate">{d.discrepancy_id}</td>
-                    <td><span className="badge">{d.type}</span></td>
-                    <td><span className={`badge ${severityColors[d.severity] || 'badge-neutral'}`}>{d.severity}</span></td>
-                    <td className="mono text-truncate">{d.constituent_kind}:{d.constituent_id}</td>
-                    <td>{d.age_days}</td>
-                    <td><span className={`badge ${d.status === 'RESOLVED' ? 'badge-low' : 'badge-neutral'}`}>{d.status}</span></td>
-                    <td className="text-truncate" style={{ maxWidth: '300px' }} title={d.reason}>{d.reason}</td>
-                    <td>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => window.location.href = `/discrepancies/${d.discrepancy_id}`}
-                      >
-                        Investigate
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
+              {discrepancies.map((d: any) => (
+                <tr key={d.discrepancy_id}>
+                  <td className="mono text-truncate">{d.discrepancy_id}</td>
+                  <td><span className="badge">{d.type}</span></td>
+                  <td><span className={`badge ${severityColors[d.severity] || 'badge-neutral'}`}>{d.severity}</span></td>
+                  <td className="mono text-truncate">{d.constituent_kind}:{d.constituent_id}</td>
+                  <td>{d.age_days}</td>
+                  <td><span className={`badge ${d.status === 'RESOLVED' ? 'badge-low' : 'badge-neutral'}`}>{d.status}</span></td>
+                  <td className="text-truncate" style={{ maxWidth: '300px' }} title={d.reason}>{d.reason}</td>
+                  <td>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => window.location.href = `/discrepancies/${d.discrepancy_id}`}
+                    >
+                      Investigate
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
