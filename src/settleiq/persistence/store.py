@@ -21,6 +21,7 @@ from typing import Final, Iterator, Mapping, Sequence
 
 from settleiq.canonical.serialization import digest
 from settleiq.engine import Discrepancy, ReconciliationResult
+from settleiq.journal.chain import Journal, open_journal
 
 __all__ = ["SCHEMA_STATEMENTS", "Persistence", "open_store"]
 
@@ -102,19 +103,40 @@ class Persistence:
             self._shared.close()
             self._shared = None
 
+    def connection(self) -> sqlite3.Connection | None:
+        """The store's live connection, for a journal that must share it.
+
+        An in-memory database is created fresh per connection, so a journal that
+        opens its own ":memory:" would read a different database from this
+        store. Returning the shared connection lets a caller adopt it.
+        """
+        return self._shared
+
     def migrate(self) -> None:
         with self._connect() as connection, closing(connection.cursor()) as cursor:
             for statement in SCHEMA_STATEMENTS:
                 cursor.execute(statement)
 
-    def record_run(self, result: ReconciliationResult) -> str:
+    def record_run(
+        self,
+        result: ReconciliationResult,
+        *,
+        journal: Journal | None = None,
+        recorded_at: str = "",
+    ) -> str:
         """Record a completed run and its discrepancies atomically.
+
+        When a journal is supplied, the run is also appended to the hash chain in
+        the **same** transaction as the outcome rows, so a journal entry cannot
+        exist for a run that was not persisted, and vice versa.
 
         Re-recording an identical run is a no-op: the run id is derived from the
         inputs, so a duplicate submission is recognised rather than duplicated
         (SETTLEIQ-REQ-009, `09` API-R08).
         """
         metrics = result.metrics
+        run_id = result.identity.run_id
+
         with self._connect() as connection, closing(connection.cursor()) as cursor:
             cursor.execute("BEGIN IMMEDIATE")
             try:
@@ -126,7 +148,7 @@ class Persistence:
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
-                        result.identity.run_id,
+                        run_id,
                         result.identity.input_digest,
                         result.identity.rule_version,
                         result.identity.schema_version,
@@ -137,6 +159,7 @@ class Persistence:
                         metrics.methodology_version,
                     ),
                 )
+                inserted_run = cursor.rowcount > 0
                 for discrepancy in result.discrepancies:
                     cursor.execute(
                         """
@@ -147,7 +170,7 @@ class Persistence:
                         """,
                         (
                             discrepancy.discrepancy_id,
-                            result.identity.run_id,
+                            run_id,
                             discrepancy.type.value,
                             discrepancy.severity.value,
                             discrepancy.constituent_kind,
@@ -157,11 +180,20 @@ class Persistence:
                             discrepancy.status.value,
                         ),
                     )
+                # The journal append belongs to the same transaction as the rows
+                # it attests to. An entry for a run that did not persist would be
+                # a false attestation.
+                if journal is not None and journal.path == self.path and inserted_run:
+                    # Create the journal schema on THIS connection before
+                    # appending, so an in-memory store and journal share one
+                    # database rather than each holding a separate one.
+                    journal.migrate_within(cursor)
+                    journal.append_within(connection, cursor, _run_payload(result))
                 connection.execute("COMMIT")
             except Exception:
-                connection.execute("ROLLBACK")
+                cursor.execute("ROLLBACK")
                 raise
-        return result.identity.run_id
+        return run_id
 
     def find_run(self, run_id: str) -> Mapping[str, object] | None:
         with self._connect() as connection, closing(connection.cursor()) as cursor:
@@ -212,3 +244,22 @@ def open_store(path: Path | str = ":memory:") -> Persistence:
     store = Persistence(path)
     store.migrate()
     return store
+
+
+def _run_payload(result: ReconciliationResult) -> dict[str, object]:
+    """What the journal attests about a run.
+
+    Deliberately narrow: identity, counts, and the discrepancy identities. It
+    does not restate amounts, which are already persisted and are themselves
+    reconstructable from the run inputs.
+    """
+    return {
+        "kind": "ReconciliationRunRecorded",
+        "run_id": result.identity.run_id,
+        "input_digest": result.identity.input_digest,
+        "rule_version": result.identity.rule_version,
+        "schema_version": result.identity.schema_version,
+        "numerator": result.metrics.numerator,
+        "denominator": result.metrics.denominator,
+        "discrepancy_ids": sorted(d.discrepancy_id for d in result.discrepancies),
+    }
