@@ -70,11 +70,12 @@ To assess measurement variability beyond a single profiling run, a 5-repetition 
 | **Trial 3** | 0.4103 s | 0.3919 s | 12,758 rec/s | Byte-identical |
 | **Trial 4** | 0.2959 s | 0.3357 s | 14,894 rec/s | Byte-identical |
 | **Trial 5** | 0.9770 s | 0.2217 s | 22,553 rec/s | Byte-identical |
-| **Summary** | **Mean: 0.6454 s (±0.2832 s)** | **Mean: 0.3186 s (±0.0641 s)** | **15,693 rec/s mean** | **100% Digest Match** |
+| **Distribution** | **Mean: 0.6454 s (±0.2832 s)**<br>**Median: 0.7448 s**<br>**Spread (Min–Max): 0.2959 s – 0.9770 s (0.6811 s range)** | **Mean: 0.3186 s (±0.0641 s)**<br>**Median: 0.3357 s**<br>**Spread (Min–Max): 0.2217 s – 0.3919 s (0.1702 s range)** | **Mean: 15,693 rec/s**<br>**Median: 14,894 rec/s**<br>**Spread: 12,758 – 22,553 rec/s** | **100% Digest Match** |
 
-**Key Takeaways:**
-1. Engine matching throughput consistently exceeds **12,500 records/sec** across all trials on 5,000-record workloads.
-2. Output digest invariance is preserved 100% across every repetition with zero balance drift or float perturbation.
+**Statistical Takeaways & Measurement Variability:**
+1. **Engine Throughput:** Consistently maintains a median of **14,894 records/sec** and never dropped below **12,750 records/sec** under sustained CPU load.
+2. **Measurement Spread:** Ingestion and memory allocation exhibit greater latency spread ($\Delta = 0.6811\,\text{s}$) due to Python heap compaction and JSON string parsing, while the core reconciliation engine exhibits tight duration clustering ($\Delta = 0.1702\,\text{s}$).
+3. **Digest Invariance:** Output digest invariance is preserved 100% across every repetition with zero balance drift or float perturbation.
 
 ---
 

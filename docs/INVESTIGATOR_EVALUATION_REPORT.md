@@ -74,15 +74,23 @@ An investigator must be an observer, not an actor. Invoking `investigate_discrep
 
 ---
 
-## 4. Architectural Boundaries & System Limitations
+## 4. Architectural Boundaries, Methodology & Honest Limitations
 
-1. **Deterministic Expert Reasoning vs Non-Deterministic LLMs:** SettleIQ's forensic investigator utilizes deterministic, AST-verified rule-guided expert algorithms rather than an external opaque neural model. This guarantees 100% reproducible outcomes, zero hallucinatory financial amounts, and complete absence of non-deterministic drift.
-2. **Synthetic Data Isolation:** The evaluation fixtures are generated under strict synthetic data confinement (`DataProvenance.SYNTHETIC`) and do not process live customer credentials or production PII.
-3. **Single-Tenant Operational Boundary:** Current database queries assume a single organization tenant namespace. Multi-tenant partitioning with row-level security (RLS) is deferred to future enterprise milestones.
+1. **Deterministic Expert System vs Autonomous General Intelligence:**
+   - SettleIQ's forensic investigator utilizes deterministic, AST-verified rule-guided expert algorithms rather than an unconstrained large language model.
+   - **Why 100% Accuracy on Synthetic Test Sets Does Not Imply Real-World Infallibility:** A 100% pass rate across the 52 evaluated scenarios (30 regression + 22 independent validation) proves that the rule engine correctly implements the specification and handles edge cases without crashing or mutating state. However, it does not guarantee that every novel, messy, multi-party netting scenario in a live production environment will be accurately diagnosed. Real payment aggregators often introduce opaque deduction codes, complex multi-currency conversions with varying markups, and unexpected split-payout behaviors that can challenge any deterministic classifier.
+2. **Syntactic Overfitting Risk:**
+   - Although the independent validation suite includes randomized Monte Carlo amounts, varied date spans, and unstructured strings, deterministic pattern extractors can still be vulnerable to unexpected real-world syntax changes in bank narrations. The system intentionally addresses this by failing closed to `MANUAL_REVIEW` whenever confidence is `INSUFFICIENT`.
+3. **Mandatory Human-in-the-Loop Authority:**
+   - SettleIQ treats AI recommendations strictly as an **investigative co-pilot**, not an autonomous fund mover. Resolutions are never executed automatically; an authorized operator must review the hypothesis, inspect the transaction trace, and explicitly trigger the resolution commit.
+4. **Synthetic Data Isolation:**
+   - All evaluation cases operate under synthetic provenance (`DataProvenance.SYNTHETIC`) without live customer credentials or external API connections.
+5. **Single-Tenant Operational Boundary:**
+   - The database layer currently manages single-tenant organizations. Multi-tenant partitioning with row-level security (RLS) is required before deploying multi-organization SaaS workloads.
 
 ---
 
-## 4. Verification Reproduction
+## 5. Verification Reproduction
 
 Run both the regression suite and the independent evaluation suite:
 
@@ -90,7 +98,7 @@ Run both the regression suite and the independent evaluation suite:
 # Run 30-case regression evaluation
 pytest tests/unit/test_investigator_evaluation.py -v
 
-# Run independent validation suite
+# Run 22-case independent validation suite
 pytest tests/unit/test_investigator_independent_validation.py -v
 ```
 

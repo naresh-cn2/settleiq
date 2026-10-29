@@ -136,6 +136,65 @@ python scripts/verify_ui_workflow.py
 python scripts/capture_proof.py
 ```
 
+<details>
+<summary><b>Expected Output from <code>python -m settleiq.cli run</code></b></summary>
+
+```text
+SETTLEIQ - reconciliation demonstration
+============================================================
+run id            : bb9d87f56eab9804c521f0835e6014ca...
+input digest      : ab96d202e243ead0767e51d057cb9a8884ddd5a38e4096a2b8cb0263e31e4fef
+rule version      : 1.0.0
+provenance        : SYNTHETIC
+
+METRICS (computed, with the methodology that produced them)
+------------------------------------------------------------
+  numerator       : 19
+  denominator     : 25
+  auto-match rate : 19/25 = 0.7600
+  ambiguous       : 1
+  rule conflicts  : 1
+  insufficient    : 0
+  methodology     : v1.0.0
+
+DISCREPANCIES
+------------------------------------------------------------
+  [HIGH  ] NET_GROSS_BREAK    payout:po_3 (unresolved)
+           batch 'sb_3' nets 56.00|USD but the payout paid 60.00|USD; residual -4.00|USD
+  [HIGH  ] PHANTOM_PROCESSOR  charge:ch_4 (unresolved)
+           charge in batch 'sb_orphan' has no payout on the processor side
+  [HIGH  ] AMOUNT_BREAK       payout:po_2 (unresolved)
+           payout paid 80.00|USD but deposit posted 78.50|USD
+  [MEDIUM] TIMING_BREAK       payout:po_4 (unresolved)
+           payout arrived 2026-10-08, deposit posted 2026-10-20: 12 days exceeds the declared window of 3
+  [HIGH  ] PHANTOM_BANK       deposit:bd_2 (unresolved)
+           bank deposit reference matches no payout
+  [MEDIUM] AMBIGUOUS_MATCH    deposit:bd_6 (unresolved)
+           2 candidates survived; the engine does not select among them
+  [HIGH  ] UNKNOWN            dispute:dp_1 (unresolved)
+           record kind 'dispute' is not modelled by the canonical data model
+
+INJECTED DEFECTS - each expected before the run
+------------------------------------------------------------
+  D1: PHANTOM_PROCESSOR    reproduced
+  D2: PHANTOM_BANK         reproduced
+  D3: AMOUNT_BREAK         reproduced
+  D4: NET_GROSS_BREAK      reproduced
+  D5: TIMING_BREAK         reproduced
+  D6: AMBIGUOUS_MATCH      reproduced
+  D7: UNKNOWN              reproduced
+
+AUDIT JOURNAL (what it proves, and what it does not)
+------------------------------------------------------------
+  chain intact    : True
+  entries         : 1
+  detects         : payload modification, digest modification, deletion from the middle, reordering, duplication
+  does NOT detect : tail truncation without an externally anchored head, a wholesale rewrite from genesis
+
+RESULT: every injected defect classified as recorded.
+```
+</details>
+
 ### 3. Launch Web Dashboard & REST API
 
 ```bash

@@ -6,8 +6,8 @@ AI reasoning accuracy, and tamper detection.
 
 ## Summary of Verification Tiers
 
-- **Generated At:** `2026-10-29T11:35:58.246375+00:00`
-- **Git Commit:** `672ee5e5bc2fa687e2dcfb4e5483629cf5ce9912` (`main`)
+- **Generated At:** `2026-10-29T11:51:25.862860+00:00`
+- **Git Commit:** `cb3d1838c7fd6cbe53590e7de0d4bb67befd8b73` (`main`)
 - **Platform:** `Windows 11 (AMD64)`
 - **Python Version:** `3.12.10`
 
@@ -16,9 +16,9 @@ AI reasoning accuracy, and tamper detection.
 | Gate | Requirement | Measured Result | Status |
 | :--- | :--- | :--- | :--- |
 | **G1: Money Safety** | Zero binary float usage | AST static gate clean (0 violations) | **PASS** |
-| **G2: Test Suite** | 100% test pass rate | 193 passing tests | **PASS** |
+| **G2: Test Suite** | 100% test pass rate | 200 passing tests | **PASS** |
 | **G3: Code Quality** | Zero static lint warnings | Clean ruff static check | **PASS** |
-| **G4: Engine Throughput** | > 1,000 records/sec | 1,730.5 rec/s (10k batch) | **PASS** |
+| **G4: Engine Throughput** | > 1,000 records/sec | 4,124.4 rec/s (10k batch) | **PASS** |
 | **G5: Frontend SPA** | Production web assets | Verified index.html + hashed assets | **PASS** |
 
 ### Tier 2: Acceptance Evidence (Domain Correctness & Behavior)
@@ -26,7 +26,7 @@ AI reasoning accuracy, and tamper detection.
 | Verification Area | Requirement | Measured Result | Status |
 | :--- | :--- | :--- | :--- |
 | **Investigator Regression** | Ground-truth benchmark | 30/30 Cases (100% Top-1 Accuracy) | **PASS** |
-| **Investigator Independent** | Action vs Root-Cause separation | 15/15 Tests (100% Root-Cause Acc) | **PASS** |
+| **Investigator Independent** | Action vs Root-Cause separation | 22/22 Tests (100% Root-Cause Acc) | **PASS** |
 | **Audit Journal Integrity** | Tamper detection | Bit modification detected & rejected | **PASS** |
 | **End-to-End Workflow** | 8-step journey | 8/8 HTTP 200/201 Success | **PASS** |
 | **Financial Adversarial** | Multi-currency & $100B balances | JPY, BHD, $100B, Net-zero 100% closed | **PASS** |
@@ -39,16 +39,16 @@ AI reasoning accuracy, and tamper detection.
 
 | Artifact File | SHA-256 Digest |
 | :--- | :--- |
-| `tier1_execution_evidence.json` | `6a296f782c3225016572a3351953bcc269ef28b77b5078c380309caaeb8df905` |
-| `tier2_acceptance_evidence.json` | `afc118b998391d2b89a5381ee038c5023b06aaaf2f15fa1a2e8cb9ceb06729c9` |
-| `tier3_independent_verification.json` | `3dd0a288fadbf00f4c88ccfab0d7726ac0a4215fe79e4b04b9181a30b7da14ff` |
+| `tier1_execution_evidence.json` | `b4453535b0db748bd25ba7a436c84ee6d00b1bcb36ed9f915fe74bdfe81a2321` |
+| `tier2_acceptance_evidence.json` | `8384f67341df803e23bb507de2a628a3bc3fe414274e7b41becc49143e71874c` |
+| `tier3_independent_verification.json` | `a53bc00c65b3f5ce63b0f12dc1e50e9768f071d1cb8fcfa5951b906026b43297` |
 | `gate_results.json` | `555f464a7f386aedca05014134870af4ab73a900ceefb420ea150b5f809a2137` |
-| `test_results.json` | `c32e4d13e677273c0362305f0c40406d5629c8b95fb72c0b1f296a9c70b9cb34` |
+| `test_results.json` | `deb65a347cbda1adb64b4dd1fdbc9269b08e148aa000e9ca445774a060f4969b` |
 | `journal_verification.json` | `2c052763909505ea53f73231df8abe45c8538c375c29a00253ba31520359d3b2` |
-| `investigator_evaluation.json` | `9e7cc44514121401143ee1be9c025d69283d26903e8eb63a5fc5d70811655bc9` |
-| `investigator_independent_validation.json` | `784a845a4cec0dcb7d2fb226facaba878db7039f0d6eacbf11a0438c578c33b5` |
-| `benchmark_results.json` | `b9960d9d3ca0fed20150873ed5a28471f2a05cb9d4092d969b5236ddd264f35c` |
-| `demo_journey_trace.json` | `19d7f56a27c19a08712ffbafbe24759d525a1216dfc2f7f904fb5a55a38ec017` |
+| `investigator_evaluation.json` | `2f2c629b9508d8e56c5c64628ddbdde186307ea758b1b05842120485cb153a60` |
+| `investigator_independent_validation.json` | `5b246a26d019f823d0286e1022cbcfff4c04ce70e5837f6a52bbb7af9ef4e2da` |
+| `benchmark_results.json` | `31d9cd36589bb8280da80b751f288fbe0c815043d9e873e59daae7d990596e53` |
+| `demo_journey_trace.json` | `6a631fd3c0e37d671045b12163515e7edccebc95709673bbb7cc1dae58b147a9` |
 
 #### Exact Reproduction Protocol
 
