@@ -136,7 +136,7 @@ class InvestigationReport:
 def _parse_reason_amounts(reason: str) -> dict[str, str]:
     """Extract currency-amount pairs from standardized discrepancy reason strings."""
     found: dict[str, str] = {}
-    matches = re.findall(r"([0-9]+\.[0-9]{2})\|([A-Z]{3})", reason)
+    matches = re.findall(r"([0-9]+(?:\.[0-9]+)?)\|([A-Z]{3})", reason)
     for idx, (amt, curr) in enumerate(matches):
         found[f"amount_{idx}"] = f"{amt}|{curr}"
     return found
@@ -468,6 +468,49 @@ def investigate_discrepancy(
                 "reason": (
                     "Missing diagnostic reason and constituent evidence; "
                     "routed to manual review."
+                ),
+                "resolved_by": "settleiq_ai_agent",
+            },
+        )
+
+    # Guard: Unparseable / Malformed Reason string
+    if (
+        not records
+        and trace.gross_amount == "0.00"
+        and trace.net_paid == "0.00"
+        and disc_type in (
+            DiscrepancyType.NET_GROSS_BREAK.value,
+            DiscrepancyType.AMOUNT_BREAK.value,
+        )
+    ):
+        hypotheses.append(
+            Hypothesis(
+                rank=1,
+                title="Malformed Reason String / Unparseable Numeric Tokens",
+                description=(
+                    "Diagnostic reason failed deterministic syntax parsing. "
+                    "Cannot safely extract monetary components."
+                ),
+                confidence="INSUFFICIENT",
+                supporting_evidence=(f"Raw reason string: {reason}",),
+                contradicting_evidence=(),
+                recommended_action="MANUAL_REVIEW",
+            )
+        )
+        return InvestigationReport(
+            discrepancy_id=disc_id,
+            type=disc_type,
+            severity=severity,
+            constituent_id=cid,
+            status=status,
+            reason=reason,
+            trace=trace,
+            hypotheses=tuple(hypotheses),
+            recommended_action="MANUAL_REVIEW",
+            draft_resolution={
+                "action": "MANUAL_REVIEW",
+                "reason": (
+                    "Malformed reason string; routed to manual engineering review."
                 ),
                 "resolved_by": "settleiq_ai_agent",
             },

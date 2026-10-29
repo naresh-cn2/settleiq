@@ -49,6 +49,8 @@ ignore = ["UP042"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/unit/test_money.py" = ["B015"]
+"scripts/verify_ui_workflow.py" = ["E501"]
+"scripts/capture_proof.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"

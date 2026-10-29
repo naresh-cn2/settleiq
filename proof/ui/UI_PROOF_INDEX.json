@@ -1,0 +1,9 @@
+{
+  "generated_at": "2026-10-29T07:15:37.084693+00:00",
+  "views": {
+    "runs_dashboard": "C:\\Users\\nares\\Workspace\\settleiq\\proof\\ui\\01_runs_dashboard.html",
+    "discrepancy_queue": "C:\\Users\\nares\\Workspace\\settleiq\\proof\\ui\\02_discrepancy_queue.html",
+    "ai_investigator": "C:\\Users\\nares\\Workspace\\settleiq\\proof\\ui\\03_ai_investigator_and_money_trace.html",
+    "audit_journal": "C:\\Users\\nares\\Workspace\\settleiq\\proof\\ui\\04_resolution_and_audit_journal.html"
+  }
+}

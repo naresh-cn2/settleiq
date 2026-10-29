@@ -1,0 +1,26 @@
+{
+  "tier": "Tier 1: Execution Evidence",
+  "description": "Deterministic proof that code compiles, runs, and satisfies all quality gates",
+  "timestamp": "2026-10-29T07:14:45.551507+00:00",
+  "gates": {
+    "money_safety_gate": true,
+    "test_suite": true,
+    "static_analysis": true,
+    "benchmark_throughput": false,
+    "frontend_bundle": true
+  },
+  "performance": {
+    "record_count": 10000,
+    "total_duration_secs": 31.5267,
+    "validation_duration_secs": 14.9678,
+    "validation_throughput_rec_per_sec": 668.1,
+    "reconciliation_duration_secs": 16.5572,
+    "reconciliation_throughput_rec_per_sec": 604.0,
+    "peak_memory_mb": 19.03,
+    "matched_numerator": 9999,
+    "eligible_denominator": 10000,
+    "auto_match_rate": 0.9999,
+    "discrepancy_count": 1
+  },
+  "frontend_assets_count": 3
+}

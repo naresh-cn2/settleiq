@@ -129,8 +129,13 @@ def decompose(
 
     constituents: list[Constituent] = []
     for entry in records:
-        record = entry.get("record") if isinstance(entry, Mapping) else entry
-        kind = str((entry.get("kind") if isinstance(entry, Mapping) else "") or "")
+        if not isinstance(entry, Mapping):
+            continue
+        has_rec = "record" in entry and isinstance(entry["record"], Mapping)
+        record = entry["record"] if has_rec else entry
+        kind_from_entry = entry.get("kind")
+        kind_from_rec = record.get("kind") if isinstance(record, Mapping) else ""
+        kind = str(kind_from_entry or kind_from_rec or "")
         if kind not in _CONTRIBUTIONS:
             continue
         if _batch(record) != batch:

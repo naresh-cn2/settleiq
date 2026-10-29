@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SettleIQ - Discrepancy Queue</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --primary: #3b82f6;
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      padding: 24px;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 20px; border-bottom: 1px solid var(--card-border); margin-bottom: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-logo {
+      width: 36px; height: 36px; background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 18px; color: #fff;
+    }
+    .brand-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .nav-links { display: flex; gap: 16px; font-size: 14px; font-weight: 500; }
+    .nav-link { color: var(--text-muted); text-decoration: none; padding: 6px 12px; border-radius: 6px; }
+    .nav-link.active { background: #1f2937; color: #fff; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px;
+      font-family: var(--font-mono); font-weight: 600;
+    }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 10px; padding: 20px;
+    }
+    .metric-title { font-size: 13px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 6px; }
+    .metric-value { font-size: 28px; font-weight: 700; font-family: var(--font-mono); }
+    .mono { font-family: var(--font-mono); }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+    th { text-align: left; padding: 10px 14px; color: var(--text-muted); border-bottom: 1px solid var(--card-border); font-size: 12px; text-transform: uppercase; }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--card-border); }
+    tr:last-child td { border-bottom: none; }
+    .btn {
+      background: var(--primary); color: #fff; border: none; padding: 8px 16px;
+      border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .btn-secondary { background: #374151; }
+    .graph-node { fill: #1e293b; stroke: #3b82f6; stroke-width: 2; rx: 8; }
+    .graph-text { fill: #f8fafc; font-size: 12px; font-weight: 600; font-family: sans-serif; }
+    .graph-sub { fill: #94a3b8; font-size: 10px; font-family: monospace; }
+    .graph-edge { stroke: #64748b; stroke-width: 2; marker-end: url(#arrow); stroke-dasharray: 4 2; }
+    </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="brand-logo">SQ</div>
+        <div>
+          <div class="brand-title">SettleIQ</div>
+          <div style="font-size: 12px; color: var(--text-muted);">Deterministic Reconciliation Engine</div>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a class="nav-link" href="01_runs_dashboard.html">Runs Dashboard</a>
+        <a class="nav-link active" href="02_discrepancy_queue.html">Discrepancy Queue</a>
+        <a class="nav-link" href="03_ai_investigator_and_money_trace.html">AI Investigator</a>
+        <a class="nav-link" href="04_resolution_and_audit_journal.html">Audit Journal</a>
+      </div>
+      <div>
+        <span class="badge badge-warning">7 ITEMS REQUIRING ATTENTION</span>
+      </div>
+    </header>
+
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+          <h2 style="font-size: 18px;">Forensic Discrepancy Queue</h2>
+          <p style="color: var(--text-muted); font-size: 13px;">All items classified with complete causal attribution and rule audit trail.</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary">Filter: All (7)</button>
+          <button class="btn btn-secondary">Critical (1)</button>
+          <button class="btn btn-secondary">Warning (5)</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Discrepancy ID</th>
+            <th>Classification</th>
+            <th>Severity</th>
+            <th>Forensic Reason & Causal Breakdown</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td class="mono" style="font-weight: 600;">dsc:AMOUNT_BREAK:po_2</td>
+            <td><span class="badge badge-info">AMOUNT_BREAK</span></td>
+            <td><span class="badge badge-info">HIGH</span></td>
+            <td style="color: var(--text-muted); font-size: 13px;">payout paid 80.00|USD but deposit posted 78.50|USD</td>
+            <td><span class="badge badge-warning">OPEN</span></td>
+            <td>
+              <a href="03_ai_investigator_and_money_trace.html" class="btn" style="text-decoration: none; padding: 4px 10px; font-size: 12px;">Investigate</a>
+            </td>
+          </tr>
+        
+          <tr>
+            <td class="mono" style="font-weight: 600;">dsc:NET_GROSS_BREAK:po_3</td>
+            <td><span class="badge badge-info">NET_GROSS_BREAK</span></td>
+            <td><span class="badge badge-info">HIGH</span></td>
+            <td style="color: var(--text-muted); font-size: 13px;">batch &#x27;sb_3&#x27; nets 56.00|USD but the payout paid 60.00|USD; residual -4.00|USD</td>
+            <td><span class="badge badge-warning">OPEN</span></td>
+            <td>
+              <a href="03_ai_investigator_and_money_trace.html" class="btn" style="text-decoration: none; padding: 4px 10px; font-size: 12px;">Investigate</a>
+            </td>
+          </tr>
+        
+          <tr>
+            <td class="mono" style="font-weight: 600;">dsc:PHANTOM_BANK:bd_2</td>
+            <td><span class="badge badge-info">PHANTOM_BANK</span></td>
+            <td><span class="badge badge-info">HIGH</span></td>
+            <td style="color: var(--text-muted); font-size: 13px;">bank deposit reference matches no payout</td>
+            <td><span class="badge badge-warning">OPEN</span></td>
+            <td>
+              <a href="03_ai_investigator_and_money_trace.html" class="btn" style="text-decoration: none; padding: 4px 10px; font-size: 12px;">Investigate</a>
+            </td>
+          </tr>
+        
+          <tr>
+            <td class="mono" style="font-weight: 600;">dsc:PHANTOM_PROCESSOR:ch_4</td>
+            <td><span class="badge badge-info">PHANTOM_PROCESSOR</span></td>
+            <td><span class="badge badge-info">HIGH</span></td>
+            <td style="color: var(--text-muted); font-size: 13px;">charge in batch &#x27;sb_orphan&#x27; has no payout on the processor side</td>
+            <td><span class="badge badge-warning">OPEN</span></td>
+            <td>
+              <a href="03_ai_investigator_and_money_trace.html" class="btn" style="text-decoration: none; padding: 4px 10px; font-size: 12px;">Investigate</a>
+            </td>
+          </tr>
+        
+          <tr>
+            <td class="mono" style="font-weight: 600;">dsc:TIMING_BREAK:po_4</td>
+            <td><span class="badge badge-info">TIMING_BREAK</span></td>
+            <td><span class="badge badge-info">MEDIUM</span></td>
+            <td style="color: var(--text-muted); font-size: 13px;">payout arrived 2026-10-08, deposit posted 2026-10-20: 12 days exceeds the declared window of 3</td>
+            <td><span class="badge badge-warning">OPEN</span></td>
+            <td>
+              <a href="03_ai_investigator_and_money_trace.html" class="btn" style="text-decoration: none; padding: 4px 10px; font-size: 12px;">Investigate</a>
+            </td>
+          </tr>
+        
+          <tr>
+            <td class="mono" style="font-weight: 600;">dsc:UNKNOWN:dp_1</td>
+            <td><span class="badge badge-info">UNKNOWN</span></td>
+            <td><span class="badge badge-info">HIGH</span></td>
+            <td style="color: var(--text-muted); font-size: 13px;">record kind &#x27;dispute&#x27; is not modelled by the canonical data model; classified UNKNOWN rather than forced into a named type</td>
+            <td><span class="badge badge-warning">OPEN</span></td>
+            <td>
+              <a href="03_ai_investigator_and_money_trace.html" class="btn" style="text-decoration: none; padding: 4px 10px; font-size: 12px;">Investigate</a>
+            </td>
+          </tr>
+        
+          <tr>
+            <td class="mono" style="font-weight: 600;">dsc:deposit:bd_6</td>
+            <td><span class="badge badge-info">AMBIGUOUS_MATCH</span></td>
+            <td><span class="badge badge-info">MEDIUM</span></td>
+            <td style="color: var(--text-muted); font-size: 13px;">2 candidates survived; the engine does not select among them</td>
+            <td><span class="badge badge-warning">OPEN</span></td>
+            <td>
+              <a href="03_ai_investigator_and_money_trace.html" class="btn" style="text-decoration: none; padding: 4px 10px; font-size: 12px;">Investigate</a>
+            </td>
+          </tr>
+        
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

@@ -7,7 +7,7 @@ Tests:
 4. Amount break wire fee vs deposit overpayment vs identical amount contradiction.
 5. Incomplete / insufficient evidence uncertainty handling.
 6. Non-mutation invariant: draft resolutions do not alter database or audit journal.
-7. Precision and Top-1 hypothesis ranking metrics.
+7. Precision and Top-1 hypothesis ranking metrics across 30 labelled cases.
 """
 
 from decimal import Decimal
@@ -208,13 +208,16 @@ def test_eval_draft_resolution_non_mutation_invariant(tmp_path) -> None:
     stored_after = store.find_discrepancy(disc_id)
     assert stored_after is not None
     assert stored_after["status"] == "OPEN"
-    assert "resolution_history" not in stored_after or len(stored_after["resolution_history"]) == 0
-    assert "resolution_history" not in stored_after or len(stored_after["resolution_history"]) == 0
+    assert (
+        "resolution_history" not in stored_after
+        or len(stored_after["resolution_history"]) == 0
+    )
 
 
 def test_eval_top1_accuracy_benchmark() -> None:
-    """Case 12: Benchmark Top-1 accuracy across 10 labelled test cases."""
+    """Case 12: Benchmark Top-1 accuracy across 30 labelled adversarial cases."""
     labelled_cases: list[dict[str, Any]] = [
+        # Standard 10 cases
         {
             "disc": {
                 "discrepancy_id": "d1",
@@ -305,6 +308,190 @@ def test_eval_top1_accuracy_benchmark() -> None:
             "expected_action": "MANUAL_REVIEW",
             "expected_confidence": "INSUFFICIENT",
         },
+        # Additional 20 adversarial cases
+        {
+            "disc": {
+                "discrepancy_id": "d11",
+                "type": "NET_GROSS_BREAK",
+                "reason": (
+                    "nets 10000000.00|USD but the payout paid 9950000.00|USD; "
+                    "residual 50000.00|USD"
+                ),
+            },
+            "expected_action": "ADJUST_FEE",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d12",
+                "type": "NET_GROSS_BREAK",
+                "reason": "nets 0.00|USD but the payout paid 500.00|USD; residual -500.00|USD",
+            },
+            "expected_action": "BOOK_REBATE",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d13",
+                "type": "AMOUNT_BREAK",
+                "reason": "payout paid 25.00|USD but deposit posted 24.99|USD",
+            },
+            "expected_action": "ACCEPT_TOLERANCE",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d14",
+                "type": "AMOUNT_BREAK",
+                "reason": "deposit posted 99.50|USD but its payout paid 100.00|USD",
+            },
+            "expected_action": "ACCEPT_TOLERANCE",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d15",
+                "type": "AMOUNT_BREAK",
+                "reason": "payout paid 500.00|USD but deposit posted 500.00|USD",
+            },
+            "expected_action": "MANUAL_REVIEW",
+            "expected_confidence": "INSUFFICIENT",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d16",
+                "type": "TIMING_BREAK",
+                "reason": "payout arrived 2026-10-01, deposit posted 2026-10-05: 4 days",
+            },
+            "expected_action": "ACCEPT_LAG",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d17",
+                "type": "TIMING_BREAK",
+                "reason": "payout arrived 2026-10-01, deposit posted 2026-11-15: 45 days",
+            },
+            "expected_action": "ACCEPT_LAG",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d18",
+                "type": "TIMING_BREAK",
+                "reason": "payout arrived 2026-10-05, deposit posted 2026-10-04: -1 days",
+            },
+            "expected_action": "VERIFY_CLOCK_SKEW",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d19",
+                "type": "TIMING_BREAK",
+                "reason": "payout arrived 2026-10-01, deposit posted 2026-10-01: 0 days",
+            },
+            "expected_action": "MANUAL_REVIEW",
+            "expected_confidence": "INSUFFICIENT",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d20",
+                "type": "TIMING_BREAK",
+                "reason": "payout arrived 2026-10-01, deposit posted 2026-10-02: 1 days",
+            },
+            "expected_action": "MANUAL_REVIEW",
+            "expected_confidence": "INSUFFICIENT",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d21",
+                "type": "NET_GROSS_BREAK",
+                "reason": "nets 100.00|EUR but the payout paid 98.00|EUR; residual 2.00|EUR",
+            },
+            "expected_action": "ADJUST_FEE",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d22",
+                "type": "NET_GROSS_BREAK",
+                "reason": "nets 500.00|GBP but the payout paid 550.00|GBP; residual -50.00|GBP",
+            },
+            "expected_action": "BOOK_REBATE",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d23",
+                "type": "AMBIGUOUS_MATCH",
+                "reason": "5 candidates survived without tie breaker",
+            },
+            "expected_action": "REQUIRE_HUMAN_SELECTION",
+            "expected_confidence": "MEDIUM",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d24",
+                "type": "UNKNOWN",
+                "reason": "record kind 'crypto_transfer' is unmodeled",
+            },
+            "expected_action": "MANUAL_REVIEW",
+            "expected_confidence": "INSUFFICIENT",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d25",
+                "type": "UNKNOWN",
+                "reason": "record kind 'barter_credit' is unmodeled",
+            },
+            "expected_action": "MANUAL_REVIEW",
+            "expected_confidence": "INSUFFICIENT",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d26",
+                "type": "AMOUNT_BREAK",
+                "reason": "payout paid 10000.00|USD but deposit posted 9950.00|USD",
+            },
+            "expected_action": "ACCEPT_TOLERANCE",
+            "expected_confidence": "HIGH",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d27",
+                "type": "NET_GROSS_BREAK",
+                "reason": "",
+            },
+            "expected_action": "MANUAL_REVIEW",
+            "expected_confidence": "INSUFFICIENT",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d28",
+                "type": "NET_GROSS_BREAK",
+                "reason": "CORRUPTED_NON_NUMERIC_REASON_STRING",
+            },
+            "expected_action": "MANUAL_REVIEW",
+            "expected_confidence": "INSUFFICIENT",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d29",
+                "type": "AMOUNT_BREAK",
+                "reason": "CORRUPTED_AMOUNT_BREAK_STRING",
+            },
+            "expected_action": "MANUAL_REVIEW",
+            "expected_confidence": "INSUFFICIENT",
+        },
+        {
+            "disc": {
+                "discrepancy_id": "d30",
+                "type": "PHANTOM_PROCESSOR",
+                "reason": "charge ch_future created 2029-01-01 has no payout",
+            },
+            "expected_action": "HOLD_IN_SUSPENSE",
+            "expected_confidence": "HIGH",
+        },
     ]
 
     correct_actions = 0
@@ -321,6 +508,7 @@ def test_eval_top1_accuracy_benchmark() -> None:
     action_accuracy = correct_actions / total
     confidence_accuracy = correct_confidences / total
 
+    assert total == 30, f"Expected 30 evaluation cases, got {total}"
     assert action_accuracy == 1.0, f"Top-1 action accuracy {action_accuracy:.2%} < 100%"
     assert confidence_accuracy == 1.0, f"Confidence accuracy {confidence_accuracy:.2%} < 100%"
 
