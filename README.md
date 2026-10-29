@@ -104,7 +104,7 @@ SettleIQ is an independent project governed solely by its authoritative specific
 
 ```bash
 # Clone the repository
-git clone https://github.com/bukyanaresh/settleiq.git
+git clone https://github.com/naresh-cn2/settleiq.git
 cd settleiq
 
 # Install Python package in editable mode with development dependencies

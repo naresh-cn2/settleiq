@@ -82,7 +82,10 @@ def main() -> None:
         "stderr": gate_err.strip(),
     }
     (latest_dir / "gate_results.json").write_text(json.dumps(gate_results, indent=2))
-    print(f"           Result: {'PASSED' if gate_passed else 'FAILED'}")
+    if not gate_passed:
+        print("           Result: FAILED (Money safety gate violated)", file=sys.stderr)
+        sys.exit(1)
+    print("           Result: PASSED")
 
     print("[TIER 1.2] Running Pytest Full Test Suite (200 Unit, Property, Security Tests)...")
     pytest_code, pytest_out, pytest_err = run_command(
@@ -96,14 +99,20 @@ def main() -> None:
         "stderr": pytest_err.strip(),
     }
     (latest_dir / "test_results.json").write_text(json.dumps(test_results, indent=2))
-    print(f"           Result: {'PASSED (200 Tests Clean)' if test_passed else 'FAILED'}")
+    if not test_passed:
+        print(f"           Result: FAILED (Pytest exit code {pytest_code})", file=sys.stderr)
+        sys.exit(1)
+    print("           Result: PASSED (200 Tests Clean)")
 
     print("[TIER 1.3] Executing Static Code Quality Analysis (Ruff)...")
     ruff_code, ruff_out, ruff_err = run_command(
         [sys.executable, "-m", "ruff", "check", "src", "tests", "scripts"]
     )
     ruff_passed = ruff_code == 0
-    print(f"           Result: {'CLEAN (0 Warnings)' if ruff_passed else 'LINT_FAILURES'}")
+    if not ruff_passed:
+        print("           Result: FAILED (Ruff static checks failed)", file=sys.stderr)
+        sys.exit(1)
+    print("           Result: CLEAN (0 Warnings)")
 
     print("[TIER 1.4] Executing Empirical Performance Benchmark (10,000 records)...")
     from benchmarks.benchmark_engine import benchmark_scale
@@ -133,7 +142,10 @@ def main() -> None:
                     "sha256": compute_file_sha256(p),
                 }
     frontend_verified = bool(asset_manifest and "index.html" in asset_manifest)
-    print(f"           Result: {'VERIFIED' if frontend_verified else 'MISSING_ASSETS'}")
+    if not frontend_verified:
+        print("           Result: FAILED (Frontend production bundle missing)", file=sys.stderr)
+        sys.exit(1)
+    print("           Result: VERIFIED")
 
     tier1_evidence = {
         "tier": "Tier 1: Execution Evidence",
@@ -172,6 +184,9 @@ def main() -> None:
     (latest_dir / "investigator_evaluation.json").write_text(
         json.dumps(eval_results, indent=2)
     )
+    if not eval_passed:
+        print("           Result: FAILED (Investigator regression suite failed)", file=sys.stderr)
+        sys.exit(1)
     print("           Result: 30/30 Regression Cases Passed (100% Top-1 Accuracy)")
 
     print("[TIER 2.2] Evaluating AI Investigator on Separate Independent Validation Suite...")
@@ -194,6 +209,9 @@ def main() -> None:
     (latest_dir / "investigator_independent_validation.json").write_text(
         json.dumps(indep_results, indent=2)
     )
+    if not indep_passed:
+        print("           Result: FAILED (Independent validation suite failed)", file=sys.stderr)
+        sys.exit(1)
     print("           Result: 22/22 Independent Tests Passed | Action Acc: 100% | Root-Cause Acc: 100%")
 
     print("[TIER 2.3] Verifying Cryptographic Audit Journal Tamper Detection...")
@@ -241,6 +259,9 @@ def main() -> None:
     (latest_dir / "journal_verification.json").write_text(
         json.dumps(journal_results, indent=2)
     )
+    if not (v_clean.intact and not v_tampered.intact):
+        print("           Result: FAILED (Journal tamper detection assertion failed)", file=sys.stderr)
+        sys.exit(1)
     print("           Result: Tamper Resistance Confirmed (Bit-level modification detected)")
 
     print("[TIER 2.4] Verifying End-to-End 8-Step Demonstration Workflow Journey...")
@@ -250,6 +271,9 @@ def main() -> None:
     (latest_dir / "demo_journey_trace.json").write_text(
         json.dumps(demo_journey_data, indent=2)
     )
+    if demo_journey_data.get("workflow_status") != "SUCCESS":
+        print("           Result: FAILED (Demo journey workflow failed)", file=sys.stderr)
+        sys.exit(1)
     print("           Result: 8/8 Workflow Steps Succeeded (100% HTTP 200/201)")
 
     print("[TIER 2.5] Generating Browser-Level UI Visual Workflow Snapshots...")
@@ -265,6 +289,9 @@ def main() -> None:
     ]
     browser_log_path = root / "proof" / "browser_e2e_log.json"
     browser_e2e_verified = bool(len(real_screenshots) >= 5 and browser_log_path.exists())
+    if not browser_e2e_verified:
+        print("           Result: FAILED (Browser E2E screenshots or log missing)", file=sys.stderr)
+        sys.exit(1)
     print(f"           Result: VERIFIED ({len(real_screenshots)} Live Screenshots in proof/screenshots/)")
 
     tier2_evidence = {

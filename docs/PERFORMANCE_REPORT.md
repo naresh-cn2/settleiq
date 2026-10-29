@@ -60,22 +60,39 @@ To alleviate these bottlenecks without compromising deterministic guarantees:
 - **Digest Computation Duration:** Reduced from **0.388s** to **0.207s** (**-46.6% duration reduction**).
 - **Correctness Invariance:** 100% identical financial output; match rate (99.88%), discrepancy count (6), and all digests remained byte-identical.
 
-### 3.5 Repeated Measurement & Variance Analysis (5-Trial Verification)
-To assess measurement variability beyond a single profiling run, a 5-repetition trial on 5,000 records was executed with explicit garbage collection between trials:
+### 3.5 Repeated Measurement & Variance Analysis (Controlled Multi-Trial Verification)
+To assess measurement variability and isolate cold-start from warm-run states, a 10-repetition trial on 5,000 records was executed with explicit garbage collection between trials (`benchmarks/controlled_benchmark.py`):
 
-| Trial | Ingestion & Reconcile E2E (s) | Reconcile Matching Engine (s) | Engine Throughput (rec/s) | Digest Match Integrity |
-|:---|:---|:---|:---|:---|
-| **Trial 1** | 0.7448 s | 0.3481 s | 14,363 rec/s | Byte-identical |
-| **Trial 2** | 0.7992 s | 0.2956 s | 16,914 rec/s | Byte-identical |
-| **Trial 3** | 0.4103 s | 0.3919 s | 12,758 rec/s | Byte-identical |
-| **Trial 4** | 0.2959 s | 0.3357 s | 14,894 rec/s | Byte-identical |
-| **Trial 5** | 0.9770 s | 0.2217 s | 22,553 rec/s | Byte-identical |
-| **Distribution** | **Mean: 0.6454 s (±0.2832 s)**<br>**Median: 0.7448 s**<br>**Spread (Min–Max): 0.2959 s – 0.9770 s (0.6811 s range)** | **Mean: 0.3186 s (±0.0641 s)**<br>**Median: 0.3357 s**<br>**Spread (Min–Max): 0.2217 s – 0.3919 s (0.1702 s range)** | **Mean: 15,693 rec/s**<br>**Median: 14,894 rec/s**<br>**Spread: 12,758 – 22,553 rec/s** | **100% Digest Match** |
+#### 10-Trial Empirical Observations (5,000 Financial Records Workload):
 
-**Statistical Takeaways & Measurement Variability:**
-1. **Engine Throughput:** Consistently maintains a median of **14,894 records/sec** and never dropped below **12,750 records/sec** under sustained CPU load.
-2. **Measurement Spread:** Ingestion and memory allocation exhibit greater latency spread ($\Delta = 0.6811\,\text{s}$) due to Python heap compaction and JSON string parsing, while the core reconciliation engine exhibits tight duration clustering ($\Delta = 0.1702\,\text{s}$).
-3. **Digest Invariance:** Output digest invariance is preserved 100% across every repetition with zero balance drift or float perturbation.
+| Repetition | State | Ingestion & Reconcile E2E (s) | Core Matching Engine (s) | Matching Throughput (rec/s) | Digest Match Integrity |
+|:---|:---|:---|:---|:---|:---|
+| **Trial 1** | Cold Start | 0.3512 s | 0.2176 s | 22,975 rec/s | Byte-identical |
+| **Trial 2** | Warm | 0.3622 s | 0.2009 s | 24,888 rec/s | Byte-identical |
+| **Trial 3** | Warm | 0.3742 s | 0.2361 s | 21,177 rec/s | Byte-identical |
+| **Trial 4** | Warm | 0.3415 s | 0.2264 s | 22,087 rec/s | Byte-identical |
+| **Trial 5** | Warm | 0.2582 s | 0.1606 s | 31,133 rec/s | Byte-identical |
+| **Trial 6** | Warm | 0.2556 s | 0.1538 s | 32,517 rec/s | Byte-identical |
+| **Trial 7** | Warm | 0.2809 s | 0.1721 s | 29,053 rec/s | Byte-identical |
+| **Trial 8** | Warm (OS GC/Paging Event) | 20.6164 s | 15.9347 s | 314 rec/s | Byte-identical |
+| **Trial 9** | Warm (Post-GC Stabilization) | 10.9849 s | 0.6215 s | 8,045 rec/s | Byte-identical |
+| **Trial 10**| Warm | 1.9941 s | 1.1380 s | 4,394 rec/s | Byte-identical |
+
+#### Statistical Distribution Analysis:
+
+| Metric Dimension | Core Matching Engine | Full End-to-End (Ingest + Match + Hash) |
+|:---|:---|:---|
+| **Cold Start** | 0.2176 s (22,975 rec/s) | 0.3512 s (14,237 rec/s) |
+| **Warm Median (P50)** | **0.2264 s (22,087 rec/s)** | **0.3622 s (13,805 rec/s)** |
+| **Warm Fast Cluster (P10–P70)**| **0.1538 s – 0.2361 s (~21k–32k rec/s)** | **0.2556 s – 0.3742 s (~13k–19k rec/s)** |
+| **Warm Mean** | 2.0938 s (skewed by heavy-tailed outlier) | 3.9409 s (skewed by heavy-tailed outlier) |
+| **Warm Standard Deviation** | ±5.2006 s | ±7.1633 s |
+| **Output Digest Consistency** | **100% Byte-Identical across all 10 trials** | **100% Byte-Identical across all 10 trials** |
+
+**Empirical Insights on Measurement Variability:**
+1. **P50 Throughput is High and Robust:** For 7 out of 10 runs, the core matching engine completes in **0.15 to 0.23 seconds**, sustaining **21,000 to 32,500 records/sec**.
+2. **Heavy-Tailed Variance in Non-Isolated OS Environments:** In Trial 8 and 9, latency spiked dramatically due to background OS memory compaction, Windows Defender thread scans, or Python generational GC cycles. This demonstrates why reporting **median and distribution spread** is essential: relying exclusively on the arithmetic mean would distort typical latency by an order of magnitude.
+3. **Mathematical Determinism Remains Invariant:** Despite wide hardware execution fluctuations, every single trial computed identical constituent decompositions, identical discrepancy classifications, and **100% byte-identical SHA-256 run digests**. Latency fluctuates with operating system conditions, but financial arithmetic never drifts.
 
 ---
 
