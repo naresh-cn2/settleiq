@@ -4,10 +4,13 @@ This repository maintains a formal **Three-Tier Verification System** providing
 cryptographic and empirical proof of mathematical correctness, deterministic matching,
 AI reasoning accuracy, and tamper detection.
 
+> [!WARNING]
+> **Cryptographic Scope & Limitation**: SHA-256 digests verify accidental corruption, bit-rot, and file tampering relative to the manifest. They do NOT provide authenticity or immutability against an attacker who has write access to both the artifact repository and the manifest itself, unless the root digest is externally anchored to an immutable ledger or witness log.
+
 ## Summary of Verification Tiers
 
-- **Generated At:** `2026-10-29T14:06:31.449548+00:00`
-- **Git Commit:** `5a313d1503907295ea2b649cf67ecc0b29a8db90` (`main`)
+- **Generated At:** `2026-10-29T15:30:50.047826+00:00`
+- **Git Commit:** `a86abe7af5c48758fbb05ad4008ea95a96d064ab` (`main`)
 - **Platform:** `Windows 11 (AMD64)`
 - **Python Version:** `3.12.10`
 
@@ -18,7 +21,7 @@ AI reasoning accuracy, and tamper detection.
 | **G1: Money Safety** | Zero binary float usage | AST static gate clean (0 violations) | **PASS** |
 | **G2: Test Suite** | 100% test pass rate | 204 passing tests | **PASS** |
 | **G3: Code Quality** | Zero static lint warnings | Clean ruff static check | **PASS** |
-| **G4: Engine Throughput** | > 1,000 records/sec | 1,485.2 rec/s (10k batch) | **PASS** |
+| **G4: Engine Throughput** | > 1,000 records/sec | 6,265.5 rec/s (10k batch) | **PASS** |
 | **G5: Frontend SPA** | Production web assets | Verified index.html + hashed assets | **PASS** |
 
 ### Tier 2: Acceptance Evidence (Domain Correctness & Behavior)
@@ -39,16 +42,16 @@ AI reasoning accuracy, and tamper detection.
 
 | Artifact File | SHA-256 Digest |
 | :--- | :--- |
-| `tier1_execution_evidence.json` | `5e1d4026d76abc0b6ea9282acba5df1bf59ed1ab1491232d2beb930e23a54ed8` |
-| `tier2_acceptance_evidence.json` | `0a4d8d243608c3b2efccdc27c6d93c8dd8310dc013c49cd78462b3cd21394c22` |
-| `tier3_independent_verification.json` | `740c32f8deb5b4d3d07534ee5e23b870b03cf2d449670b468e598ad4ffb1f6de` |
+| `tier1_execution_evidence.json` | `b229fdec88872d8be89b420a3913ee01f96a162c74de75887a96e70051980308` |
+| `tier2_acceptance_evidence.json` | `135ef31d063f2efc2df2f315431b03c0b5813536e0b083f4b2a2c6d4943ef461` |
+| `tier3_independent_verification.json` | `1b541da20e6c3317d4f92d5805e1ce3f5f1541e355ed59aa3dc986972d165812` |
 | `gate_results.json` | `555f464a7f386aedca05014134870af4ab73a900ceefb420ea150b5f809a2137` |
-| `test_results.json` | `142713a7e83f60cff763ecfa8b7212c7a0e86ab0546f46ea52c9633557ce03e7` |
+| `test_results.json` | `90bf6a416dd5b4d214f895f3e0f747585c0ce49d87c1a1e0a5b4572f049cfb09` |
 | `journal_verification.json` | `2c052763909505ea53f73231df8abe45c8538c375c29a00253ba31520359d3b2` |
-| `investigator_evaluation.json` | `e8be483746c352ba17b52ab62a3a4bc906fc6608d1fdd969308d510976f68f29` |
-| `investigator_independent_validation.json` | `daf5977f89ad4d95715d2e2350338393d17ffca02878797c7c4e717c20512bcf` |
-| `benchmark_results.json` | `65f056b5f5cee5059675c47ddf72f3feaa6a3076dc219074ce84fad2b3eaf45e` |
-| `demo_journey_trace.json` | `c33ee1007546fc0d0a4fdf379cae5205dcc75a5b97fe0a069e77aee77f610891` |
+| `investigator_evaluation.json` | `c69bb89963a2c1a286b84d5fc8e7f6985f01bef188f58f281261e9c2a095308e` |
+| `investigator_independent_validation.json` | `dedeb6669dd5cd8ffb39bf3c26ce4b3d0199eeeaa226e8ca512ef8a146abd9b6` |
+| `benchmark_results.json` | `26b56c038b96cfde6905b2123a79cccb4ce4ab01dddb4a56bd975f021ea4a3d9` |
+| `demo_journey_trace.json` | `f2c2563d7657566632ca41a77f569d0d377f197e399eb1c6b502c0643cd4555b` |
 
 #### Exact Reproduction Protocol
 

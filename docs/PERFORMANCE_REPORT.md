@@ -103,7 +103,7 @@ To ensure full mathematical transparency and prevent ambiguity in percentile ran
 
 **Empirical Insights on Measurement Variability:**
 1. **P50 Throughput is High and Robust:** For 7 out of 10 runs, the core matching engine completes in **0.15 to 0.23 seconds**, sustaining **21,000 to 32,500 records/sec**.
-2. **Heavy-Tailed Variance in Non-Isolated OS Environments:** In Trial 8 and 9, latency spiked dramatically due to background OS memory compaction, Windows Defender thread scans, or Python generational GC cycles. This demonstrates why reporting **median and distribution spread** is essential: relying exclusively on the arithmetic mean would distort typical latency by an order of magnitude.
+2. **Heavy-Tailed Latency Spikes in Non-Isolated OS Environments:** In Trials 8 and 9, latency spiked dramatically (reaching 15.93 s in Trial 8). While potential causes include host operating-system thread scheduling, memory compaction, or generational garbage collection pauses, these remain unconfirmed hypotheses pending isolated low-level kernel profiling. This demonstrates why reporting **median (0.2264 s) and distribution spread (0.15 s to 15.93 s)** is statistically essential: relying exclusively on the arithmetic mean (2.09 s) would distort typical latency by an order of magnitude while obscuring significant outliers.
 3. **Mathematical Determinism Remains Invariant:** Despite wide hardware execution fluctuations, every single trial computed identical constituent decompositions, identical discrepancy classifications, and **100% byte-identical SHA-256 run digests**. Latency fluctuates with operating system conditions, but financial arithmetic never drifts.
 
 ---

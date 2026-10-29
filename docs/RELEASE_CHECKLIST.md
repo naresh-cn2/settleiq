@@ -20,7 +20,7 @@ Every item in this section is verified by executable, reproducible code and cryp
 | **Abstention Behavior** | Strict refusal to guess on missing, malformed, or contradictory inputs | `test_abstention_and_refusal_matrix` | **100% FAIL-CLOSED** |
 | **Real Browser E2E** | Live Puppeteer automation driving compiled React SPA via Chrome | `verify_browser_e2e.mjs` (6 PNG captures) | **0 PAGE / NET ERRORS** |
 | **Audit Journal Integrity**| Tamper detection on payload modification, reordering, and deletion | `test_journal_integrity.py` | **VERIFIED DETECTED** |
-| **Manifest Integrity** | Three-tier SHA-256 proof manifest verified against disk hashes | `test_proof_manifest_integrity.py` | **100% DIGEST MATCH** |
+| **Manifest Integrity** | Three-tier SHA-256 proof manifest verified against disk hashes (detects modification, deletion, and untracked file injection; does not defend against adversary rewriting both manifest and artifacts without external witness anchoring) | `test_proof_manifest_integrity.py` | **100% DIGEST MATCH** |
 | **Proof Fail-Closed** | Proof capture aborts non-zero if any gate fails | `scripts/capture_proof.py` (tested) | **FAIL-CLOSED** |
 
 ---

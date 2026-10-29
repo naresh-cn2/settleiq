@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-10-29T14:07:04.820225+00:00",
+  "verified_at": "2026-10-29T15:31:10.451304+00:00",
   "workflow_status": "SUCCESS",
   "total_steps": 8,
   "steps": [
@@ -8,7 +8,7 @@
       "title": "Seed Enterprise Synthetic Ledger",
       "path": "/v1/demo/seed",
       "http_status": 201,
-      "timestamp": "2026-10-29T14:07:04.562515+00:00",
+      "timestamp": "2026-10-29T15:31:10.363100+00:00",
       "data_summary": {
         "status": "seeded",
         "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
@@ -23,7 +23,7 @@
       "title": "Inspect Calculated Reconciliation Metrics",
       "path": "/v1/runs/bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a/metrics",
       "http_status": 200,
-      "timestamp": "2026-10-29T14:07:04.636001+00:00",
+      "timestamp": "2026-10-29T15:31:10.375099+00:00",
       "data_summary": {
         "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
         "numerator": 19,
@@ -43,7 +43,7 @@
       "title": "Query Run Discrepancy Queue",
       "path": "/v1/runs/bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a/discrepancies",
       "http_status": 200,
-      "timestamp": "2026-10-29T14:07:04.663101+00:00",
+      "timestamp": "2026-10-29T15:31:10.386262+00:00",
       "data_summary": {
         "count": 7,
         "types": [
@@ -62,7 +62,7 @@
       "title": "Invoke Autonomous AI Forensic Investigator",
       "path": "/v1/discrepancies/dsc:AMOUNT_BREAK:po_2/investigate",
       "http_status": 200,
-      "timestamp": "2026-10-29T14:07:04.711279+00:00",
+      "timestamp": "2026-10-29T15:31:10.400268+00:00",
       "data_summary": {
         "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
         "type": "AMOUNT_BREAK",
@@ -77,7 +77,7 @@
       "title": "Reconstruct Visual Fund Journey Trace",
       "path": "/v1/runs/bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a/trace/po_2",
       "http_status": 200,
-      "timestamp": "2026-10-29T14:07:04.734615+00:00",
+      "timestamp": "2026-10-29T15:31:10.410394+00:00",
       "data_summary": {
         "nodes_count": 0,
         "gross": "0.00",
@@ -93,7 +93,7 @@
       "title": "Authorize and Commit Resolution",
       "path": "/v1/discrepancies/dsc:AMOUNT_BREAK:po_2/resolve",
       "http_status": 200,
-      "timestamp": "2026-10-29T14:07:04.779729+00:00",
+      "timestamp": "2026-10-29T15:31:10.428964+00:00",
       "data_summary": {
         "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
         "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
@@ -241,6 +241,26 @@
               "selected_candidate": null,
               "resolved_by": "demo_lead_auditor",
               "resolved_at": "2026-10-29T14:07:04.759985+00:00"
+            },
+            {
+              "resolution_id": "res_dsc:AMOUNT_BREAK:po_2_1793287792026",
+              "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+              "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+              "status": "RESOLVED",
+              "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
+              "selected_candidate": null,
+              "resolved_by": "investigator",
+              "resolved_at": "2026-10-29T15:29:52.026478+00:00"
+            },
+            {
+              "resolution_id": "res_dsc:AMOUNT_BREAK:po_2_1793287870419",
+              "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+              "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+              "status": "RESOLVED",
+              "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
+              "selected_candidate": null,
+              "resolved_by": "demo_lead_auditor",
+              "resolved_at": "2026-10-29T15:31:10.419972+00:00"
             }
           ]
         }
@@ -251,10 +271,10 @@
       "title": "Confirm Persistent Database State (RESOLVED)",
       "path": "/v1/discrepancies/dsc:AMOUNT_BREAK:po_2",
       "http_status": 200,
-      "timestamp": "2026-10-29T14:07:04.800203+00:00",
+      "timestamp": "2026-10-29T15:31:10.439123+00:00",
       "data_summary": {
         "status": "RESOLVED",
-        "resolution_history_count": 13
+        "resolution_history_count": 15
       }
     },
     {
@@ -262,12 +282,12 @@
       "title": "Cryptographically Verify Hash-Chained Audit Journal",
       "path": "/v1/journal/verify",
       "http_status": 200,
-      "timestamp": "2026-10-29T14:07:04.820225+00:00",
+      "timestamp": "2026-10-29T15:31:10.451304+00:00",
       "data_summary": {
         "intact": true,
         "findings": [],
-        "entries_verified": 14,
-        "head_digest": "76531deb7d584e293d28d4ab1eef9448ba95b128835f06d110539485ca97aa97",
+        "entries_verified": 16,
+        "head_digest": "07489c198e624f31737b3b6e468c606eda6a9c5d151a6adfe9ec8d30c877d6b2",
         "detects": [
           "payload modification",
           "digest modification",

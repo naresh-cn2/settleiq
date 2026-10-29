@@ -383,6 +383,8 @@ def main() -> None:
         "This repository maintains a formal **Three-Tier Verification System** providing\n",
         "cryptographic and empirical proof of mathematical correctness, deterministic matching,\n",
         "AI reasoning accuracy, and tamper detection.\n\n",
+        "> [!WARNING]\n",
+        "> **Cryptographic Scope & Limitation**: SHA-256 digests verify accidental corruption, bit-rot, and file tampering relative to the manifest. They do NOT provide authenticity or immutability against an attacker who has write access to both the artifact repository and the manifest itself, unless the root digest is externally anchored to an immutable ledger or witness log.\n\n",
         "## Summary of Verification Tiers\n\n",
         f"- **Generated At:** `{timestamp}`\n",
         f"- **Git Commit:** `{git_info['commit_sha']}` (`{git_info['branch']}`)\n",

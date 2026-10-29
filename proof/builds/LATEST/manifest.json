@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-10-29T14:06:31.449548+00:00",
+  "timestamp": "2026-10-29T15:30:50.047826+00:00",
   "git": {
-    "commit_sha": "5a313d1503907295ea2b649cf67ecc0b29a8db90",
+    "commit_sha": "a86abe7af5c48758fbb05ad4008ea95a96d064ab",
     "branch": "main",
     "is_dirty": true
   },
   "tier1": {
     "tier": "Tier 1: Execution Evidence",
     "description": "Deterministic proof that code compiles, runs, and satisfies all quality gates",
-    "timestamp": "2026-10-29T14:06:31.449548+00:00",
+    "timestamp": "2026-10-29T15:30:50.047826+00:00",
     "gates": {
       "money_safety_gate": true,
       "test_suite": true,
@@ -18,11 +18,11 @@
     },
     "performance": {
       "record_count": 10000,
-      "total_duration_secs": 10.0078,
-      "validation_duration_secs": 3.2746,
-      "validation_throughput_rec_per_sec": 3053.8,
-      "reconciliation_duration_secs": 6.7331,
-      "reconciliation_throughput_rec_per_sec": 1485.2,
+      "total_duration_secs": 3.9404,
+      "validation_duration_secs": 2.3443,
+      "validation_throughput_rec_per_sec": 4265.6,
+      "reconciliation_duration_secs": 1.596,
+      "reconciliation_throughput_rec_per_sec": 6265.5,
       "peak_memory_mb": 17.75,
       "matched_numerator": 9999,
       "eligible_denominator": 10000,
@@ -34,14 +34,14 @@
   "tier2": {
     "tier": "Tier 2: Acceptance Evidence",
     "description": "Forensic acceptance criteria verified against specifications and domain constraints",
-    "timestamp": "2026-10-29T14:06:31.449548+00:00",
+    "timestamp": "2026-10-29T15:30:50.047826+00:00",
     "investigator_regression_evaluation": {
       "passed": true,
       "benchmark_cases_evaluated": 30,
       "top1_action_accuracy": 1.0,
       "confidence_accuracy": 1.0,
       "unsupported_claim_rate": 0.0,
-      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 13 items\n\ntests\\unit\\test_investigator_evaluation.py .............                 [100%]\n\n============================= 13 passed in 0.29s =============================="
+      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 13 items\n\ntests\\unit\\test_investigator_evaluation.py .............                 [100%]\n\n============================= 13 passed in 0.14s =============================="
     },
     "investigator_independent_validation": {
       "passed": true,
@@ -53,7 +53,7 @@
       "state_immutability_verified": true,
       "randomized_monte_carlo_verified": true,
       "unsupported_claim_rate": 0.0,
-      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 22 items\n\ntests\\unit\\test_investigator_independent_validation.py ................. [ 77%]\n.....                                                                    [100%]\n\n============================= 22 passed in 0.30s =============================="
+      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 22 items\n\ntests\\unit\\test_investigator_independent_validation.py ................. [ 77%]\n.....                                                                    [100%]\n\n============================= 22 passed in 0.10s =============================="
     },
     "audit_journal_tamper_verified": true,
     "demo_journey_workflow": "SUCCESS",
@@ -76,9 +76,9 @@
   "tier3": {
     "tier": "Tier 3: Independent Verification",
     "description": "Cryptographically verifiable bundle reproducible by any third-party auditor",
-    "timestamp": "2026-10-29T14:06:31.449548+00:00",
+    "timestamp": "2026-10-29T15:30:50.047826+00:00",
     "git": {
-      "commit_sha": "5a313d1503907295ea2b649cf67ecc0b29a8db90",
+      "commit_sha": "a86abe7af5c48758fbb05ad4008ea95a96d064ab",
       "branch": "main",
       "is_dirty": true
     },
@@ -90,14 +90,14 @@
     },
     "artifacts_sha256": {
       "gate_results.json": "555f464a7f386aedca05014134870af4ab73a900ceefb420ea150b5f809a2137",
-      "test_results.json": "142713a7e83f60cff763ecfa8b7212c7a0e86ab0546f46ea52c9633557ce03e7",
+      "test_results.json": "90bf6a416dd5b4d214f895f3e0f747585c0ce49d87c1a1e0a5b4572f049cfb09",
       "journal_verification.json": "2c052763909505ea53f73231df8abe45c8538c375c29a00253ba31520359d3b2",
-      "investigator_evaluation.json": "e8be483746c352ba17b52ab62a3a4bc906fc6608d1fdd969308d510976f68f29",
-      "investigator_independent_validation.json": "daf5977f89ad4d95715d2e2350338393d17ffca02878797c7c4e717c20512bcf",
-      "benchmark_results.json": "65f056b5f5cee5059675c47ddf72f3feaa6a3076dc219074ce84fad2b3eaf45e",
-      "demo_journey_trace.json": "c33ee1007546fc0d0a4fdf379cae5205dcc75a5b97fe0a069e77aee77f610891",
-      "tier1_execution_evidence.json": "5e1d4026d76abc0b6ea9282acba5df1bf59ed1ab1491232d2beb930e23a54ed8",
-      "tier2_acceptance_evidence.json": "0a4d8d243608c3b2efccdc27c6d93c8dd8310dc013c49cd78462b3cd21394c22"
+      "investigator_evaluation.json": "c69bb89963a2c1a286b84d5fc8e7f6985f01bef188f58f281261e9c2a095308e",
+      "investigator_independent_validation.json": "dedeb6669dd5cd8ffb39bf3c26ce4b3d0199eeeaa226e8ca512ef8a146abd9b6",
+      "benchmark_results.json": "26b56c038b96cfde6905b2123a79cccb4ce4ab01dddb4a56bd975f021ea4a3d9",
+      "demo_journey_trace.json": "f2c2563d7657566632ca41a77f569d0d377f197e399eb1c6b502c0643cd4555b",
+      "tier1_execution_evidence.json": "b229fdec88872d8be89b420a3913ee01f96a162c74de75887a96e70051980308",
+      "tier2_acceptance_evidence.json": "135ef31d063f2efc2df2f315431b03c0b5813536e0b083f4b2a2c6d4943ef461"
     },
     "reproduction_commands": [
       "python -m settleiq.cli gate",
