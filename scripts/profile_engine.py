@@ -49,7 +49,8 @@ def run_profile(scale: int = 5000) -> str:
     full_report = summary_header + output
     out_file = root / "proof" / "engine_profile_stats.txt"
     out_file.parent.mkdir(parents=True, exist_ok=True)
-    out_file.write_text(full_report, encoding="utf-8")
+    with out_file.open("w", newline="\n", encoding="utf-8") as f:
+        f.write(full_report)
     print(f"Profiling stats saved to {out_file}")
     return full_report
 

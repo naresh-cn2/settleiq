@@ -9,8 +9,8 @@ AI reasoning accuracy, and tamper detection.
 
 ## Summary of Verification Tiers
 
-- **Generated At:** `2026-10-29T15:30:50.047826+00:00`
-- **Git Commit:** `a86abe7af5c48758fbb05ad4008ea95a96d064ab` (`main`)
+- **Generated At:** `2026-10-29T16:41:54.602863+00:00`
+- **Git Commit:** `63f83895ccffd7af6c6675a92935f06fb9711ca1` (`main`)
 - **Platform:** `Windows 11 (AMD64)`
 - **Python Version:** `3.12.10`
 
@@ -21,7 +21,7 @@ AI reasoning accuracy, and tamper detection.
 | **G1: Money Safety** | Zero binary float usage | AST static gate clean (0 violations) | **PASS** |
 | **G2: Test Suite** | 100% test pass rate | 204 passing tests | **PASS** |
 | **G3: Code Quality** | Zero static lint warnings | Clean ruff static check | **PASS** |
-| **G4: Engine Throughput** | > 1,000 records/sec | 6,265.5 rec/s (10k batch) | **PASS** |
+| **G4: Engine Throughput** | > 1,000 records/sec | 3,812.4 rec/s (10k batch) | **PASS** |
 | **G5: Frontend SPA** | Production web assets | Verified index.html + hashed assets | **PASS** |
 
 ### Tier 2: Acceptance Evidence (Domain Correctness & Behavior)
@@ -42,16 +42,16 @@ AI reasoning accuracy, and tamper detection.
 
 | Artifact File | SHA-256 Digest |
 | :--- | :--- |
-| `tier1_execution_evidence.json` | `b229fdec88872d8be89b420a3913ee01f96a162c74de75887a96e70051980308` |
-| `tier2_acceptance_evidence.json` | `135ef31d063f2efc2df2f315431b03c0b5813536e0b083f4b2a2c6d4943ef461` |
-| `tier3_independent_verification.json` | `1b541da20e6c3317d4f92d5805e1ce3f5f1541e355ed59aa3dc986972d165812` |
-| `gate_results.json` | `555f464a7f386aedca05014134870af4ab73a900ceefb420ea150b5f809a2137` |
-| `test_results.json` | `90bf6a416dd5b4d214f895f3e0f747585c0ce49d87c1a1e0a5b4572f049cfb09` |
-| `journal_verification.json` | `2c052763909505ea53f73231df8abe45c8538c375c29a00253ba31520359d3b2` |
-| `investigator_evaluation.json` | `c69bb89963a2c1a286b84d5fc8e7f6985f01bef188f58f281261e9c2a095308e` |
-| `investigator_independent_validation.json` | `dedeb6669dd5cd8ffb39bf3c26ce4b3d0199eeeaa226e8ca512ef8a146abd9b6` |
-| `benchmark_results.json` | `26b56c038b96cfde6905b2123a79cccb4ce4ab01dddb4a56bd975f021ea4a3d9` |
-| `demo_journey_trace.json` | `f2c2563d7657566632ca41a77f569d0d377f197e399eb1c6b502c0643cd4555b` |
+| `tier1_execution_evidence.json` | `773fbef587a5f00b970ff229676ef31fc6e1c58c2e2fc73dca3c5d57f6734c4f` |
+| `tier2_acceptance_evidence.json` | `e80a6fe9d33bcada9ec4842ba38f99923a220dbed2be97e5f0c4b0d316cc4fac` |
+| `tier3_independent_verification.json` | `73d13698b4232954c534756d6320561f09d40a270a42d5f886db2a54b4525d93` |
+| `gate_results.json` | `81ba477737d358ce968652539dda198831e516cbb1f27b42783de074711c09d8` |
+| `test_results.json` | `5b0b9e5440922130430665c63f7e1cdd5bdbaf2ac12eb54415f21501b7c4bfc9` |
+| `journal_verification.json` | `4df66302f28a77bbc9651711d2db14562816475a51a241ba6438e70b65d8a1e2` |
+| `investigator_evaluation.json` | `6acbcf9235d015e87c69ac6840c96f166c86efb53e51c0cf38dfc837969541fe` |
+| `investigator_independent_validation.json` | `6180c7d3252788b504bd597380099f2751d7671bac64e3354f6a37d78d6d8348` |
+| `benchmark_results.json` | `e5a8bdb4d7be4e6bae162e8973ebc7f905dde9c0386d90ebe9d76fc95d215c86` |
+| `demo_journey_trace.json` | `463e4d47c337bdab8b55e20d7be8abd14441c4e30a4918e1773c5adfb4ee7927` |
 
 #### Exact Reproduction Protocol
 

@@ -46,6 +46,10 @@ class TestProofManifestIntegrity:
         for filename, expected_hash in checksums.items():
             artifact_path = proof_dir / filename
             assert artifact_path.exists(), f"Artifact {filename} missing from disk"
+            raw_bytes = artifact_path.read_bytes()
+            assert b"\r\n" not in raw_bytes, (
+                f"Artifact {filename} must have canonical POSIX LF line endings"
+            )
             actual_hash = _sha256(artifact_path)
             assert actual_hash == expected_hash, (
                 f"Hash mismatch for {filename}: expected {expected_hash}, got {actual_hash}"

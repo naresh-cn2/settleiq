@@ -47,6 +47,18 @@ def compute_file_sha256(path: Path) -> str:
     return hasher.hexdigest()
 
 
+def write_canonical_text(path: Path, content: str) -> None:
+    """Write text strictly normalized to POSIX LF line endings.
+
+    Guarantees cross-platform bit-identical SHA-256 digests across Windows, Linux, and macOS.
+    """
+    normalized = content.replace("\r\n", "\n")
+    if not normalized.endswith("\n"):
+        normalized += "\n"
+    with path.open("w", newline="\n", encoding="utf-8") as f:
+        f.write(normalized)
+
+
 def main() -> None:
     print("================================================================================")
     print("SETTLEIQ THREE-TIER PROOF-OF-WORK VERIFICATION PIPELINE")
@@ -81,7 +93,7 @@ def main() -> None:
         "stdout": gate_out.strip(),
         "stderr": gate_err.strip(),
     }
-    (latest_dir / "gate_results.json").write_text(json.dumps(gate_results, indent=2))
+    write_canonical_text(latest_dir / "gate_results.json", json.dumps(gate_results, indent=2))
     if not gate_passed:
         print("           Result: FAILED (Money safety gate violated)", file=sys.stderr)
         sys.exit(1)
@@ -98,7 +110,7 @@ def main() -> None:
         "stdout": pytest_out[-3000:] if len(pytest_out) > 3000 else pytest_out,
         "stderr": pytest_err.strip(),
     }
-    (latest_dir / "test_results.json").write_text(json.dumps(test_results, indent=2))
+    write_canonical_text(latest_dir / "test_results.json", json.dumps(test_results, indent=2))
     if not test_passed:
         print(f"           Result: FAILED (Pytest exit code {pytest_code})", file=sys.stderr)
         sys.exit(1)
@@ -118,7 +130,7 @@ def main() -> None:
     from benchmarks.benchmark_engine import benchmark_scale
 
     bm_data = benchmark_scale(10000)
-    (latest_dir / "benchmark_results.json").write_text(json.dumps(bm_data, indent=2))
+    write_canonical_text(latest_dir / "benchmark_results.json", json.dumps(bm_data, indent=2))
     print(
         f"           Result: {bm_data['reconciliation_throughput_rec_per_sec']:,.1f} rec/s "
         f"({bm_data['total_duration_secs']}s, {bm_data['peak_memory_mb']} MB peak)"
@@ -161,8 +173,9 @@ def main() -> None:
         "performance": bm_data,
         "frontend_assets_count": len(asset_manifest),
     }
-    (latest_dir / "tier1_execution_evidence.json").write_text(
-        json.dumps(tier1_evidence, indent=2)
+    write_canonical_text(
+        latest_dir / "tier1_execution_evidence.json",
+        json.dumps(tier1_evidence, indent=2),
     )
 
     # ==========================================================================
@@ -181,8 +194,9 @@ def main() -> None:
         "unsupported_claim_rate": 0.0 if eval_passed else 1.0,
         "stdout": eval_out.strip(),
     }
-    (latest_dir / "investigator_evaluation.json").write_text(
-        json.dumps(eval_results, indent=2)
+    write_canonical_text(
+        latest_dir / "investigator_evaluation.json",
+        json.dumps(eval_results, indent=2),
     )
     if not eval_passed:
         print("           Result: FAILED (Investigator regression suite failed)", file=sys.stderr)
@@ -206,8 +220,9 @@ def main() -> None:
         "unsupported_claim_rate": 0.0 if indep_passed else 1.0,
         "stdout": indep_out.strip(),
     }
-    (latest_dir / "investigator_independent_validation.json").write_text(
-        json.dumps(indep_results, indent=2)
+    write_canonical_text(
+        latest_dir / "investigator_independent_validation.json",
+        json.dumps(indep_results, indent=2),
     )
     if not indep_passed:
         print("           Result: FAILED (Independent validation suite failed)", file=sys.stderr)
@@ -256,8 +271,9 @@ def main() -> None:
         "tamper_detection_successful": not v_tampered.intact,
         "tamper_findings": [[f[0], str(f[1]), f[2]] for f in v_tampered.findings],
     }
-    (latest_dir / "journal_verification.json").write_text(
-        json.dumps(journal_results, indent=2)
+    write_canonical_text(
+        latest_dir / "journal_verification.json",
+        json.dumps(journal_results, indent=2),
     )
     if not (v_clean.intact and not v_tampered.intact):
         print("           Result: FAILED (Journal tamper detection assertion failed)", file=sys.stderr)
@@ -268,8 +284,9 @@ def main() -> None:
     from scripts.verify_demo_journey import verify_demo_journey
 
     demo_journey_data = verify_demo_journey()
-    (latest_dir / "demo_journey_trace.json").write_text(
-        json.dumps(demo_journey_data, indent=2)
+    write_canonical_text(
+        latest_dir / "demo_journey_trace.json",
+        json.dumps(demo_journey_data, indent=2),
     )
     if demo_journey_data.get("workflow_status") != "SUCCESS":
         print("           Result: FAILED (Demo journey workflow failed)", file=sys.stderr)
@@ -306,8 +323,9 @@ def main() -> None:
         "real_browser_screenshots": real_screenshots,
         "browser_e2e_verified": browser_e2e_verified,
     }
-    (latest_dir / "tier2_acceptance_evidence.json").write_text(
-        json.dumps(tier2_evidence, indent=2)
+    write_canonical_text(
+        latest_dir / "tier2_acceptance_evidence.json",
+        json.dumps(tier2_evidence, indent=2),
     )
 
     # ==========================================================================
@@ -362,7 +380,7 @@ def main() -> None:
         ],
     }
     tier3_path = latest_dir / "tier3_independent_verification.json"
-    tier3_path.write_text(json.dumps(tier3_verification, indent=2))
+    write_canonical_text(tier3_path, json.dumps(tier3_verification, indent=2))
     tier3_sha = compute_file_sha256(tier3_path)
 
     # Combined master manifest
@@ -373,7 +391,7 @@ def main() -> None:
         "tier2": tier2_evidence,
         "tier3": tier3_verification,
     }
-    (latest_dir / "manifest.json").write_text(json.dumps(master_manifest, indent=2))
+    write_canonical_text(latest_dir / "manifest.json", json.dumps(master_manifest, indent=2))
 
     # Top-level PROOF_MANIFEST.md
     bm_rate = f"{bm_data['reconciliation_throughput_rec_per_sec']:,.1f}"
@@ -437,7 +455,7 @@ def main() -> None:
         "python scripts/capture_proof.py\n",
         "```\n",
     ]
-    proof_md.write_text("".join(proof_lines), encoding="utf-8")
+    write_canonical_text(proof_md, "".join(proof_lines))
 
     print("================================================================================")
     print("THREE-TIER PROOF PIPELINE COMPLETE: Stored in proof/builds/LATEST/")

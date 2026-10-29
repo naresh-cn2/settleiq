@@ -56,7 +56,7 @@ jobs:
         run: python -m settleiq.cli gate
 
       - name: Run Ruff Linter
-        run: python -m ruff check src tests
+        run: python -m ruff check src tests scripts benchmarks
 
       - name: Run Pytest Test Suite
         env:

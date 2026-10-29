@@ -194,7 +194,8 @@ def verify_demo_journey() -> dict[str, object]:
     }
 
     out_file = root / "proof" / "demo_journey_trace.json"
-    out_file.write_text(json.dumps(output, indent=2), encoding="utf-8")
+    with out_file.open("w", newline="\n", encoding="utf-8") as f:
+        f.write(json.dumps(output, indent=2) + "\n")
     print("================================================================================")
     print(f"DEMO WORKFLOW VERIFIED: Saved execution trace to {out_file}")
     print("================================================================================")
