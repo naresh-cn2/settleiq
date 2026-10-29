@@ -12,6 +12,56 @@ async function fetchApi<T>(path: string, options: RequestInit = {}): Promise<T> 
   return res.json()
 }
 
+export interface TraceNode {
+  node_id: string
+  kind: string
+  amount: string
+  currency: string
+  reference: string
+  date: string
+  status: string
+  metadata: Record<string, any>
+}
+
+export interface TransactionTrace {
+  nodes: TraceNode[]
+  gross_amount: string
+  fee_amount: string
+  refund_amount: string
+  net_expected: string
+  net_paid: string
+  bank_deposited: string
+  residual: string
+  is_closed: boolean
+}
+
+export interface Hypothesis {
+  rank: number
+  title: string
+  description: string
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'INSUFFICIENT'
+  supporting_evidence: string[]
+  contradicting_evidence: string[]
+  recommended_action: string
+}
+
+export interface InvestigationReport {
+  discrepancy_id: string
+  type: string
+  severity: string
+  constituent_id: string
+  status: string
+  reason: string
+  trace: TransactionTrace
+  hypotheses: Hypothesis[]
+  recommended_action: string
+  draft_resolution: {
+    action: string
+    reason: string
+    resolved_by: string
+  }
+}
+
 export const api = {
   runs: {
     list: () => fetchApi<{ count: number; runs: any[] }>('/runs'),
@@ -62,6 +112,24 @@ export const api = {
         if (!r.ok) return r.json().then(d => { throw new Error(d.detail) })
         return r.json()
       }),
+  },
+
+  investigation: {
+    get: (id: string) => fetchApi<InvestigationReport>(`/discrepancies/${id}/investigate`),
+    trace: (runId: string, constituentId: string) =>
+      fetchApi<TransactionTrace>(`/runs/${runId}/trace/${constituentId}`),
+  },
+
+  demo: {
+    seed: () =>
+      fetchApi<{
+        status: string
+        run_id: string
+        discrepancy_count: number
+        numerator: number
+        denominator: number
+        rate: number
+      }>('/demo/seed', { method: 'POST' }),
   },
 
   journal: {

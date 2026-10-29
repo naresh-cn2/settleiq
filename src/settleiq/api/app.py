@@ -332,6 +332,62 @@ def get_discrepancy(discrepancy_id: str) -> dict[str, object]:
     return dict(stored)
 
 
+@app.get(f"{API_PREFIX}/discrepancies/{{discrepancy_id}}/investigate")
+@app.get(f"{API_PREFIX}/runs/{{run_id}}/discrepancies/{{discrepancy_id}}/investigate")
+def investigate_discrepancy_endpoint(
+    discrepancy_id: str,
+    run_id: str | None = None,
+) -> dict[str, object]:
+    """Autonomous evidence-backed AI investigation for a discrepancy."""
+    stored = _store().find_discrepancy(discrepancy_id)
+    if stored is None or (run_id is not None and stored.get("run_id") != run_id):
+        raise HTTPException(status_code=404, detail={"error": "discrepancy_not_found"})
+    from settleiq.engine.investigator import investigate_discrepancy
+
+    report = investigate_discrepancy(stored)
+    return report.to_canonical()
+
+
+@app.get(f"{API_PREFIX}/runs/{{run_id}}/trace/{{constituent_id}}")
+def get_constituent_trace_endpoint(
+    run_id: str,
+    constituent_id: str,
+) -> dict[str, object]:
+    """Visual transaction trace for a constituent within a reconciliation run."""
+    stored = _store().find_discrepancy(constituent_id)
+    from settleiq.engine.investigator import build_transaction_trace
+
+    dummy_disc = stored or {
+        "constituent_id": constituent_id,
+        "type": "NET_GROSS_BREAK",
+        "reason": "",
+    }
+    trace = build_transaction_trace(dummy_disc)
+    return trace.to_canonical()
+
+
+@app.post(f"{API_PREFIX}/demo/seed", status_code=201)
+def seed_demo_run() -> dict[str, object]:
+    """One-click seed creating a realistic reconciliation run with injected defects."""
+    from settleiq.fixtures.generator import generate
+
+    dataset = generate()
+    validated = validate_records(dataset.records)
+    params = RunParameters("2026-10-01", "2026-10-31", settlement_window_days=3)
+    result = reconcile(validated.accepted, params)
+    store = _store()
+    journal = _journal()
+    run_id = store.record_run(result, journal=journal)
+    return {
+        "status": "seeded",
+        "run_id": run_id,
+        "numerator": result.metrics.numerator,
+        "denominator": result.metrics.denominator,
+        "rate": result.metrics.rate,
+        "discrepancy_count": len(result.discrepancies),
+    }
+
+
 @app.post(f"{API_PREFIX}/discrepancies/{{discrepancy_id}}/resolve")
 @app.post(f"{API_PREFIX}/runs/{{run_id}}/discrepancies/{{discrepancy_id}}/resolve")
 def resolve_discrepancy(

@@ -1,0 +1,13 @@
+{
+  "record_count": 10000,
+  "total_duration_secs": 7.4861,
+  "validation_duration_secs": 2.1102,
+  "validation_throughput_rec_per_sec": 4738.9,
+  "reconciliation_duration_secs": 5.3759,
+  "reconciliation_throughput_rec_per_sec": 1860.2,
+  "peak_memory_mb": 19.03,
+  "matched_numerator": 9999,
+  "eligible_denominator": 10000,
+  "auto_match_rate": 0.9999,
+  "discrepancy_count": 1
+}

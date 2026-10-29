@@ -1,6 +1,6 @@
-# SettleIQ — Documentation Index
+# SettleIQ — Master Documentation & Knowledge Base Index
 
-SettleIQ is an **independent** payment settlement reconciliation and discrepancy investigation engine, built as a demonstrated engineering artifact for employment evidence. It is not governed by any other repository, and it makes no claim about competitors, no market-gap claim, and no commercial-viability claim.
+SettleIQ is an independent payment settlement reconciliation and discrepancy investigation platform, built as a verified, high-performance financial engineering product.
 
 ---
 
@@ -32,22 +32,62 @@ All specifications in `docs/specifications/` govern the implemented architecture
 
 ---
 
-## 2. Engineering Verification Reports
+## 2. Product Strategy & User Experience
 
-| Report | Purpose | Verification Status |
-|---|---|---|
-| [`SECURITY_REVIEW.md`](SECURITY_REVIEW.md) | Threat modeling, attack surfaces, security baseline, constant-time auth | **VERIFIED** (`tests/integration/test_security_hardening.py`) |
-| [`PERFORMANCE_REPORT.md`](PERFORMANCE_REPORT.md) | Empirical scaling benchmarks (1k, 10k, 50k, 100k records) | **VERIFIED** (`benchmarks/benchmark_engine.py`) |
-| [`DEPLOYMENT.md`](DEPLOYMENT.md) | Production Docker, PostgreSQL, migrations, backup/restore guide | **VERIFIED** (`Dockerfile`, `docker-compose.yml`) |
+| Document | Purpose |
+|---|---|
+| [`product/PRODUCT_VISION.md`](product/PRODUCT_VISION.md) | Core mission, 5 architectural tenets, and target outcomes |
+| [`product/PRODUCT_REQUIREMENTS.md`](product/PRODUCT_REQUIREMENTS.md) | Formal functional (FR-01…08) and non-functional requirements |
+| [`product/USER_PERSONAS.md`](product/USER_PERSONAS.md) | 4 enterprise personas and 60-second guided workflow map |
+| [`product/PRODUCT_ACCEPTANCE_CRITERIA.md`](product/PRODUCT_ACCEPTANCE_CRITERIA.md) | Verifiable quality gates (G1 through G6) |
 
 ---
 
-## 3. Implementation Status Summary
+## 3. Competitive Intelligence & Research
+
+| Dossier | Description |
+|---|---|
+| [`research/COMPETITIVE_LANDSCAPE.md`](research/COMPETITIVE_LANDSCAPE.md) | Deep profiles: BlackLine, Modern Treasury, HighRadius, Numeric |
+| [`research/COMMERCIAL_PRODUCT_MATRIX.md`](research/COMMERCIAL_PRODUCT_MATRIX.md) | 25-dimension feature matrix comparing SettleIQ against commercial vendors |
+| [`research/OPEN_SOURCE_REPOSITORY_AUDIT.md`](research/OPEN_SOURCE_REPOSITORY_AUDIT.md) | Technical teardown of open-source reconciliation tools |
+| [`research/FEATURE_GAP_ANALYSIS.md`](research/FEATURE_GAP_ANALYSIS.md) | Five industry gaps and SettleIQ solutions |
+| [`research/ARCHITECTURE_COMPARISON.md`](research/ARCHITECTURE_COMPARISON.md) | Architectural comparison of financial ledger designs |
+| [`research/RESEARCH_SOURCES.md`](research/RESEARCH_SOURCES.md) | Authoritative citations and financial standards references |
+
+---
+
+## 4. Failure Investigations & Engineering Case Studies
+
+| Document | Subject / Discovery |
+|---|---|
+| [`failure-investigations/FAILURES_INDEX.md`](failure-investigations/FAILURES_INDEX.md) | Central incident registry |
+| [`failure-investigations/FAIL-0001_FAKE_RESOLUTION_MUTATION.md`](failure-investigations/FAIL-0001_FAKE_RESOLUTION_MUTATION.md) | Disconnected route resolution RCA & transactional fix |
+| [`failure-investigations/FAIL-0002_QUADRATIC_DECOMPOSITION_BOTTLENECK.md`](failure-investigations/FAIL-0002_QUADRATIC_DECOMPOSITION_BOTTLENECK.md) | $O(P \times N)$ bottleneck RCA & $O(N)$ hash partitioning fix |
+| [`failure-investigations/FAIL-0003_STATIC_DASHBOARD_ROUTING_MISMATCH.md`](failure-investigations/FAIL-0003_STATIC_DASHBOARD_ROUTING_MISMATCH.md) | FastAPI static mount vs SPA client routing fix |
+| [`case-studies/CASE_STUDY_01_ZERO_FLOAT_FINANCIAL_ENGINEERING.md`](case-studies/CASE_STUDY_01_ZERO_FLOAT_FINANCIAL_ENGINEERING.md) | Eliminating float drift via AST static gate |
+| [`case-studies/CASE_STUDY_02_HASH_CHAINED_AUDIT_LEDGER.md`](case-studies/CASE_STUDY_02_HASH_CHAINED_AUDIT_LEDGER.md) | Merkle-style tamper detection for SOX 404 compliance |
+| [`case-studies/CASE_STUDY_03_LINEAR_SCALING_100K_WORKLOADS.md`](case-studies/CASE_STUDY_03_LINEAR_SCALING_100K_WORKLOADS.md) | Algorithmic batch partitioning and candidate pruning |
+
+---
+
+## 5. Engineering Verification Reports & Proofs
+
+| Report | Purpose | Verification Status |
+|---|---|---|
+| [`../proof/PROOF_MANIFEST.md`](../proof/PROOF_MANIFEST.md) | Cryptographic proof-of-work manifest | **VERIFIED** (`scripts/capture_proof.py`) |
+| [`SECURITY_REVIEW.md`](SECURITY_REVIEW.md) | Threat modeling, attack surfaces, constant-time auth | **VERIFIED** (`tests/integration/test_security_hardening.py`) |
+| [`PERFORMANCE_REPORT.md`](PERFORMANCE_REPORT.md) | Empirical scaling benchmarks (1k, 10k, 50k, 100k records) | **VERIFIED** (`benchmarks/benchmark_engine.py`) |
+| [`DEPLOYMENT.md`](DEPLOYMENT.md) | Production Docker, PostgreSQL, backup/restore guide | **VERIFIED** (`Dockerfile`, `docker-compose.yml`) |
+
+---
+
+## 6. Implementation Status Summary
 
 The software implementation is fully built, tested, and validated:
-- **Test Suite:** 149 automated tests passing (100% pass rate).
+- **Test Suite:** 157 automated tests passing (100% pass rate).
 - **Float Gate:** AST scanner confirms zero binary floats on monetary paths.
+- **Autonomous AI Investigator:** Deterministic evidence-backed reasoning engine with constituent fund journey tracing.
 - **Reproducible Demonstration:** `python -m settleiq.cli run` reproduces all 7 defect classifications deterministically.
-- **REST API & Dashboard:** FastAPI static delivery serving the compiled 5-view React/TypeScript SPA at `http://localhost:8000/`.
+- **Interactive Workspace:** 5-view React/TypeScript SPA with 60-second guided tour demo seed served directly by FastAPI.
 - **Persistence:** Dual engine support for SQLite and PostgreSQL with versioned transactional migrations.
 - **Scale:** 100,000 records reconciled in under 38 seconds with linear $O(N)$ candidate pre-indexing.

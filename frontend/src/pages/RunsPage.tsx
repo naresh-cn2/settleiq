@@ -6,6 +6,12 @@ export function RunsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [seeding, setSeeding] = useState(false)
+  const [seedNotice, setSeedNotice] = useState<{
+    run_id: string
+    rate: number
+    discrepancy_count: number
+  } | null>(null)
   const [showCreate, setShowCreate] = useState(false)
 
   const fetchRuns = async () => {
@@ -23,6 +29,23 @@ export function RunsPage() {
   useEffect(() => {
     fetchRuns()
   }, [])
+
+  const handleSeedDemo = async () => {
+    try {
+      setSeeding(true)
+      const result = await api.demo.seed()
+      setSeedNotice({
+        run_id: result.run_id,
+        rate: result.rate,
+        discrepancy_count: result.discrepancy_count,
+      })
+      await fetchRuns()
+    } catch (err: any) {
+      alert(`Failed to seed demo run: ${err.message}`)
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -84,17 +107,61 @@ export function RunsPage() {
     }
   }
 
-  if (loading) return <div className="loading">Loading runs...</div>
-  if (error) return <div className="error">Failed to load runs: {error}</div>
+  if (loading && runs.length === 0) return <div className="loading">Loading runs...</div>
+  if (error && runs.length === 0) return <div className="error">Failed to load runs: {error}</div>
 
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="page-title">Runs</h1>
-        <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-          New Run
-        </button>
+        <div>
+          <h1 className="page-title">Reconciliation Runs</h1>
+          <p className="text-muted" style={{ fontSize: '0.875rem', marginTop: '4px' }}>
+            Deterministic payment matching, payout decomposition, and audit journal records.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            className="btn btn-secondary"
+            onClick={handleSeedDemo}
+            disabled={seeding}
+            style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+          >
+            {seeding ? '⚡ Seeding Enterprise Batch...' : '⚡ 60-Second Demo Seed'}
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
+            + New Custom Run
+          </button>
+        </div>
       </div>
+
+      {/* Guided Tour / Demo Seed Success Banner */}
+      {seedNotice && (
+        <div className="card" style={{
+          marginBottom: '20px',
+          background: 'rgba(56, 139, 253, 0.08)',
+          border: '1px solid var(--accent)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}>
+          <div>
+            <div style={{ fontWeight: 600, color: 'var(--accent)', marginBottom: '4px' }}>
+              ✓ Seeded Enterprise Reconciliation Dataset Successfully!
+            </div>
+            <div className="mono text-muted" style={{ fontSize: '0.8125rem' }}>
+              Run ID: {seedNotice.run_id} | Reconciliation Rate: {(seedNotice.rate * 100).toFixed(1)}% | Injected Breaks: {seedNotice.discrepancy_count}
+            </div>
+          </div>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => window.location.href = `/discrepancies?run_id=${seedNotice.run_id}`}
+          >
+            Investigate Detected Breaks ➔
+          </button>
+        </div>
+      )}
 
       {showCreate && (
         <div className="modal-overlay" onClick={() => setShowCreate(false)}>

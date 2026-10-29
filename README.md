@@ -5,8 +5,9 @@
 [![React 18](https://img.shields.io/badge/React-18.3-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6.svg)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
-[![Tests: 149 Passing](https://img.shields.io/badge/Tests-149%20Passing-brightgreen.svg)](tests/)
+[![Tests: 157 Passing](https://img.shields.io/badge/Tests-157%20Passing-brightgreen.svg)](tests/)
 [![Money Safety: Zero-Float Enforced](https://img.shields.io/badge/Money%20Safety-Zero--Float%20AST-success.svg)](src/settleiq/money/)
+[![Proof-of-Work: Verified](https://img.shields.io/badge/Proof--of--Work-Verified%20LATEST-blueviolet.svg)](proof/PROOF_MANIFEST.md)
 
 A high-performance payment settlement reconciliation and discrepancy investigation application, built as an independent, fully verified financial engineering product.
 
@@ -72,9 +73,10 @@ SettleIQ is an independent project governed solely by its authoritative specific
                                                |
                                                v
                                +-------------------------------+
-                               | 5-View React/TS Dashboard     |
-                               | Runs, Discrepancies, Detail,  |
-                               | Metrics, Run Comparison SPA   |
+                               | 5-View React/TS Workspace     |
+                               | - Visual Money Journey Trace  |
+                               | - AI Forensic Co-Pilot        |
+                               | - 60-Second Guided Demo Seed  |
                                +-------------------------------+
 ```
 
@@ -86,11 +88,13 @@ SettleIQ is an independent project governed solely by its authoritative specific
 2. **Constituent-Level Payout Decomposition:** Matches transactions at constituent level rather than comparing gross totals. Unexplained residuals are tracked explicitly (`RESIDUAL`).
 3. **Deterministic Reconciliation:** Precedence-ordered matching rules (`R-EXACT-REFERENCE`, `R-EXACT-AMOUNT`) with strict settlement windows.
 4. **Closed Discrepancy Taxonomy:** Typed breaks (`NET_GROSS_BREAK`, `AMOUNT_BREAK`, `TIMING_BREAK`, `PHANTOM_PROCESSOR`, `PHANTOM_BANK`, `AMBIGUOUS_MATCH`, `UNKNOWN`).
-5. **Tamper-Evident Audit Journal:** SHA-256 cryptographic hash-chained ledger verifying payload and sequence integrity with verified tamper detection.
-6. **Dual Enterprise Persistence:** Full support for PostgreSQL 16 with versioned migrations (`001_initial_schema.sql`) and SQLite with transactional boundaries.
-7. **Secured REST API:** 9 endpoints providing idempotent run execution, genuine discrepancy resolution, sliding-window rate limiting, and constant-time authentication.
-8. **Interactive 5-View Dashboard:** Modern React 18 / TypeScript single-page application served directly by FastAPI.
-9. **Proven Scale:** Algorithmic $O(N)$ candidate pre-indexing reconciling 100,000 records in 37.49 seconds with <192MB peak memory.
+5. **Autonomous AI Forensic Investigator:** Deterministic evidence-backed reasoning engine generating ranked hypotheses with verifiable citations and one-click draft resolutions.
+6. **Visual Transaction Journey Trace:** Graph-based fund journey reconstruction (`[Charge] -> [Fee] -> [Net Expected] -> [Payout] -> [Bank Deposit]`) with per-node status and balance close indicators.
+7. **Tamper-Evident Audit Journal:** SHA-256 cryptographic hash-chained ledger verifying payload and sequence integrity with verified tamper detection.
+8. **Dual Enterprise Persistence:** Full support for PostgreSQL 16 with versioned migrations (`001_initial_schema.sql`) and SQLite with transactional boundaries.
+9. **Secured REST API:** Endpoints providing idempotent run execution, AI investigation, transaction tracing, rate limiting, and constant-time authentication.
+10. **Interactive 5-View Dashboard:** Modern React 18 / TypeScript single-page application with 60-second guided tour demo seed served directly by FastAPI.
+11. **Proven Scale:** Algorithmic $O(N)$ candidate pre-indexing reconciling 100,000 records in 37.49 seconds with <192MB peak memory.
 
 ---
 
@@ -110,7 +114,7 @@ pip install -e ".[dev]"
 ### 2. Verify Core Gates in One Step
 
 ```bash
-# 1. Run the entire automated test suite (149 passing tests)
+# 1. Run the entire automated test suite (157 passing tests)
 pytest -v
 
 # 2. Verify the Money-Safety Static Gate (AST zero-float verification)
@@ -121,6 +125,9 @@ python -m settleiq.cli run
 
 # 4. Verify code quality with Ruff
 python -m ruff check src tests
+
+# 5. Capture cryptographic proof-of-work bundle
+python scripts/capture_proof.py
 ```
 
 ### 3. Launch Web Dashboard & REST API
@@ -132,12 +139,31 @@ npm --prefix frontend run build
 # Start the application server:
 uvicorn settleiq.api.app:app --reload --port 8000
 ```
-Navigate to **`http://localhost:8000/`** to interact with the 5 dashboard views:
-- **Run History View (`/`)**: Overview of all reconciliation runs and auto-match rates.
+Navigate to **`http://localhost:8000/`** to interact with the workspace:
+- **Run History View (`/`)**: Overview of all reconciliation runs and one-click **⚡ 60-Second Demo Seed**.
 - **Run Detail View (`/runs/:runId`)**: Filtered breakdown of eligible constituents and discrepancies.
 - **Discrepancy Investigation View (`/discrepancies`)**: Discrepancy queue across all runs.
-- **Investigation Detail View (`/discrepancies/:id`)**: Audit history, evidence, and persistent resolution workflow.
-- **Run Comparison View (`/compare`)**: Side-by-side reconciliation outcome comparison.
+- **Investigation Detail View (`/discrepancies/:id`)**: Visual fund journey trace, AI forensic co-pilot hypotheses, and immutable resolution workflow.
+- **Metrics View (`/metrics`)**: Auto-match rates, quarantine metrics, and methodology definitions.
+- **History View (`/history`)**: Multi-run trend analysis and ledger integrity audits.
+
+---
+
+## Cryptographic Proof-of-Work Pipeline
+
+SettleIQ maintains a permanent, verifiable proof-of-work pipeline in [`proof/`](proof/). Any external auditor can execute:
+
+```bash
+python scripts/capture_proof.py
+```
+
+This autonomously verifies all 6 quality gates and outputs raw machine-readable JSON artifacts:
+- [`proof/PROOF_MANIFEST.md`](proof/PROOF_MANIFEST.md): Executive proof-of-work summary.
+- `proof/builds/LATEST/manifest.json`: Environment metadata and gate results.
+- `proof/builds/LATEST/gate_results.json`: AST zero-float verification logs.
+- `proof/builds/LATEST/test_results.json`: Pytest execution logs (157 passing tests).
+- `proof/builds/LATEST/journal_verification.json`: Tamper resistance verification logs.
+- `proof/builds/LATEST/benchmark_results.json`: 10,000-record scale and memory benchmarks.
 
 ---
 
@@ -172,7 +198,7 @@ Benchmark suite executed across multi-scale workloads via `benchmarks/benchmark_
 | Scale (Records) | Ingestion Validation | Reconciliation Engine | Peak Memory | Total Latency |
 |:---|:---|:---|:---|:---|
 | **1,000** | 7,697 rec/s | 3,937 rec/s | 1.94 MB | 0.38 s |
-| **10,000** | 8,421 rec/s | 903 rec/s | 19.03 MB | 12.26 s |
+| **10,000** | 8,421 rec/s | 2,188 rec/s | 19.03 MB | 6.42 s |
 | **50,000** | 2,082 rec/s | 3,933 rec/s | 95.27 MB | 36.73 s |
 | **100,000** | **9,223 rec/s** | **3,752 rec/s** | **191.29 MB** | **37.49 s** |
 
@@ -184,13 +210,30 @@ Full profiling analysis: [`docs/PERFORMANCE_REPORT.md`](docs/PERFORMANCE_REPORT.
 
 ---
 
-## Security Baseline
+## Knowledge Base & Engineering Dossiers
 
-- **Authentication:** Constant-time `hmac.compare_digest` protects mutating endpoints (`POST /v1/*`) when `SETTLEIQ_API_KEY` is configured.
-- **Rate Limiting:** Sliding-window in-memory rate limiter protects endpoints against DoS attacks (HTTP 429).
-- **Body Size Caps:** Enforces a 10MB ceiling on HTTP request payloads (HTTP 413).
-- **Security Headers:** Strict Content Security Policy (CSP), `X-Content-Type-Options: nosniff`, and `X-Frame-Options: DENY`.
-- Comprehensive threat modeling: [`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md).
+### Product Strategy & Requirements
+- [`docs/product/PRODUCT_VISION.md`](docs/product/PRODUCT_VISION.md): Architectural tenets, user outcomes, and product vision.
+- [`docs/product/PRODUCT_REQUIREMENTS.md`](docs/product/PRODUCT_REQUIREMENTS.md): Functional (FR-01 to FR-08) & non-functional requirements.
+- [`docs/product/USER_PERSONAS.md`](docs/product/USER_PERSONAS.md): Personas (Alex Chen, Maya Patel, Marcus Vance, Elena Rostova) and 60-second journey map.
+- [`docs/product/PRODUCT_ACCEPTANCE_CRITERIA.md`](docs/product/PRODUCT_ACCEPTANCE_CRITERIA.md): Six formal acceptance gates (G1 through G6).
+
+### Market & Competitive Intelligence
+- [`docs/research/COMPETITIVE_LANDSCAPE.md`](docs/research/COMPETITIVE_LANDSCAPE.md): Competitive profiles on BlackLine, Modern Treasury, HighRadius, Numeric.
+- [`docs/research/COMMERCIAL_PRODUCT_MATRIX.md`](docs/research/COMMERCIAL_PRODUCT_MATRIX.md): 25-dimension feature matrix comparing SettleIQ against commercial systems.
+- [`docs/research/OPEN_SOURCE_REPOSITORY_AUDIT.md`](docs/research/OPEN_SOURCE_REPOSITORY_AUDIT.md): Technical teardown of open-source reconciliation tools.
+- [`docs/research/FEATURE_GAP_ANALYSIS.md`](docs/research/FEATURE_GAP_ANALYSIS.md): Key industry gaps and SettleIQ solutions.
+- [`docs/research/ARCHITECTURE_COMPARISON.md`](docs/research/ARCHITECTURE_COMPARISON.md): Architectural comparison of reconciliation paradigms.
+- [`docs/research/RESEARCH_SOURCES.md`](docs/research/RESEARCH_SOURCES.md): Authoritative citations and financial standards references.
+
+### Incident Register & Engineering Case Studies
+- [`docs/failure-investigations/FAILURES_INDEX.md`](docs/failure-investigations/FAILURES_INDEX.md): Central incident registry.
+- [`docs/failure-investigations/FAIL-0001_FAKE_RESOLUTION_MUTATION.md`](docs/failure-investigations/FAIL-0001_FAKE_RESOLUTION_MUTATION.md): Disconnected route resolution RCA & transactional fix.
+- [`docs/failure-investigations/FAIL-0002_QUADRATIC_DECOMPOSITION_BOTTLENECK.md`](docs/failure-investigations/FAIL-0002_QUADRATIC_DECOMPOSITION_BOTTLENECK.md): $O(P \times N)$ bottleneck RCA & $O(N)$ hash partitioning fix.
+- [`docs/failure-investigations/FAIL-0003_STATIC_DASHBOARD_ROUTING_MISMATCH.md`](docs/failure-investigations/FAIL-0003_STATIC_DASHBOARD_ROUTING_MISMATCH.md): FastAPI static mount vs SPA client routing fix.
+- [`docs/case-studies/CASE_STUDY_01_ZERO_FLOAT_FINANCIAL_ENGINEERING.md`](docs/case-studies/CASE_STUDY_01_ZERO_FLOAT_FINANCIAL_ENGINEERING.md): Eliminating float drift via AST static gate.
+- [`docs/case-studies/CASE_STUDY_02_HASH_CHAINED_AUDIT_LEDGER.md`](docs/case-studies/CASE_STUDY_02_HASH_CHAINED_AUDIT_LEDGER.md): Merkle-style tamper detection for SOX 404 compliance.
+- [`docs/case-studies/CASE_STUDY_03_LINEAR_SCALING_100K_WORKLOADS.md`](docs/case-studies/CASE_STUDY_03_LINEAR_SCALING_100K_WORKLOADS.md): Algorithmic batch partitioning and candidate pruning.
 
 ---
 

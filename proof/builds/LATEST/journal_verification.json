@@ -1,0 +1,13 @@
+{
+  "clean_verification_intact": true,
+  "clean_entries_verified": 2,
+  "clean_head_digest": "2acf599e2123a09a9cb90f4ba1067cc7222141fadb76074b9bd6d22418a030a7",
+  "tamper_detection_successful": true,
+  "tamper_findings": [
+    [
+      1,
+      "PAYLOAD_MODIFIED",
+      "recomputed digest does not match the stored digest"
+    ]
+  ]
+}

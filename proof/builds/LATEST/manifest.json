@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-10-29T04:17:04.733883+00:00",
+  "git": {
+    "commit_sha": "d2ecf4cfe87bafdb849f87d94cce12fa2d3528ce",
+    "is_dirty": true
+  },
+  "system": {
+    "os": "Windows",
+    "os_release": "11",
+    "architecture": "AMD64",
+    "python_version": "3.12.10"
+  },
+  "gates": {
+    "money_safety_gate": true,
+    "test_suite": true,
+    "audit_journal_tamper_detection": true,
+    "performance_benchmark": true,
+    "static_analysis": true,
+    "frontend_bundle": true
+  },
+  "metrics_summary": {
+    "benchmark_10k_throughput_rec_per_sec": 1860.2,
+    "benchmark_10k_peak_memory_mb": 19.03,
+    "frontend_asset_count": 3
+  },
+  "artifacts": {
+    "gate_results": "gate_results.json",
+    "test_results": "test_results.json",
+    "journal_verification": "journal_verification.json",
+    "benchmark_results": "benchmark_results.json"
+  }
+}
