@@ -5,7 +5,7 @@
 [![React 18](https://img.shields.io/badge/React-18.3-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6.svg)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
-[![Tests: 200 Passing](https://img.shields.io/badge/Tests-200%20Passing-brightgreen.svg)](tests/)
+[![Tests: 204 Passing](https://img.shields.io/badge/Tests-204%20Passing-brightgreen.svg)](tests/)
 [![Money Safety: Zero-Float Enforced](https://img.shields.io/badge/Money%20Safety-Zero--Float%20AST-success.svg)](src/settleiq/money/)
 [![Proof-of-Work: Verified](https://img.shields.io/badge/Proof--of--Work-Verified%20LATEST-blueviolet.svg)](proof/PROOF_MANIFEST.md)
 
@@ -114,7 +114,7 @@ pip install -e ".[dev]"
 ### 2. Verify Core Gates in One Step
 
 ```bash
-# 1. Run the entire automated test suite (200 passing tests across unit, integration, and independent validation)
+# 1. Run the entire automated test suite (204 passing tests across unit, property, and integration)
 pytest -v
 
 # 2. Verify the Money-Safety Static Gate (AST zero-float verification)
@@ -244,7 +244,7 @@ This autonomously verifies all quality gates and partitions machine-readable ver
 
 ### Tier 1: Execution Evidence (`proof/builds/LATEST/tier1_execution_evidence.json`)
 - AST Zero-Float Static Gate (`gate_results.json`)
-- 200 Automated Tests Clean (`test_results.json`) across unit, integration, and independent validation
+- 204 Automated Tests Clean (`test_results.json`) across unit, property, and integration
 - Ruff Static Analysis Clean (0 warnings)
 - Scaled Performance Benchmark (`benchmark_results.json` for 1k, 10k, 50k, 100k workloads)
 - Engine Hot Path Profiling (`proof/engine_profile_stats.txt`): -45.1% function calls and 34.3% execution speedup via serialization fast-paths & decimal caching
@@ -351,6 +351,7 @@ Full profiling analysis: [`docs/PERFORMANCE_REPORT.md`](docs/PERFORMANCE_REPORT.
 | [`docs/specifications/SETTLEIQ-MASTER-SPEC.md`](docs/specifications/SETTLEIQ-MASTER-SPEC.md) | Authoritative master specification |
 | [`docs/specifications/17_TRACEABILITY_MATRIX_AND_CONSISTENCY.md`](docs/specifications/17_TRACEABILITY_MATRIX_AND_CONSISTENCY.md) | Requirements-to-verification traceability matrix |
 | [`docs/INVESTIGATOR_EVALUATION_REPORT.md`](docs/INVESTIGATOR_EVALUATION_REPORT.md) | Independent AI investigator evaluation, stress tests & Monte Carlo trials |
+| [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) | Formal release verification checklist (Gate A verified vs Gates B & C scope) |
 | [`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md) | Security review and threat model |
 | [`docs/PERFORMANCE_REPORT.md`](docs/PERFORMANCE_REPORT.md) | Profile-guided bottleneck optimization and scale benchmark report |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Container orchestration and database operational guide |

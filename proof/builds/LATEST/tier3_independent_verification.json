@@ -1,9 +1,9 @@
 {
   "tier": "Tier 3: Independent Verification",
   "description": "Cryptographically verifiable bundle reproducible by any third-party auditor",
-  "timestamp": "2026-10-29T13:10:01.053694+00:00",
+  "timestamp": "2026-10-29T14:06:31.449548+00:00",
   "git": {
-    "commit_sha": "0645e5837d2322f8949808e28467ad109c9a2cb7",
+    "commit_sha": "5a313d1503907295ea2b649cf67ecc0b29a8db90",
     "branch": "main",
     "is_dirty": true
   },
@@ -15,14 +15,14 @@
   },
   "artifacts_sha256": {
     "gate_results.json": "555f464a7f386aedca05014134870af4ab73a900ceefb420ea150b5f809a2137",
-    "test_results.json": "a5b575781dc5662fabbb8831812b802afe20c6b923c2467e16c41419ead78e9a",
+    "test_results.json": "142713a7e83f60cff763ecfa8b7212c7a0e86ab0546f46ea52c9633557ce03e7",
     "journal_verification.json": "2c052763909505ea53f73231df8abe45c8538c375c29a00253ba31520359d3b2",
-    "investigator_evaluation.json": "49e023107b75c52ef66bdeb23029edf57df93b69dc47f7b927c9e87c12fe0d44",
-    "investigator_independent_validation.json": "5201ee9fca573c450c35231fff875e13206280ac9c62f78277d82b96c102b2c4",
-    "benchmark_results.json": "60fed405556be437ed41e51b58b49c5116196e2622448ca2f2e2bd789a7946af",
-    "demo_journey_trace.json": "db38c5b79d35a464f3daf3611315edcf0a607095891a9e339ee875da6300ec9d",
-    "tier1_execution_evidence.json": "755b2ce4de7ce9fdf63e044afb9fa659c13d3c5dca5a4383d6dd595e5cd8d52c",
-    "tier2_acceptance_evidence.json": "4b6a5c2809b443579146457692e44f196224b978f5df26f12b170a5a0b4a3f09"
+    "investigator_evaluation.json": "e8be483746c352ba17b52ab62a3a4bc906fc6608d1fdd969308d510976f68f29",
+    "investigator_independent_validation.json": "daf5977f89ad4d95715d2e2350338393d17ffca02878797c7c4e717c20512bcf",
+    "benchmark_results.json": "65f056b5f5cee5059675c47ddf72f3feaa6a3076dc219074ce84fad2b3eaf45e",
+    "demo_journey_trace.json": "c33ee1007546fc0d0a4fdf379cae5205dcc75a5b97fe0a069e77aee77f610891",
+    "tier1_execution_evidence.json": "5e1d4026d76abc0b6ea9282acba5df1bf59ed1ab1491232d2beb930e23a54ed8",
+    "tier2_acceptance_evidence.json": "0a4d8d243608c3b2efccdc27c6d93c8dd8310dc013c49cd78462b3cd21394c22"
   },
   "reproduction_commands": [
     "python -m settleiq.cli gate",

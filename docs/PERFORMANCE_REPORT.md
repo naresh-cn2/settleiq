@@ -80,11 +80,23 @@ To assess measurement variability and isolate cold-start from warm-run states, a
 
 #### Statistical Distribution Analysis:
 
+#### Statistical Distribution & Explicit Array Order:
+
+To ensure full mathematical transparency and prevent ambiguity in percentile ranking, all 9 warm trial observations are listed below in ascending numerical order:
+
+- **Warm Matching Engine (9 trials sorted):**  
+  `[0.1538 s, 0.1606 s, 0.1721 s, 0.2009 s,` **`0.2264 s (P50 Median)`**`, 0.2361 s, 0.6215 s, 1.1380 s, 15.9347 s]`  
+  *Index Calculation:* In an odd-sized dataset of $N=9$ items, the formal median is element index $(9+1)/2 = 5$, which is exactly **`0.2264 s`** (yielding **22,087 rec/s**). Note that `0.6215 s` is the 7th element (approx 75th percentile / upper quartile).
+- **Warm Full E2E (9 trials sorted):**  
+  `[0.2556 s, 0.2582 s, 0.2809 s, 0.3415 s,` **`0.3622 s (P50 Median)`**`, 0.3742 s, 1.9941 s, 10.9849 s, 20.6164 s]`  
+  *Index Calculation:* Element 5 of 9 is **`0.3622 s`** (yielding **13,805 rec/s**).
+
 | Metric Dimension | Core Matching Engine | Full End-to-End (Ingest + Match + Hash) |
 |:---|:---|:---|
-| **Cold Start** | 0.2176 s (22,975 rec/s) | 0.3512 s (14,237 rec/s) |
-| **Warm Median (P50)** | **0.2264 s (22,087 rec/s)** | **0.3622 s (13,805 rec/s)** |
+| **Cold Start (Trial 1)** | 0.2176 s (22,975 rec/s) | 0.3512 s (14,237 rec/s) |
+| **Warm Median (P50, 5th of 9)** | **0.2264 s (22,087 rec/s)** | **0.3622 s (13,805 rec/s)** |
 | **Warm Fast Cluster (P10–P70)**| **0.1538 s – 0.2361 s (~21k–32k rec/s)** | **0.2556 s – 0.3742 s (~13k–19k rec/s)** |
+| **Warm 75th Percentile (7th of 9)** | 0.6215 s (8,045 rec/s) | 1.9941 s (2,507 rec/s) |
 | **Warm Mean** | 2.0938 s (skewed by heavy-tailed outlier) | 3.9409 s (skewed by heavy-tailed outlier) |
 | **Warm Standard Deviation** | ±5.2006 s | ±7.1633 s |
 | **Output Digest Consistency** | **100% Byte-Identical across all 10 trials** | **100% Byte-Identical across all 10 trials** |

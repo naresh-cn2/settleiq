@@ -87,7 +87,7 @@ def main() -> None:
         sys.exit(1)
     print("           Result: PASSED")
 
-    print("[TIER 1.2] Running Pytest Full Test Suite (200 Unit, Property, Security Tests)...")
+    print("[TIER 1.2] Running Pytest Full Test Suite (204 Unit, Property, Security Tests)...")
     pytest_code, pytest_out, pytest_err = run_command(
         [sys.executable, "-m", "pytest", "-v", "--tb=short"]
     )
@@ -102,7 +102,7 @@ def main() -> None:
     if not test_passed:
         print(f"           Result: FAILED (Pytest exit code {pytest_code})", file=sys.stderr)
         sys.exit(1)
-    print("           Result: PASSED (200 Tests Clean)")
+    print("           Result: PASSED (204 Tests Clean)")
 
     print("[TIER 1.3] Executing Static Code Quality Analysis (Ruff)...")
     ruff_code, ruff_out, ruff_err = run_command(
@@ -392,7 +392,7 @@ def main() -> None:
         "| Gate | Requirement | Measured Result | Status |\n",
         "| :--- | :--- | :--- | :--- |\n",
         "| **G1: Money Safety** | Zero binary float usage | AST static gate clean (0 violations) | **PASS** |\n",
-        "| **G2: Test Suite** | 100% test pass rate | 200 passing tests | **PASS** |\n",
+        "| **G2: Test Suite** | 100% test pass rate | 204 passing tests | **PASS** |\n",
         "| **G3: Code Quality** | Zero static lint warnings | Clean ruff static check | **PASS** |\n",
         f"| **G4: Engine Throughput** | > 1,000 records/sec | {bm_rate} rec/s (10k batch) | **PASS** |\n",
         "| **G5: Frontend SPA** | Production web assets | Verified index.html + hashed assets | **PASS** |\n\n",
