@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-10-29T08:24:16.648Z",
+  "browser": "Google Chrome Headless",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "status": "SUCCESS",
+  "screenshots": [
+    "01_react_runs_dashboard.png",
+    "02_react_demo_seeded.png",
+    "03_react_discrepancy_queue.png",
+    "04_react_ai_investigation_and_trace.png",
+    "05_react_discrepancy_resolved.png",
+    "06_react_audit_history.png"
+  ],
+  "page_errors_count": 0,
+  "page_errors": [],
+  "failed_network_requests": [],
+  "console_messages_count": 0
+}

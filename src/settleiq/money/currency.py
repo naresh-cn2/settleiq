@@ -33,6 +33,8 @@ CURRENCY_EXPONENTS: Final[dict[str, int]] = {
 #: schema version and therefore in run identity (AC-2.05).
 CURRENCY_TABLE_VERSION: Final[str] = "1.0.0"
 
+_PARSE_CACHE: dict[str, CurrencyCode] = {}
+
 
 class CurrencyCode(str, Enum):
     """A supported currency, identified by its ISO 4217 alphabetic code."""
@@ -51,10 +53,15 @@ class CurrencyCode(str, Enum):
 
         Raises :class:`CurrencyNotSupported` — never a default to exponent 2.
         """
+        cached = _PARSE_CACHE.get(raw)
+        if cached is not None:
+            return cached
         code = raw.strip().upper()
         if code not in CURRENCY_EXPONENTS:
             raise CurrencyNotSupported(code, tuple(CURRENCY_EXPONENTS))
-        return cls(code)
+        res = cls(code)
+        _PARSE_CACHE[raw] = res
+        return res
 
     @property
     def exponent(self) -> int:
@@ -63,3 +70,4 @@ class CurrencyCode(str, Enum):
 
 
 SUPPORTED_CURRENCIES: Final[tuple[CurrencyCode, ...]] = tuple(CurrencyCode)
+_PARSE_CACHE.update({c.value: c for c in CurrencyCode})

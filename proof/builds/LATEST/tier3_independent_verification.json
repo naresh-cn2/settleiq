@@ -1,9 +1,9 @@
 {
   "tier": "Tier 3: Independent Verification",
   "description": "Cryptographically verifiable bundle reproducible by any third-party auditor",
-  "timestamp": "2026-10-29T07:14:45.551507+00:00",
+  "timestamp": "2026-10-29T08:33:43.098168+00:00",
   "git": {
-    "commit_sha": "0c1e6deb2fed0367c2dd8e8da902dabc938b6ef1",
+    "commit_sha": "2d03f9a04c0fc4380795971b01540bb8c81d35ed",
     "branch": "main",
     "is_dirty": true
   },
@@ -15,19 +15,20 @@
   },
   "artifacts_sha256": {
     "gate_results.json": "555f464a7f386aedca05014134870af4ab73a900ceefb420ea150b5f809a2137",
-    "test_results.json": "a1dd94bdd0f1146b49698b6bd37830ed76464ae636b0f21863a7c05b814164ea",
+    "test_results.json": "c626d18ef9de41280f67dc46ff7641f57d6f96a2f78ea0a74b43c8b42bb0b582",
     "journal_verification.json": "2c052763909505ea53f73231df8abe45c8538c375c29a00253ba31520359d3b2",
-    "investigator_evaluation.json": "338e0af5998328bea0cad99189453e1ce8352558ed194ce34b7338b47ab70a84",
-    "benchmark_results.json": "ed503778aac4d540b3a92fb8388fc3c430f42f2dd7af39e1e3af98e42e6ff1ea",
-    "demo_journey_trace.json": "3b969993a63646de29629c8aed2eac4d09a274b1f4997d6c45734e481b9d2cf6",
-    "tier1_execution_evidence.json": "b8aa291fa5b13773e38b9ed6ed0e689384d57f2db3492deebc40cad985e7b21a",
-    "tier2_acceptance_evidence.json": "2af6d1af517dba9b43f248d777173f4b0bcf3324473c644fdd28e8260a6b83e5"
+    "investigator_evaluation.json": "5ff120109a2de38b6c46fbec9d23893fe9293cf30968af99464b7b6c0ffcd8e5",
+    "investigator_independent_validation.json": "97a5ceb4abea69de79d2f22904fa30497ce677605b8dd7182a6458cbf4c73175",
+    "benchmark_results.json": "bf087e4ce8ffa37423a9aef864c41efc9679c3a0e6c49ce6a2730e5f36672202",
+    "demo_journey_trace.json": "8e2c6b3c1bac49e902407efb42e05be260fe0efcad5eb794521d5762cf962162",
+    "tier1_execution_evidence.json": "247208be1d3718b5b7c55da7bffeb3b19a7a8ab15376bd5afdfd34c67688f124",
+    "tier2_acceptance_evidence.json": "7fa8d98818c98bbbd76ffd473d9ad71ec3f7eebf2352bfdf906a090bdfb559d2"
   },
   "reproduction_commands": [
     "python -m settleiq.cli gate",
     "pytest tests/unit tests/property tests/integration",
     "python -m ruff check src tests scripts",
-    "python scripts/verify_demo_journey.py",
+    "npm --prefix frontend run verify:e2e",
     "python scripts/verify_ui_workflow.py",
     "python scripts/capture_proof.py"
   ]

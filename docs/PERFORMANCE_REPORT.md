@@ -46,6 +46,20 @@ Workloads were generated via `benchmarks/benchmark_engine.py` using synthetic ba
 - Unlike floating-point representations, `decimal.Decimal` operations require exact digit normalization and boundary checks.
 - Benchmark measurements show the Decimal context overhead accounts for approximately 18% of total engine CPU time, which is an acceptable trade-off for zero precision loss, zero rounding drift, and zero financial balance errors.
 
+### 3.4 Profile-Guided Bottleneck Optimization
+Empirical profiling using `cProfile` identified that ~43% of engine runtime was consumed in canonical preimage serialization (`digest` and `canonical_bytes`) and ~33% in `Money` instantiation and decimal exponent validation.
+
+To alleviate these bottlenecks without compromising deterministic guarantees:
+1. **Canonical Preimage Dispatch:** Replaced chained `isinstance` evaluations with direct type checks (`type(v) is str`, `type(v) is Decimal`). For dictionary records whose keys are all strings, `sorted(keys)` was used directly, as prepending `"s:"` does not alter relative lexical order.
+2. **Precomputed Scale Quanta:** Replaced repeated runtime calls to `Decimal(1).scaleb(-exponent)` with precomputed lookup constants (`_QUANTA = {0: 1, 1: 0.1, 2: 0.01, 3: 0.001}`), eliminating tens of thousands of dynamic scaling operations per run.
+3. **Currency Parser Caching:** Added a fast-path cache dictionary for `CurrencyCode.parse()`.
+
+**Empirical Verification (5,000 Records Benchmark):**
+- **Function Calls:** Reduced from **1,412,621** to **774,922** (**-45.1% reduction** in call overhead).
+- **Cumulative Reconcile Time:** Reduced from **0.898s** to **0.590s** (**34.3% faster**).
+- **Digest Computation Duration:** Reduced from **0.388s** to **0.207s** (**-46.6% duration reduction**).
+- **Correctness Invariance:** 100% identical financial output; match rate (99.88%), discrepancy count (6), and all digests remained byte-identical.
+
 ---
 
 ## 4. Hardware and Profiling Details

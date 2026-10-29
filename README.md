@@ -5,7 +5,7 @@
 [![React 18](https://img.shields.io/badge/React-18.3-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6.svg)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
-[![Tests: 178 Passing](https://img.shields.io/badge/Tests-178%20Passing-brightgreen.svg)](tests/)
+[![Tests: 193 Passing](https://img.shields.io/badge/Tests-193%20Passing-brightgreen.svg)](tests/)
 [![Money Safety: Zero-Float Enforced](https://img.shields.io/badge/Money%20Safety-Zero--Float%20AST-success.svg)](src/settleiq/money/)
 [![Proof-of-Work: Verified](https://img.shields.io/badge/Proof--of--Work-Verified%20LATEST-blueviolet.svg)](proof/PROOF_MANIFEST.md)
 
@@ -114,7 +114,7 @@ pip install -e ".[dev]"
 ### 2. Verify Core Gates in One Step
 
 ```bash
-# 1. Run the entire automated test suite (178 passing tests)
+# 1. Run the entire automated test suite (193 passing tests across unit, integration, and independent validation)
 pytest -v
 
 # 2. Verify the Money-Safety Static Gate (AST zero-float verification)
@@ -126,10 +126,13 @@ python -m settleiq.cli run
 # 4. Verify code quality with Ruff
 python -m ruff check src tests scripts
 
-# 5. Generate browser-level UI workflow snapshots
+# 5. Run real headless Chrome browser E2E verification (captures 6 PNG screenshots & verifies 0 errors)
+npm --prefix frontend run verify:e2e
+
+# 6. Generate browser-level UI workflow snapshots
 python scripts/verify_ui_workflow.py
 
-# 6. Capture complete Three-Tier cryptographic proof bundle
+# 7. Capture complete Three-Tier cryptographic proof bundle
 python scripts/capture_proof.py
 ```
 
@@ -164,14 +167,20 @@ This autonomously verifies all quality gates and partitions machine-readable ver
 
 ### Tier 1: Execution Evidence (`proof/builds/LATEST/tier1_execution_evidence.json`)
 - AST Zero-Float Static Gate (`gate_results.json`)
-- 178 Automated Tests Clean (`test_results.json`)
+- 193 Automated Tests Clean (`test_results.json`) across unit, integration, and independent validation
 - Ruff Static Analysis Clean (0 warnings)
-- Scaled Performance Benchmark (`benchmark_results.json`)
-- Engine Hot Path Profiling (`proof/engine_profile_stats.txt`)
+- Scaled Performance Benchmark (`benchmark_results.json` for 1k, 10k, 50k, 100k workloads)
+- Engine Hot Path Profiling (`proof/engine_profile_stats.txt`): -45.1% function calls and 34.3% execution speedup via serialization fast-paths & decimal caching
 - Production Frontend Static Assets Verified
 
 ### Tier 2: Acceptance Evidence (`proof/builds/LATEST/tier2_acceptance_evidence.json`)
-- AI Forensic Investigator Ground Truth (30/30 Adversarial Benchmark Cases, 100% Top-1 Accuracy, 0% Hallucinations) (`investigator_evaluation.json`)
+- AI Forensic Investigator Dual Evaluation:
+  - 30-case regression benchmark (`investigator_evaluation.json`, 100% Top-1 action accuracy, 0% hallucinations)
+  - 15-case independent validation suite (`tests/unit/test_investigator_independent_validation.py`, [`docs/INVESTIGATOR_EVALUATION_REPORT.md`](docs/INVESTIGATOR_EVALUATION_REPORT.md)) verifying Action vs Root-Cause accuracy, fail-closed `INSUFFICIENT` confidence on incomplete/contradictory evidence, multi-hypothesis ranking, and 35 randomized Monte Carlo invariant trials
+- Real Browser End-to-End Verification (`frontend/scripts/verify_browser_e2e.mjs`):
+  - Driven by headless Google Chrome via Puppeteer against live FastAPI backend
+  - 6 real PNG screenshots captured in [`proof/screenshots/`](proof/screenshots/)
+  - Execution trace in [`proof/browser_e2e_log.json`](proof/browser_e2e_log.json) proving 0 page errors and 0 failed network requests
 - SHA-256 Audit Journal Tamper Detection Proof (`journal_verification.json`)
 - End-to-End 8-Step Demonstration Workflow Execution Trace (`demo_journey_trace.json`)
 - Browser-Level Standalone UI Snapshots in `proof/ui/`:
@@ -182,6 +191,8 @@ This autonomously verifies all quality gates and partitions machine-readable ver
 
 ### Tier 3: Independent Verification (`proof/builds/LATEST/tier3_independent_verification.json`)
 - Cryptographic SHA-256 Checksum Manifest across all build artifacts (`proof/PROOF_MANIFEST.md`)
+- Complete independent validation evaluation report (`docs/INVESTIGATOR_EVALUATION_REPORT.md`)
+- Profile-guided bottleneck optimization benchmark report (`docs/PERFORMANCE_REPORT.md`)
 - One-command reproduction protocol executable from clean environments
 
 ---
@@ -262,8 +273,9 @@ Full profiling analysis: [`docs/PERFORMANCE_REPORT.md`](docs/PERFORMANCE_REPORT.
 |---|---|
 | [`docs/specifications/SETTLEIQ-MASTER-SPEC.md`](docs/specifications/SETTLEIQ-MASTER-SPEC.md) | Authoritative master specification |
 | [`docs/specifications/17_TRACEABILITY_MATRIX_AND_CONSISTENCY.md`](docs/specifications/17_TRACEABILITY_MATRIX_AND_CONSISTENCY.md) | Requirements-to-verification traceability matrix |
+| [`docs/INVESTIGATOR_EVALUATION_REPORT.md`](docs/INVESTIGATOR_EVALUATION_REPORT.md) | Independent AI investigator evaluation, stress tests & Monte Carlo trials |
 | [`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md) | Security review and threat model |
-| [`docs/PERFORMANCE_REPORT.md`](docs/PERFORMANCE_REPORT.md) | Performance benchmark and algorithmic complexity report |
+| [`docs/PERFORMANCE_REPORT.md`](docs/PERFORMANCE_REPORT.md) | Profile-guided bottleneck optimization and scale benchmark report |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Container orchestration and database operational guide |
 | [`docs/README.md`](docs/README.md) | Master documentation index |
 

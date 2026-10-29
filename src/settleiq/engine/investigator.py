@@ -217,25 +217,24 @@ def build_transaction_trace(
                 net_exp = Decimal(net_exp_str)
 
                 # Reconstruct gross, fees/adjustments, and net_paid
-                gross = net_exp
                 variance = abs(net_exp - net_paid)
                 if variance == Decimal("0.00"):
                     variance = abs(residual)
 
-                nodes.append(
-                    TraceNode(
-                        node_id="charges_summary",
-                        kind="charge",
-                        amount=f"{gross:.2f}",
-                        currency=currency,
-                        reference=cid,
-                        date="2026-10-15",
-                        status="MATCHED",
-                    )
-                )
-
                 if net_paid < net_exp or residual > Decimal("0.00"):
                     fees = variance
+                    gross = net_exp + fees
+                    nodes.append(
+                        TraceNode(
+                            node_id="charges_summary",
+                            kind="charge",
+                            amount=f"{gross:.2f}",
+                            currency=currency,
+                            reference=cid,
+                            date="2026-10-15",
+                            status="MATCHED",
+                        )
+                    )
                     nodes.append(
                         TraceNode(
                             node_id="fee_summary",
@@ -248,6 +247,18 @@ def build_transaction_trace(
                         )
                     )
                 else:
+                    gross = net_exp
+                    nodes.append(
+                        TraceNode(
+                            node_id="charges_summary",
+                            kind="charge",
+                            amount=f"{gross:.2f}",
+                            currency=currency,
+                            reference=cid,
+                            date="2026-10-15",
+                            status="MATCHED",
+                        )
+                    )
                     nodes.append(
                         TraceNode(
                             node_id="adjustment_summary",
@@ -680,6 +691,27 @@ def investigate_discrepancy(
                     recommended_action="ACCEPT_TOLERANCE",
                 )
             )
+            hypotheses.append(
+                Hypothesis(
+                    rank=2,
+                    title="Foreign Exchange Rate Spread or Cross-Border Transfer Fee",
+                    description=(
+                        "Cross-border transfer or currency conversion spread applied by "
+                        "intermediary correspondent banking network."
+                    ),
+                    confidence="MEDIUM",
+                    supporting_evidence=(
+                        (
+                            "Variance magnitude is consistent with ad-valorem FX spread or "
+                            "processing fee"
+                        ),
+                    ),
+                    contradicting_evidence=(
+                        "Transaction currency declared as domestic USD",
+                    ),
+                    recommended_action="ADJUST_FX",
+                )
+            )
             recommended_action = "ACCEPT_TOLERANCE"
             draft_resolution = {
                 "action": "ACCEPT_TOLERANCE",
@@ -706,6 +738,24 @@ def investigate_discrepancy(
                         "Single processor payout reference present on statement narration",
                     ),
                     recommended_action="INVESTIGATE_OVERPAYMENT",
+                )
+            )
+            hypotheses.append(
+                Hypothesis(
+                    rank=2,
+                    title="Prior Period Billing Adjustment Settlement Credit",
+                    description=(
+                        "A delayed restitution credit from a prior settlement cycle was credited "
+                        "directly into this batch deposit."
+                    ),
+                    confidence="MEDIUM",
+                    supporting_evidence=(
+                        "Surplus cash credit deposited into verified operating account",
+                    ),
+                    contradicting_evidence=(
+                        "Statement narration references current batch identifier only",
+                    ),
+                    recommended_action="LINK_PRIOR_ADJUSTMENT",
                 )
             )
             recommended_action = "INVESTIGATE_OVERPAYMENT"

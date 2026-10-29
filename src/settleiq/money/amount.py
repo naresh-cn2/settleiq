@@ -33,6 +33,13 @@ from .errors import (
 __all__ = ["CURRENCY_TABLE_VERSION", "Decimal", "Money"]
 
 _ZERO: Final[Decimal] = Decimal(0)
+_QUANTA: Final[dict[int, Decimal]] = {
+    0: Decimal(1),
+    1: Decimal("0.1"),
+    2: Decimal("0.01"),
+    3: Decimal("0.001"),
+    4: Decimal("0.0001"),
+}
 
 
 class Money:
@@ -58,19 +65,23 @@ class Money:
 
     @staticmethod
     def _to_decimal(amount: Decimal | str | int) -> Decimal:
-        ctx = get_context()
-        if isinstance(amount, Decimal):
-            return +amount  # normalise under the declared context
-        if isinstance(amount, int):
-            return Decimal(amount, context=ctx)
-        if isinstance(amount, str):
+        t = type(amount)
+        if t is str:
             text = amount.strip()
             if not text:
                 raise InvalidAmountError("Money cannot be constructed from an empty string")
             try:
-                return Decimal(text, context=ctx)
+                return Decimal(text, context=DEFAULT_CONTEXT)
             except decimal.InvalidOperation as exc:
                 raise InvalidAmountError(f"{amount!r} is not a valid decimal amount") from exc
+        if t is Decimal:
+            return +amount
+        if t is int:
+            return Decimal(amount, context=DEFAULT_CONTEXT)
+        if isinstance(amount, Decimal):
+            return +amount  # normalise under the declared context
+        if isinstance(amount, int):
+            return Decimal(amount, context=DEFAULT_CONTEXT)
         raise InvalidAmountError(f"unsupported amount type: {type(amount).__name__}")
 
     @staticmethod
@@ -85,10 +96,11 @@ class Money:
         built through :meth:`from_computation`, which is deliberately permissive
         so that an explicit rounding decision is forced before persistence.
         """
-        quantum = Decimal(1).scaleb(-currency.exponent)
+        exp = currency.exponent
+        quantum = _QUANTA.get(exp) or Decimal(1).scaleb(-exp)
         representable = value == value.quantize(quantum)
         if not representable and strict:
-            raise CurrencyPrecisionExceeded(value, currency.exponent, currency.value)
+            raise CurrencyPrecisionExceeded(value, exp, currency.value)
         return representable
 
     @classmethod

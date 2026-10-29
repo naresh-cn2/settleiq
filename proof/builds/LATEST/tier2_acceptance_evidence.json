@@ -1,14 +1,26 @@
 {
   "tier": "Tier 2: Acceptance Evidence",
   "description": "Forensic acceptance criteria verified against specifications and domain constraints",
-  "timestamp": "2026-10-29T07:14:45.551507+00:00",
-  "ai_investigator": {
+  "timestamp": "2026-10-29T08:33:43.098168+00:00",
+  "investigator_regression_evaluation": {
     "passed": true,
     "benchmark_cases_evaluated": 30,
     "top1_action_accuracy": 1.0,
     "confidence_accuracy": 1.0,
     "unsupported_claim_rate": 0.0,
-    "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 13 items\n\ntests\\unit\\test_investigator_evaluation.py .............                 [100%]\n\n============================= 13 passed in 0.45s =============================="
+    "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 13 items\n\ntests\\unit\\test_investigator_evaluation.py .............                 [100%]\n\n============================= 13 passed in 0.60s =============================="
+  },
+  "investigator_independent_validation": {
+    "passed": true,
+    "evaluation_battery": "Independent Validation Suite",
+    "tests_passed": 15,
+    "action_accuracy": 1.0,
+    "root_cause_accuracy": 1.0,
+    "confidence_accuracy": 1.0,
+    "state_immutability_verified": true,
+    "randomized_monte_carlo_verified": true,
+    "unsupported_claim_rate": 0.0,
+    "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 15 items\n\ntests\\unit\\test_investigator_independent_validation.py ...............   [100%]\n\n============================= 15 passed in 0.36s =============================="
   },
   "audit_journal_tamper_verified": true,
   "demo_journey_workflow": "SUCCESS",
@@ -17,5 +29,14 @@
     "discrepancy_queue",
     "ai_investigator",
     "audit_journal"
-  ]
+  ],
+  "real_browser_screenshots": [
+    "01_react_runs_dashboard.png",
+    "02_react_demo_seeded.png",
+    "03_react_discrepancy_queue.png",
+    "04_react_ai_investigation_and_trace.png",
+    "05_react_discrepancy_resolved.png",
+    "06_react_audit_history.png"
+  ],
+  "browser_e2e_verified": true
 }

@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-10-29T07:14:45.551507+00:00",
+  "timestamp": "2026-10-29T08:33:43.098168+00:00",
   "git": {
-    "commit_sha": "0c1e6deb2fed0367c2dd8e8da902dabc938b6ef1",
+    "commit_sha": "2d03f9a04c0fc4380795971b01540bb8c81d35ed",
     "branch": "main",
     "is_dirty": true
   },
   "tier1": {
     "tier": "Tier 1: Execution Evidence",
     "description": "Deterministic proof that code compiles, runs, and satisfies all quality gates",
-    "timestamp": "2026-10-29T07:14:45.551507+00:00",
+    "timestamp": "2026-10-29T08:33:43.098168+00:00",
     "gates": {
       "money_safety_gate": true,
       "test_suite": true,
@@ -18,12 +18,12 @@
     },
     "performance": {
       "record_count": 10000,
-      "total_duration_secs": 31.5267,
-      "validation_duration_secs": 14.9678,
-      "validation_throughput_rec_per_sec": 668.1,
-      "reconciliation_duration_secs": 16.5572,
-      "reconciliation_throughput_rec_per_sec": 604.0,
-      "peak_memory_mb": 19.03,
+      "total_duration_secs": 17.4499,
+      "validation_duration_secs": 6.3389,
+      "validation_throughput_rec_per_sec": 1577.6,
+      "reconciliation_duration_secs": 11.1044,
+      "reconciliation_throughput_rec_per_sec": 900.5,
+      "peak_memory_mb": 17.75,
       "matched_numerator": 9999,
       "eligible_denominator": 10000,
       "auto_match_rate": 0.9999,
@@ -34,14 +34,26 @@
   "tier2": {
     "tier": "Tier 2: Acceptance Evidence",
     "description": "Forensic acceptance criteria verified against specifications and domain constraints",
-    "timestamp": "2026-10-29T07:14:45.551507+00:00",
-    "ai_investigator": {
+    "timestamp": "2026-10-29T08:33:43.098168+00:00",
+    "investigator_regression_evaluation": {
       "passed": true,
       "benchmark_cases_evaluated": 30,
       "top1_action_accuracy": 1.0,
       "confidence_accuracy": 1.0,
       "unsupported_claim_rate": 0.0,
-      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 13 items\n\ntests\\unit\\test_investigator_evaluation.py .............                 [100%]\n\n============================= 13 passed in 0.45s =============================="
+      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 13 items\n\ntests\\unit\\test_investigator_evaluation.py .............                 [100%]\n\n============================= 13 passed in 0.60s =============================="
+    },
+    "investigator_independent_validation": {
+      "passed": true,
+      "evaluation_battery": "Independent Validation Suite",
+      "tests_passed": 15,
+      "action_accuracy": 1.0,
+      "root_cause_accuracy": 1.0,
+      "confidence_accuracy": 1.0,
+      "state_immutability_verified": true,
+      "randomized_monte_carlo_verified": true,
+      "unsupported_claim_rate": 0.0,
+      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0\nrootdir: C:\\Users\\nares\\Workspace\\settleiq\nconfigfile: pyproject.toml\nplugins: anyio-4.15.1, platformdirs-4.13.5, asyncio-1.4.0, cov-7.1.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 15 items\n\ntests\\unit\\test_investigator_independent_validation.py ...............   [100%]\n\n============================= 15 passed in 0.36s =============================="
     },
     "audit_journal_tamper_verified": true,
     "demo_journey_workflow": "SUCCESS",
@@ -50,14 +62,23 @@
       "discrepancy_queue",
       "ai_investigator",
       "audit_journal"
-    ]
+    ],
+    "real_browser_screenshots": [
+      "01_react_runs_dashboard.png",
+      "02_react_demo_seeded.png",
+      "03_react_discrepancy_queue.png",
+      "04_react_ai_investigation_and_trace.png",
+      "05_react_discrepancy_resolved.png",
+      "06_react_audit_history.png"
+    ],
+    "browser_e2e_verified": true
   },
   "tier3": {
     "tier": "Tier 3: Independent Verification",
     "description": "Cryptographically verifiable bundle reproducible by any third-party auditor",
-    "timestamp": "2026-10-29T07:14:45.551507+00:00",
+    "timestamp": "2026-10-29T08:33:43.098168+00:00",
     "git": {
-      "commit_sha": "0c1e6deb2fed0367c2dd8e8da902dabc938b6ef1",
+      "commit_sha": "2d03f9a04c0fc4380795971b01540bb8c81d35ed",
       "branch": "main",
       "is_dirty": true
     },
@@ -69,19 +90,20 @@
     },
     "artifacts_sha256": {
       "gate_results.json": "555f464a7f386aedca05014134870af4ab73a900ceefb420ea150b5f809a2137",
-      "test_results.json": "a1dd94bdd0f1146b49698b6bd37830ed76464ae636b0f21863a7c05b814164ea",
+      "test_results.json": "c626d18ef9de41280f67dc46ff7641f57d6f96a2f78ea0a74b43c8b42bb0b582",
       "journal_verification.json": "2c052763909505ea53f73231df8abe45c8538c375c29a00253ba31520359d3b2",
-      "investigator_evaluation.json": "338e0af5998328bea0cad99189453e1ce8352558ed194ce34b7338b47ab70a84",
-      "benchmark_results.json": "ed503778aac4d540b3a92fb8388fc3c430f42f2dd7af39e1e3af98e42e6ff1ea",
-      "demo_journey_trace.json": "3b969993a63646de29629c8aed2eac4d09a274b1f4997d6c45734e481b9d2cf6",
-      "tier1_execution_evidence.json": "b8aa291fa5b13773e38b9ed6ed0e689384d57f2db3492deebc40cad985e7b21a",
-      "tier2_acceptance_evidence.json": "2af6d1af517dba9b43f248d777173f4b0bcf3324473c644fdd28e8260a6b83e5"
+      "investigator_evaluation.json": "5ff120109a2de38b6c46fbec9d23893fe9293cf30968af99464b7b6c0ffcd8e5",
+      "investigator_independent_validation.json": "97a5ceb4abea69de79d2f22904fa30497ce677605b8dd7182a6458cbf4c73175",
+      "benchmark_results.json": "bf087e4ce8ffa37423a9aef864c41efc9679c3a0e6c49ce6a2730e5f36672202",
+      "demo_journey_trace.json": "8e2c6b3c1bac49e902407efb42e05be260fe0efcad5eb794521d5762cf962162",
+      "tier1_execution_evidence.json": "247208be1d3718b5b7c55da7bffeb3b19a7a8ab15376bd5afdfd34c67688f124",
+      "tier2_acceptance_evidence.json": "7fa8d98818c98bbbd76ffd473d9ad71ec3f7eebf2352bfdf906a090bdfb559d2"
     },
     "reproduction_commands": [
       "python -m settleiq.cli gate",
       "pytest tests/unit tests/property tests/integration",
       "python -m ruff check src tests scripts",
-      "python scripts/verify_demo_journey.py",
+      "npm --prefix frontend run verify:e2e",
       "python scripts/verify_ui_workflow.py",
       "python scripts/capture_proof.py"
     ]

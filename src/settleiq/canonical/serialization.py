@@ -21,14 +21,15 @@ def sort_key(value: Any) -> str:
     Decimal is rendered in fixed-point notation so that "10.0" and "10.00"
     sort adjacently rather than lexically apart.
     """
-    if isinstance(value, Decimal):
-        return f"d:{format(value, 'f')}"
-    if isinstance(value, bool):
-        return f"b:{value}"
-    if isinstance(value, int):
-        return f"i:{value}"
-    if isinstance(value, str):
+    t = type(value)
+    if t is str:
         return f"s:{value}"
+    if t is Decimal:
+        return f"d:{format(value, 'f')}"
+    if t is bool:
+        return f"b:{value}"
+    if t is int:
+        return f"i:{value}"
     return f"o:{value!r}"
 
 
@@ -38,24 +39,33 @@ def canonical_scalar(value: Any) -> str:
     Floats are rejected: a float reaching a digest would make the preimage
     platform-dependent and irreproducible.
     """
-    if isinstance(value, float):
-        raise TypeError("binary floats must not enter a canonical serialization")
-    if isinstance(value, Decimal):
+    t = type(value)
+    if t is str:
+        return value
+    if t is Decimal:
         return format(value, "f")
-    if isinstance(value, bool):
+    if t is bool:
         return "true" if value else "false"
+    if t is int:
+        return str(value)
     if value is None:
         return ""
+    if isinstance(value, float):
+        raise TypeError("binary floats must not enter a canonical serialization")
     return str(value)
 
 
 def _render(value: Any) -> str:
-    if isinstance(value, dict):
-        parts = []
-        for key in sorted(value, key=sort_key):
-            parts.append(f"{canonical_scalar(key)}={_render(value[key])}")
+    t = type(value)
+    if t is dict:
+        keys = value.keys()
+        # Fast path: when all dictionary keys are strings (standard in canonical records),
+        # lexical string sorting is identical to sort_key which prefixes 's:' to all strings.
+        if all(type(k) is str for k in keys):
+            return "{" + ";".join(f"{k}={_render(value[k])}" for k in sorted(keys)) + "}"
+        parts = [f"{canonical_scalar(k)}={_render(value[k])}" for k in sorted(keys, key=sort_key)]
         return "{" + ";".join(parts) + "}"
-    if isinstance(value, (list, tuple)):
+    if t in (list, tuple):
         ordered = sorted(value, key=sort_key)
         return "[" + ",".join(_render(item) for item in ordered) + "]"
     return canonical_scalar(value)

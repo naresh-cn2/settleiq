@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-10-29T07:15:36.661245+00:00",
+  "verified_at": "2026-10-29T08:34:54.788439+00:00",
   "workflow_status": "SUCCESS",
   "total_steps": 8,
   "steps": [
@@ -8,7 +8,7 @@
       "title": "Seed Enterprise Synthetic Ledger",
       "path": "/v1/demo/seed",
       "http_status": 201,
-      "timestamp": "2026-10-29T07:15:36.336677+00:00",
+      "timestamp": "2026-10-29T08:34:54.294861+00:00",
       "data_summary": {
         "status": "seeded",
         "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
@@ -23,7 +23,7 @@
       "title": "Inspect Calculated Reconciliation Metrics",
       "path": "/v1/runs/bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a/metrics",
       "http_status": 200,
-      "timestamp": "2026-10-29T07:15:36.365348+00:00",
+      "timestamp": "2026-10-29T08:34:54.359464+00:00",
       "data_summary": {
         "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
         "numerator": 19,
@@ -43,7 +43,7 @@
       "title": "Query Run Discrepancy Queue",
       "path": "/v1/runs/bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a/discrepancies",
       "http_status": 200,
-      "timestamp": "2026-10-29T07:15:36.404260+00:00",
+      "timestamp": "2026-10-29T08:34:54.419927+00:00",
       "data_summary": {
         "count": 7,
         "types": [
@@ -62,11 +62,11 @@
       "title": "Invoke Autonomous AI Forensic Investigator",
       "path": "/v1/discrepancies/dsc:AMOUNT_BREAK:po_2/investigate",
       "http_status": 200,
-      "timestamp": "2026-10-29T07:15:36.450698+00:00",
+      "timestamp": "2026-10-29T08:34:54.484815+00:00",
       "data_summary": {
         "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
         "type": "AMOUNT_BREAK",
-        "hypotheses_count": 1,
+        "hypotheses_count": 2,
         "top_hypothesis": "Intermediary Bank Wire Clearing Fee Deducted",
         "confidence": "HIGH",
         "recommended_action": "ACCEPT_TOLERANCE"
@@ -77,7 +77,7 @@
       "title": "Reconstruct Visual Fund Journey Trace",
       "path": "/v1/runs/bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a/trace/po_2",
       "http_status": 200,
-      "timestamp": "2026-10-29T07:15:36.468922+00:00",
+      "timestamp": "2026-10-29T08:34:54.535561+00:00",
       "data_summary": {
         "nodes_count": 0,
         "gross": "0.00",
@@ -93,7 +93,7 @@
       "title": "Authorize and Commit Resolution",
       "path": "/v1/discrepancies/dsc:AMOUNT_BREAK:po_2/resolve",
       "http_status": 200,
-      "timestamp": "2026-10-29T07:15:36.568341+00:00",
+      "timestamp": "2026-10-29T08:34:54.673806+00:00",
       "data_summary": {
         "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
         "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
@@ -151,6 +151,46 @@
               "selected_candidate": null,
               "resolved_by": "demo_lead_auditor",
               "resolved_at": "2026-10-29T07:15:36.535402+00:00"
+            },
+            {
+              "resolution_id": "res_dsc:AMOUNT_BREAK:po_2_1793262196147",
+              "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+              "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+              "status": "RESOLVED",
+              "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
+              "selected_candidate": null,
+              "resolved_by": "investigator",
+              "resolved_at": "2026-10-29T08:23:16.147518+00:00"
+            },
+            {
+              "resolution_id": "res_dsc:AMOUNT_BREAK:po_2_1793262501437",
+              "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+              "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+              "status": "RESOLVED",
+              "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
+              "selected_candidate": null,
+              "resolved_by": "demo_lead_auditor",
+              "resolved_at": "2026-10-29T08:28:21.437910+00:00"
+            },
+            {
+              "resolution_id": "res_dsc:AMOUNT_BREAK:po_2_1793262765555",
+              "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+              "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+              "status": "RESOLVED",
+              "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
+              "selected_candidate": null,
+              "resolved_by": "demo_lead_auditor",
+              "resolved_at": "2026-10-29T08:32:45.555770+00:00"
+            },
+            {
+              "resolution_id": "res_dsc:AMOUNT_BREAK:po_2_1793262894611",
+              "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+              "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+              "status": "RESOLVED",
+              "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
+              "selected_candidate": null,
+              "resolved_by": "demo_lead_auditor",
+              "resolved_at": "2026-10-29T08:34:54.611118+00:00"
             }
           ]
         }
@@ -161,10 +201,10 @@
       "title": "Confirm Persistent Database State (RESOLVED)",
       "path": "/v1/discrepancies/dsc:AMOUNT_BREAK:po_2",
       "http_status": 200,
-      "timestamp": "2026-10-29T07:15:36.627979+00:00",
+      "timestamp": "2026-10-29T08:34:54.737934+00:00",
       "data_summary": {
         "status": "RESOLVED",
-        "resolution_history_count": 4
+        "resolution_history_count": 8
       }
     },
     {
@@ -172,12 +212,12 @@
       "title": "Cryptographically Verify Hash-Chained Audit Journal",
       "path": "/v1/journal/verify",
       "http_status": 200,
-      "timestamp": "2026-10-29T07:15:36.661245+00:00",
+      "timestamp": "2026-10-29T08:34:54.788439+00:00",
       "data_summary": {
         "intact": true,
         "findings": [],
-        "entries_verified": 5,
-        "head_digest": "ce27c809caf4c660d1f641bd5facf3d1736762a63674a143ad74d9615f58a433",
+        "entries_verified": 9,
+        "head_digest": "52cece3d1dc0cf80836ff67e00ab2ce6f4d87e6eb5af9026471583abc9a4e909",
         "detects": [
           "payload modification",
           "digest modification",
