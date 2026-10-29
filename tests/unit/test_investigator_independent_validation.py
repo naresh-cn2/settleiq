@@ -441,3 +441,142 @@ class TestInvestigatorIndependentValidation:
         assert root_cause_acc == 1.0, f"Root Cause Accuracy fell below 100%: {root_cause_acc:.2%}"
         assert conf_acc == 1.0, f"Confidence Accuracy fell below 100%: {conf_acc:.2%}"
         assert unsupported_rate == 0.0, f"Found {unsupported_claims_count} unsupported claims"
+
+    # --------------------------------------------------------------------------
+    # 8. Appropriate Abstention & Fail-Closed Refusal Matrix
+    # --------------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("scenario_name", "disc_payload", "expected_action", "expected_conf"),
+        [
+            (
+                "missing_numerical_amounts",
+                {
+                    "discrepancy_id": "dsc:ABSTAIN:01",
+                    "type": DiscrepancyType.NET_GROSS_BREAK.value,
+                    "reason": "batch 'sb_anon' encountered unspecified settlement delta",
+                    "constituent_id": "po_anon",
+                },
+                "MANUAL_REVIEW",
+                "INSUFFICIENT",
+            ),
+            (
+                "unsupported_settlement_system",
+                {
+                    "discrepancy_id": "dsc:ABSTAIN:02",
+                    "type": DiscrepancyType.UNKNOWN.value,
+                    "reason": "system 'fednow_instant' bridge protocol not configured in routing rules",
+                    "constituent_id": "tx_fednow",
+                },
+                "MANUAL_REVIEW",
+                "INSUFFICIENT",
+            ),
+            (
+                "contradictory_record_types",
+                {
+                    "discrepancy_id": "dsc:ABSTAIN:03",
+                    "type": DiscrepancyType.UNKNOWN.value,
+                    "reason": "record kind 'fx_swap' cannot be decomposed into standard fee or charge constituent",
+                    "constituent_id": "tx_swap",
+                },
+                "MANUAL_REVIEW",
+                "INSUFFICIENT",
+            ),
+            (
+                "empty_payload_fields",
+                {
+                    "discrepancy_id": "dsc:ABSTAIN:04",
+                    "type": DiscrepancyType.PHANTOM_BANK.value,
+                    "reason": "",
+                    "constituent_id": "",
+                },
+                "MANUAL_REVIEW",
+                "INSUFFICIENT",
+            ),
+        ],
+    )
+    def test_investigator_appropriate_abstention_on_uncertainty(
+        self, scenario_name: str, disc_payload: Mapping[str, object], expected_action: str, expected_conf: str
+    ) -> None:
+        """When evidence is contradictory or incomplete, investigator MUST abstain from guessing."""
+        report = investigate_discrepancy(disc_payload)
+        assert report.recommended_action == expected_action
+        assert len(report.hypotheses) >= 1
+        assert report.hypotheses[0].confidence == expected_conf
+        assert report.draft_resolution["action"] == expected_action
+
+    # --------------------------------------------------------------------------
+    # 9. Compound & Unseen Adversarial Scenarios
+    # --------------------------------------------------------------------------
+
+    def test_unseen_scenario_zero_net_batch_residual(self) -> None:
+        """Unseen scenario: batch has gross 500.00 and refund 500.00 (net 0.00), but payout was 15.00."""
+        disc = {
+            "discrepancy_id": "dsc:UNSEEN_ZERO_NET:01",
+            "type": DiscrepancyType.NET_GROSS_BREAK.value,
+            "severity": "HIGH",
+            "constituent_id": "po_zero_net",
+            "status": "OPEN",
+            "reason": "batch 'sb_zero' nets 0.00|USD but the payout paid 15.00|USD; residual -15.00|USD",
+        }
+        report = investigate_discrepancy(disc)
+
+        # Negative residual represents payout surplus / volume rebate / retroactive bonus
+        assert report.recommended_action == "BOOK_REBATE"
+        assert report.hypotheses[0].confidence == "HIGH"
+        assert "Rebate" in report.hypotheses[0].title or "Incentive" in report.hypotheses[0].title
+        assert report.trace.net_expected == "0.00"
+        assert report.trace.net_paid == "15.00"
+        assert report.trace.residual == "-15.00"
+
+    def test_unseen_scenario_high_value_multi_break_precision(self) -> None:
+        """Unseen scenario: enterprise $12,500,000 settlement batch with exact $125.00 wire break."""
+        disc = {
+            "discrepancy_id": "dsc:UNSEEN_HIGH_VAL:01",
+            "type": DiscrepancyType.AMOUNT_BREAK.value,
+            "severity": "CRITICAL",
+            "constituent_id": "po_enterprise_1",
+            "status": "OPEN",
+            "reason": "payout paid 12500000.00|USD but deposit posted 12499875.00|USD",
+        }
+        report = investigate_discrepancy(disc)
+
+        assert report.recommended_action == "ACCEPT_TOLERANCE"
+        assert report.hypotheses[0].confidence == "HIGH"
+        assert "125.00" in report.hypotheses[0].description or "Wire" in report.hypotheses[0].title
+        # Verification of exact balance preservation
+        assert report.trace.net_paid == "12500000.00"
+        assert report.trace.bank_deposited == "12499875.00"
+
+    def test_citation_grounding_and_hallucination_rate(self) -> None:
+        """Verifies that all factual tokens (amounts, batch IDs, dates) in hypotheses exist in the input."""
+        test_cases = [
+            {
+                "discrepancy_id": "dsc:GROUND:01",
+                "type": DiscrepancyType.NET_GROSS_BREAK.value,
+                "reason": "batch 'sb_custom_99' nets 340.50|USD but the payout paid 330.00|USD; residual 10.50|USD",
+                "expected_tokens": ["sb_custom_99", "340.50", "330.00", "10.50"],
+            },
+            {
+                "discrepancy_id": "dsc:GROUND:02",
+                "type": DiscrepancyType.TIMING_BREAK.value,
+                "reason": "payout arrived 2026-10-04, deposit posted 2026-10-09: 5 days exceeds the declared window of 3",
+                "expected_tokens": ["2026-10-04", "2026-10-09", "5", "3"],
+            },
+        ]
+
+        grounding_hits = 0
+        total_tokens = 0
+
+        for tc in test_cases:
+            report = investigate_discrepancy(tc)
+            top_hyp = report.hypotheses[0]
+            evidence_blob = " ".join(top_hyp.supporting_evidence) + " " + top_hyp.description
+
+            for token in tc["expected_tokens"]:
+                total_tokens += 1
+                if token in evidence_blob:
+                    grounding_hits += 1
+
+        grounding_rate = grounding_hits / total_tokens
+        assert grounding_rate >= 0.95, f"Factual grounding rate fell below 95%: {grounding_rate:.2%}"

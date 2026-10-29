@@ -1,46 +1,46 @@
 SETTLEIQ ENGINE PROFILING REPORT (SCALE: 2,000 records)
 Match Rate: 99.55% | Discrepancies: 9
 ================================================================================
-         309498 function calls (263845 primitive calls) in 0.780 seconds
+         309498 function calls (263845 primitive calls) in 0.547 seconds
 
    Ordered by: cumulative time
    List reduced from 90 to 35 due to restriction <35>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-        1    0.052    0.052    0.789    0.789 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:144(reconcile)
-      181    0.054    0.000    0.312    0.002 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\decompose.py:112(decompose)
-        1    0.000    0.000    0.234    0.234 C:\Users\nares\Workspace\settleiq\src\settleiq\model\run_identity.py:38(derive)
-        1    0.000    0.000    0.234    0.234 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:79(digest)
-        1    0.000    0.000    0.234    0.234 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:74(canonical_bytes)
-  19827/1    0.062    0.000    0.233    0.233 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:58(_render)
-   4003/1    0.016    0.000    0.233    0.233 {method 'join' of 'str' objects}
-  21828/3    0.033    0.000    0.233    0.078 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:65(<genexpr>)
-     5792    0.060    0.000    0.183    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:50(__init__)
-     2001    0.006    0.000    0.180    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:70(<genexpr>)
-     1810    0.006    0.000    0.085    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\decompose.py:104(_money)
-     5792    0.035    0.000    0.079    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:87(_validate_exponent)
-     4369    0.021    0.000    0.060    0.000 {built-in method builtins.sorted}
-    55394    0.058    0.000    0.058    0.000 {method 'get' of 'dict' objects}
-      905    0.014    0.000    0.055    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:138(zero)
-        6    0.011    0.002    0.052    0.009 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:83(_by_kind)
-    23376    0.021    0.000    0.048    0.000 {built-in method builtins.isinstance}
-     1629    0.009    0.000    0.043    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:181(__add__)
-     4002    0.022    0.000    0.043    0.000 {built-in method builtins.all}
-    16000    0.030    0.000    0.041    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:68(_kind_of)
-     2000    0.039    0.000    0.039    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:18(sort_key)
-     6697    0.010    0.000    0.034    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\currency.py:66(exponent)
-      362    0.008    0.000    0.031    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\rules.py:213(evaluate)
-      724    0.002    0.000    0.029    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:185(__sub__)
-    10525    0.021    0.000    0.027    0.000 <frozen abc>:117(__instancecheck__)
-     7077    0.009    0.000    0.025    0.000 C:\Users\nares\AppData\Local\Programs\Python\Python312\Lib\enum.py:202(__get__)
-     5792    0.023    0.000    0.024    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:66(_to_decimal)
-      181    0.008    0.000    0.024    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:474(_check_matched_amount)
-    21828    0.021    0.000    0.021    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:64(<genexpr>)
-     4000    0.007    0.000    0.020    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:72(_record_of)
-     6878    0.013    0.000    0.017    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\currency.py:50(parse)
-      724    0.001    0.000    0.016    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\rules.py:96(matches)
-     7077    0.016    0.000    0.016    0.000 C:\Users\nares\AppData\Local\Programs\Python\Python312\Lib\enum.py:1291(value)
-      362    0.001    0.000    0.014    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\rules.py:147(same_amount)
-     2000    0.011    0.000    0.013    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:79(_digest_of)
+        1    0.033    0.033    0.558    0.558 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:144(reconcile)
+      181    0.034    0.000    0.214    0.001 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\decompose.py:112(decompose)
+        1    0.000    0.000    0.167    0.167 C:\Users\nares\Workspace\settleiq\src\settleiq\model\run_identity.py:38(derive)
+        1    0.000    0.000    0.167    0.167 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:79(digest)
+        1    0.000    0.000    0.166    0.166 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:74(canonical_bytes)
+  19827/1    0.051    0.000    0.166    0.166 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:58(_render)
+   4003/1    0.018    0.000    0.166    0.166 {method 'join' of 'str' objects}
+  21828/3    0.032    0.000    0.166    0.055 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:65(<genexpr>)
+     2001    0.003    0.000    0.147    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:70(<genexpr>)
+     5792    0.050    0.000    0.131    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:50(__init__)
+     1810    0.005    0.000    0.048    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\decompose.py:104(_money)
+     5792    0.019    0.000    0.047    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:87(_validate_exponent)
+     1629    0.006    0.000    0.043    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:181(__add__)
+        6    0.010    0.002    0.039    0.007 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:83(_by_kind)
+    23376    0.020    0.000    0.038    0.000 {built-in method builtins.isinstance}
+      362    0.010    0.000    0.038    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\rules.py:213(evaluate)
+    55394    0.034    0.000    0.034    0.000 {method 'get' of 'dict' objects}
+      905    0.008    0.000    0.034    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:138(zero)
+    16000    0.020    0.000    0.028    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:68(_kind_of)
+     4369    0.011    0.000    0.026    0.000 {built-in method builtins.sorted}
+     4002    0.012    0.000    0.025    0.000 {built-in method builtins.all}
+      724    0.002    0.000    0.023    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\rules.py:96(matches)
+     6697    0.009    0.000    0.021    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\currency.py:66(exponent)
+    10525    0.009    0.000    0.019    0.000 <frozen abc>:117(__instancecheck__)
+      362    0.001    0.000    0.018    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\rules.py:147(same_amount)
+     4000    0.005    0.000    0.018    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:72(_record_of)
+      724    0.002    0.000    0.017    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:185(__sub__)
+     5792    0.015    0.000    0.017    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\amount.py:66(_to_decimal)
+     2000    0.015    0.000    0.015    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:18(sort_key)
+      362    0.003    0.000    0.014    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\rules.py:134(_amount)
+      181    0.002    0.000    0.014    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\engine\reconcile.py:474(_check_matched_amount)
+     6878    0.008    0.000    0.014    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\money\currency.py:50(parse)
+    21828    0.013    0.000    0.013    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:64(<genexpr>)
+     7077    0.009    0.000    0.012    0.000 C:\Users\nares\AppData\Local\Programs\Python\Python312\Lib\enum.py:202(__get__)
+    15824    0.011    0.000    0.011    0.000 C:\Users\nares\Workspace\settleiq\src\settleiq\canonical\serialization.py:36(canonical_scalar)
 
 

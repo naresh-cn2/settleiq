@@ -12,6 +12,10 @@ This document provides the formal security review of SettleIQ across all 17 secu
 3. **Storage Boundary**: Persistence stores (PostgreSQL and SQLite) holding runs, discrepancies, resolutions, and audit journal entries.
 4. **Audit Journal Boundary**: Immutable append-only cryptographic hash chain.
 
+### Integration Boundaries & Tenancy Architecture
+1. **Single-Tenant Deployment Model:** SettleIQ currently operates in a single-tenant deployment architecture. All reconciliation runs, accounts, and audit entries belong to a single organization partition within a dedicated SQLite file or PostgreSQL schema. Multi-tenant multi-organization environments require adding tenant namespace columns (`tenant_id`), PostgreSQL Row-Level Security (RLS) policies, and per-tenant cryptographic KMS encryption.
+2. **Synthetic Ingestion Fixtures vs Live External API Connections:** SettleIQ's Stripe integration (`StripeSourceAdapter`) processes static or streamed payload records adhering strictly to the official Stripe Balance Transaction schema under verified synthetic provenance (`DataProvenance.SYNTHETIC`). The engine explicitly forbids live outbound API credentials in standard test and demonstration configurations to prevent unintentional fund movement or live credentials leakage. Real data ingestion requires explicit opt-in via environment configuration (`SETTLEIQ_ALLOW_REAL_DATA=true`).
+
 ---
 
 ## 2. Assessment of the 17 Security Dimensions
