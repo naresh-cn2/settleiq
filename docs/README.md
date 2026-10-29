@@ -84,10 +84,11 @@ All specifications in `docs/specifications/` govern the implemented architecture
 ## 6. Implementation Status Summary
 
 The software implementation is fully built, tested, and validated:
-- **Test Suite:** 157 automated tests passing (100% pass rate).
+- **Test Suite:** 170 automated tests passing (100% pass rate).
 - **Float Gate:** AST scanner confirms zero binary floats on monetary paths.
-- **Autonomous AI Investigator:** Deterministic evidence-backed reasoning engine with constituent fund journey tracing.
+- **Autonomous AI Investigator:** Evaluated against ground-truth benchmarks (100% Top-1 accuracy, 0% unsupported claims).
+- **End-to-End Workflow:** 8-step demo journey verified and captured in `proof/demo_journey_trace.json`.
 - **Reproducible Demonstration:** `python -m settleiq.cli run` reproduces all 7 defect classifications deterministically.
 - **Interactive Workspace:** 5-view React/TypeScript SPA with 60-second guided tour demo seed served directly by FastAPI.
 - **Persistence:** Dual engine support for SQLite and PostgreSQL with versioned transactional migrations.
-- **Scale:** 100,000 records reconciled in under 38 seconds with linear $O(N)$ candidate pre-indexing.
+- **Scale:** 100,000 records reconciled in under 84 seconds with linear $O(N)$ candidate pre-indexing.

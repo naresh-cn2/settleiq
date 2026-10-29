@@ -103,3 +103,60 @@ def test_security_headers_present(client: TestClient) -> None:
     assert res.headers["X-XSS-Protection"] == "1; mode=block"
     assert res.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
     assert "default-src 'self'" in res.headers["Content-Security-Policy"]
+
+
+def test_resolution_authorization_and_audit_consistency(client: TestClient, monkeypatch) -> None:
+    # First seed a demo run without auth configured
+    seed_res = client.post("/v1/demo/seed")
+    assert seed_res.status_code == 201
+    run_id = seed_res.json()["run_id"]
+
+    # Retrieve discrepancy
+    disc_res = client.get(f"/v1/runs/{run_id}/discrepancies")
+    assert disc_res.status_code == 200
+    discs = disc_res.json()["discrepancies"]
+    assert len(discs) > 0
+    target_disc = discs[0]
+    disc_id = target_disc["discrepancy_id"]
+
+    # Now configure API key requirement
+    monkeypatch.setenv("SETTLEIQ_API_KEY", "prod-auth-key-999")
+
+    # 1. Unauthenticated resolution attempt MUST be rejected with HTTP 401
+    unauth = client.post(
+        f"/v1/discrepancies/{disc_id}/resolve",
+        json={"reason": "Unauthorized resolution attempt", "resolved_by": "attacker"}
+    )
+    assert unauth.status_code == 401
+    assert unauth.json()["error"] == "unauthorized"
+
+    # Verify status is STILL OPEN
+    disc_check = client.get(f"/v1/discrepancies/{disc_id}")
+    assert disc_check.json()["status"] == "OPEN"
+
+    # 2. Authorized resolution attempt succeeds
+    auth_headers = {"X-API-Key": "prod-auth-key-999"}
+    resolve_payload = {
+        "reason": "Authorized forensic fee adjustment per SOP-12",
+        "resolved_by": "compliance_officer_1",
+    }
+    if target_disc.get("type") == "AMBIGUOUS_MATCH":
+        resolve_payload["selected_candidate"] = "cand_1"
+
+    success_res = client.post(
+        f"/v1/discrepancies/{disc_id}/resolve",
+        headers=auth_headers,
+        json=resolve_payload,
+    )
+    assert success_res.status_code == 200
+    assert success_res.json()["status"] == "RESOLVED"
+
+    # 3. Verify persistent status in database
+    persisted = client.get(f"/v1/discrepancies/{disc_id}")
+    assert persisted.json()["status"] == "RESOLVED"
+
+    # 4. Verify hash-chained audit journal verification passes
+    journal_v = client.post("/v1/journal/verify", headers=auth_headers)
+    assert journal_v.status_code == 200
+    assert journal_v.json()["intact"] is True
+

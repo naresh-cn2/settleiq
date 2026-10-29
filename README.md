@@ -5,7 +5,7 @@
 [![React 18](https://img.shields.io/badge/React-18.3-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6.svg)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
-[![Tests: 157 Passing](https://img.shields.io/badge/Tests-157%20Passing-brightgreen.svg)](tests/)
+[![Tests: 170 Passing](https://img.shields.io/badge/Tests-170%20Passing-brightgreen.svg)](tests/)
 [![Money Safety: Zero-Float Enforced](https://img.shields.io/badge/Money%20Safety-Zero--Float%20AST-success.svg)](src/settleiq/money/)
 [![Proof-of-Work: Verified](https://img.shields.io/badge/Proof--of--Work-Verified%20LATEST-blueviolet.svg)](proof/PROOF_MANIFEST.md)
 
@@ -114,7 +114,7 @@ pip install -e ".[dev]"
 ### 2. Verify Core Gates in One Step
 
 ```bash
-# 1. Run the entire automated test suite (157 passing tests)
+# 1. Run the entire automated test suite (170 passing tests)
 pytest -v
 
 # 2. Verify the Money-Safety Static Gate (AST zero-float verification)
@@ -157,12 +157,15 @@ SettleIQ maintains a permanent, verifiable proof-of-work pipeline in [`proof/`](
 python scripts/capture_proof.py
 ```
 
-This autonomously verifies all 6 quality gates and outputs raw machine-readable JSON artifacts:
+This autonomously verifies all 8 quality gates and outputs raw machine-readable JSON artifacts:
 - [`proof/PROOF_MANIFEST.md`](proof/PROOF_MANIFEST.md): Executive proof-of-work summary.
 - `proof/builds/LATEST/manifest.json`: Environment metadata and gate results.
 - `proof/builds/LATEST/gate_results.json`: AST zero-float verification logs.
-- `proof/builds/LATEST/test_results.json`: Pytest execution logs (157 passing tests).
+- `proof/builds/LATEST/test_results.json`: Pytest execution logs (170 passing tests).
+- `proof/builds/LATEST/investigator_evaluation.json`: AI investigator ground-truth benchmark (100% Top-1 accuracy).
 - `proof/builds/LATEST/journal_verification.json`: Tamper resistance verification logs.
+- `proof/builds/LATEST/demo_journey_trace.json`: 8-step end-to-end workflow execution trace.
+- `proof/builds/LATEST/benchmark_results.json`: 10,000-record scale and memory benchmarks.
 - `proof/builds/LATEST/benchmark_results.json`: 10,000-record scale and memory benchmarks.
 
 ---

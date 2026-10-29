@@ -35,7 +35,7 @@ class TraceNode:
     currency: str
     reference: str
     date: str
-    status: str  # MATCHED, BREAK, ORPHAN, DELAYED
+    status: str  # MATCHED, BREAK, ORPHAN, DELAYED, SHORTFALL
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_canonical(self) -> dict[str, object]:
@@ -215,28 +215,50 @@ def build_transaction_trace(
                 net_paid = Decimal(net_paid_str)
                 residual = Decimal(res_str)
                 net_exp = Decimal(net_exp_str)
+
+                # Reconstruct gross, fees/adjustments, and net_paid
+                gross = net_exp
+                variance = abs(net_exp - net_paid)
+                if variance == Decimal("0.00"):
+                    variance = abs(residual)
+
                 nodes.append(
                     TraceNode(
                         node_id="charges_summary",
                         kind="charge",
-                        amount=f"{net_exp + Decimal('4.00'):.2f}",
+                        amount=f"{gross:.2f}",
                         currency=currency,
                         reference=cid,
                         date="2026-10-15",
                         status="MATCHED",
                     )
                 )
-                nodes.append(
-                    TraceNode(
-                        node_id="fee_summary",
-                        kind="fee",
-                        amount="4.00",
-                        currency=currency,
-                        reference=cid,
-                        date="2026-10-15",
-                        status="SHORTFALL",
+
+                if net_paid < net_exp or residual > Decimal("0.00"):
+                    fees = variance
+                    nodes.append(
+                        TraceNode(
+                            node_id="fee_summary",
+                            kind="fee",
+                            amount=f"{fees:.2f}",
+                            currency=currency,
+                            reference=cid,
+                            date="2026-10-15",
+                            status="SHORTFALL",
+                        )
                     )
-                )
+                else:
+                    nodes.append(
+                        TraceNode(
+                            node_id="adjustment_summary",
+                            kind="adjustment",
+                            amount=f"{variance:.2f}",
+                            currency=currency,
+                            reference=cid,
+                            date="2026-10-15",
+                            status="SURPLUS",
+                        )
+                    )
                 nodes.append(
                     TraceNode(
                         node_id=cid,
@@ -253,11 +275,24 @@ def build_transaction_trace(
             # Format: payout paid 80.00|USD but deposit posted 78.50|USD
             pattern = r"paid ([0-9.]+)\|([A-Z]+) but deposit posted ([0-9.]+)\|([A-Z]+)"
             m = re.search(pattern, reason)
-            if m:
+            if not m:
+                # Alternate pattern: deposit posted 78.50|USD but its payout paid 80.00|USD
+                m_alt = re.search(
+                    r"deposit posted ([0-9.]+)\|([A-Z]+) but its payout paid ([0-9.]+)\|([A-Z]+)",
+                    reason,
+                )
+                if m_alt:
+                    d_str, curr_str, p_str, _ = m_alt.groups()
+                    currency = curr_str
+                    net_paid = Decimal(p_str)
+                    bank_dep = Decimal(d_str)
+            else:
                 p_str, curr_str, d_str, _ = m.groups()
                 currency = curr_str
                 net_paid = Decimal(p_str)
                 bank_dep = Decimal(d_str)
+
+            if net_paid > Decimal("0.00") or bank_dep > Decimal("0.00"):
                 nodes.append(
                     TraceNode(
                         node_id=cid,
@@ -266,7 +301,7 @@ def build_transaction_trace(
                         currency=currency,
                         reference=cid,
                         date="2026-10-15",
-                        status="BREAK",
+                        status="BREAK" if net_paid != bank_dep else "MATCHED",
                     )
                 )
                 nodes.append(
@@ -277,15 +312,16 @@ def build_transaction_trace(
                         currency=currency,
                         reference=cid,
                         date="2026-10-17",
-                        status="BREAK",
+                        status="BREAK" if net_paid != bank_dep else "MATCHED",
                     )
                 )
         elif disc_type == DiscrepancyType.TIMING_BREAK.value:
             # Format: payout arrived 2026-10-08, deposit posted 2026-10-20: 12 days exceeds window
-            pattern = r"arrived ([0-9-]+), deposit posted ([0-9-]+): ([0-9]+) days"
+            pattern = r"arrived ([0-9-]+), deposit posted ([0-9-]+): (-?[0-9]+) days"
             m = re.search(pattern, reason)
             if m:
                 arr_date, post_date, days = m.groups()
+                elapsed = int(days)
                 nodes.append(
                     TraceNode(
                         node_id=cid,
@@ -294,7 +330,7 @@ def build_transaction_trace(
                         currency="USD",
                         reference=cid,
                         date=arr_date,
-                        status="DELAYED",
+                        status="DELAYED" if elapsed > 3 else "MATCHED",
                     )
                 )
                 nodes.append(
@@ -305,8 +341,8 @@ def build_transaction_trace(
                         currency="USD",
                         reference=cid,
                         date=post_date,
-                        status="DELAYED",
-                        metadata={"elapsed_days": int(days)},
+                        status="DELAYED" if elapsed > 3 else "MATCHED",
+                        metadata={"elapsed_days": elapsed},
                     )
                 )
         elif disc_type == DiscrepancyType.PHANTOM_PROCESSOR.value:
@@ -401,109 +437,321 @@ def investigate_discrepancy(
         "resolved_by": "settleiq_ai_agent",
     }
 
-    if disc_type == DiscrepancyType.NET_GROSS_BREAK.value:
+    # Guard: Insufficient Evidence case
+    if not reason.strip() and not records and disc_type != DiscrepancyType.UNKNOWN.value:
         hypotheses.append(
             Hypothesis(
                 rank=1,
-                title="Undocumented Processor Interchange Fee or Reserve Deduction",
+                title="Insufficient Evidence for Automated Root Cause Analysis",
                 description=(
-                    "The net payout amount paid is less than the net expected from recorded "
-                    "charges, indicating a fee or holdback deduction was applied by the processor "
-                    "but not captured in the ingested fee settlement records."
+                    "The discrepancy record contains no diagnostic reason string and no "
+                    "constituent financial records. Automated hypothesis formulation is ungrounded."
                 ),
-                confidence="HIGH",
-                supporting_evidence=(
-                    f"Discrepancy reason calculates explicit negative residual: {reason}",
-                    "Gross charges and fee deductions fail to close algebraically to net paid",
-                    f"Payout batch {cid} exhibits non-zero unexplained variance",
-                ),
-                contradicting_evidence=(
-                    "No corresponding fee record exists in the current batch",
-                ),
-                recommended_action="ADJUST_FEE",
+                confidence="INSUFFICIENT",
+                supporting_evidence=(),
+                contradicting_evidence=(),
+                recommended_action="MANUAL_REVIEW",
             )
         )
-        hypotheses.append(
-            Hypothesis(
-                rank=2,
-                title="Mid-Batch Customer Chargeback or Dispute Reversal",
-                description=(
-                    "A customer dispute or chargeback was reversed immediately prior to payout, "
-                    "reducing the net settlement without appearing in the settled refund stream."
+        return InvestigationReport(
+            discrepancy_id=disc_id,
+            type=disc_type,
+            severity=severity,
+            constituent_id=cid,
+            status=status,
+            reason=reason,
+            trace=trace,
+            hypotheses=tuple(hypotheses),
+            recommended_action="MANUAL_REVIEW",
+            draft_resolution={
+                "action": "MANUAL_REVIEW",
+                "reason": (
+                    "Missing diagnostic reason and constituent evidence; "
+                    "routed to manual review."
                 ),
-                confidence="MEDIUM",
-                supporting_evidence=(
-                    "Negative residual matches typical dispute debit profile",
-                ),
-                contradicting_evidence=(
-                    "No explicit chargeback notification record ingested in window",
-                ),
-                recommended_action="FLAG_DISPUTE",
-            )
+                "resolved_by": "settleiq_ai_agent",
+            },
         )
-        recommended_action = "ADJUST_FEE"
-        draft_resolution = {
-            "action": "ADJUST_FEE",
-            "reason": (
-                "Unaccounted processor deduction verified via constituent trace. "
-                "Booked fee adjustment per SOP-12."
-            ),
-            "resolved_by": "settleiq_ai_agent",
-        }
+
+    if disc_type == DiscrepancyType.NET_GROSS_BREAK.value:
+        residual_dec = Decimal(trace.residual)
+        # In decompose: residual = net_expected - net_paid
+        # If residual < 0, payout paid > net_expected (surplus / rebate)
+        # If residual > 0, payout paid < net_expected (shortfall / fee deduction)
+        if residual_dec < Decimal("0.00"):
+            hypotheses.append(
+                Hypothesis(
+                    rank=1,
+                    title="Processor Retroactive Fee Rebate or Volume Incentive",
+                    description=(
+                        "The processor net payout exceeded the net expected from recorded "
+                        "charges, indicating a retroactive volume rebate, promotional credit, "
+                        "or fee discount."
+                    ),
+                    confidence="HIGH",
+                    supporting_evidence=(
+                        f"Reason indicates negative residual (payout exceeds expected): {reason}",
+                        f"Net paid ({trace.net_paid}) exceeds net expected ({trace.net_expected})",
+                        f"Residual {trace.residual} represents positive cash flow surplus",
+                    ),
+                    contradicting_evidence=(
+                        "Interchange fee deductions cannot explain a positive payment surplus",
+                    ),
+                    recommended_action="BOOK_REBATE",
+                )
+            )
+            hypotheses.append(
+                Hypothesis(
+                    rank=2,
+                    title="Dispute Reversal / Chargeback Credit Restitution",
+                    description=(
+                        "A previously lost dispute was reversed in merchant favor, depositing "
+                        "restitution funds directly into the settlement batch."
+                    ),
+                    confidence="MEDIUM",
+                    supporting_evidence=(
+                        "Surplus matches credit reversal behavior",
+                    ),
+                    contradicting_evidence=(
+                        "No formal dispute won webhook event ingested in current window",
+                    ),
+                    recommended_action="VERIFY_DISPUTE_CREDIT",
+                )
+            )
+            recommended_action = "BOOK_REBATE"
+            draft_resolution = {
+                "action": "BOOK_REBATE",
+                "reason": (
+                    f"Surplus residual of {trace.residual} verified as processor fee rebate. "
+                    "Booked to operational revenue adjustment."
+                ),
+                "resolved_by": "settleiq_ai_agent",
+            }
+        else:
+            hypotheses.append(
+                Hypothesis(
+                    rank=1,
+                    title="Undocumented Processor Interchange Fee or Reserve Deduction",
+                    description=(
+                        "The net payout amount paid is less than the net expected from recorded "
+                        "charges, indicating a fee or holdback deduction was applied by the "
+                        "processor but not captured in the ingested fee settlement records."
+                    ),
+                    confidence="HIGH",
+                    supporting_evidence=(
+                        f"Discrepancy reason calculates explicit shortfall residual: {reason}",
+                        "Gross charges and fee deductions fail to close algebraically to net paid",
+                        f"Payout batch {cid} exhibits non-zero unexplained variance",
+                    ),
+                    contradicting_evidence=(
+                        "No corresponding fee record exists in the current batch",
+                    ),
+                    recommended_action="ADJUST_FEE",
+                )
+            )
+            hypotheses.append(
+                Hypothesis(
+                    rank=2,
+                    title="Mid-Batch Customer Chargeback or Dispute Reversal",
+                    description=(
+                        "A customer dispute or chargeback was reversed immediately prior to "
+                        "payout, reducing net settlement without appearing in refund stream."
+                    ),
+                    confidence="MEDIUM",
+                    supporting_evidence=(
+                        "Positive residual matches typical dispute debit profile",
+                    ),
+                    contradicting_evidence=(
+                        "No explicit chargeback notification record ingested in window",
+                    ),
+                    recommended_action="FLAG_DISPUTE",
+                )
+            )
+            recommended_action = "ADJUST_FEE"
+            draft_resolution = {
+                "action": "ADJUST_FEE",
+                "reason": (
+                    "Unaccounted processor deduction verified via constituent trace. "
+                    "Booked fee adjustment per SOP-12."
+                ),
+                "resolved_by": "settleiq_ai_agent",
+            }
 
     elif disc_type == DiscrepancyType.AMOUNT_BREAK.value:
-        hypotheses.append(
-            Hypothesis(
-                rank=1,
-                title="Intermediary Bank Wire Clearing Fee Deducted",
-                description=(
-                    "The bank settlement deposit posted with an amount lower than the payout. "
-                    "This variance typically corresponds to an intermediary bank wire fee."
-                ),
-                confidence="HIGH",
-                supporting_evidence=(
-                    f"Reason confirms payout paid differs from deposit posted: {reason}",
-                    "Bank deposit reference matches the processor payout batch reference exactly",
-                    "Variance is within standard bank domestic/international wire fee range",
-                ),
-                contradicting_evidence=(
-                    "Bank narration does not explicitly itemize wire service fee in memo field",
-                ),
-                recommended_action="ACCEPT_TOLERANCE",
+        paid_dec = Decimal(trace.net_paid)
+        dep_dec = Decimal(trace.bank_deposited)
+
+        # Check for contradictory evidence: payout and deposit amounts are identical
+        if paid_dec == dep_dec and paid_dec > Decimal("0.00"):
+            hypotheses.append(
+                Hypothesis(
+                    rank=1,
+                    title="Contradictory Evidence: Amounts Agree in Trace",
+                    description=(
+                        "The discrepancy indicates an AMOUNT_BREAK, but the payout and deposit "
+                        "amounts in the transaction trace are identical. Potential false break."
+                    ),
+                    confidence="INSUFFICIENT",
+                    supporting_evidence=(
+                        f"Recorded discrepancy reason: {reason}",
+                    ),
+                    contradicting_evidence=(
+                        (
+                            f"Trace shows payout {trace.net_paid} equals deposit "
+                            f"{trace.bank_deposited}"
+                        ),
+                    ),
+                    recommended_action="MANUAL_REVIEW",
+                )
             )
-        )
-        recommended_action = "ACCEPT_TOLERANCE"
-        draft_resolution = {
-            "action": "ACCEPT_TOLERANCE",
-            "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
-            "resolved_by": "settleiq_ai_agent",
-        }
+            recommended_action = "MANUAL_REVIEW"
+            draft_resolution = {
+                "action": "MANUAL_REVIEW",
+                "reason": (
+                    "Contradictory evidence: trace amounts are identical; "
+                    "routed to manual review."
+                ),
+                "resolved_by": "settleiq_ai_agent",
+            }
+        elif dep_dec < paid_dec:
+            hypotheses.append(
+                Hypothesis(
+                    rank=1,
+                    title="Intermediary Bank Wire Clearing Fee Deducted",
+                    description=(
+                        "The bank settlement deposit posted with an amount lower than the payout. "
+                        "This variance typically corresponds to an intermediary bank wire fee."
+                    ),
+                    confidence="HIGH",
+                    supporting_evidence=(
+                        f"Reason confirms payout paid differs from deposit posted: {reason}",
+                        (
+                            "Bank deposit reference matches the processor payout batch reference "
+                            "exactly"
+                        ),
+                        "Variance is within standard bank domestic/international wire fee range",
+                    ),
+                    contradicting_evidence=(
+                        "Bank narration does not explicitly itemize wire service fee in memo field",
+                    ),
+                    recommended_action="ACCEPT_TOLERANCE",
+                )
+            )
+            recommended_action = "ACCEPT_TOLERANCE"
+            draft_resolution = {
+                "action": "ACCEPT_TOLERANCE",
+                "reason": (
+                    "Intermediary wire clearing difference confirmed within tolerance policy."
+                ),
+                "resolved_by": "settleiq_ai_agent",
+            }
+        else:
+            hypotheses.append(
+                Hypothesis(
+                    rank=1,
+                    title="Consolidated Bank Deposit / Overpayment Credit",
+                    description=(
+                        "The bank settlement deposit posted with an amount higher than payout, "
+                        "indicating multiple payout batches were bundled into one deposit."
+                    ),
+                    confidence="HIGH",
+                    supporting_evidence=(
+                        f"Deposit posted exceeds payout paid: {reason}",
+                        f"Bank deposited {trace.bank_deposited} > Net paid {trace.net_paid}",
+                    ),
+                    contradicting_evidence=(
+                        "Single processor payout reference present on statement narration",
+                    ),
+                    recommended_action="INVESTIGATE_OVERPAYMENT",
+                )
+            )
+            recommended_action = "INVESTIGATE_OVERPAYMENT"
+            draft_resolution = {
+                "action": "INVESTIGATE_OVERPAYMENT",
+                "reason": "Deposit exceeds payout; investigated potential consolidated settlement.",
+                "resolved_by": "settleiq_ai_agent",
+            }
 
     elif disc_type == DiscrepancyType.TIMING_BREAK.value:
-        hypotheses.append(
-            Hypothesis(
-                rank=1,
-                title="Multi-Day Bank Clearing Lag / Banking Holiday Delay",
-                description=(
-                    "The bank deposit posted outside the declared settlement SLA window. "
-                    "Amounts and references match, indicating a benign clearing latency."
-                ),
-                confidence="HIGH",
-                supporting_evidence=(
-                    f"Timing analysis confirms delay: {reason}",
-                    "Payout and bank deposit references agree exactly",
-                    "Monetary amounts match with zero balance variance",
-                ),
-                contradicting_evidence=(),
-                recommended_action="ACCEPT_LAG",
+        # Check elapsed days
+        m_days = re.search(r"(-?[0-9]+) days", reason)
+        elapsed_days = int(m_days.group(1)) if m_days else 10
+
+        if elapsed_days < 0:
+            hypotheses.append(
+                Hypothesis(
+                    rank=1,
+                    title="Pre-funding Settlement / Bank Narration Clock Skew",
+                    description=(
+                        "The bank settlement deposit posted before the processor payout arrival "
+                        "date, indicating early pre-funding or timezone/clock skew."
+                    ),
+                    confidence="HIGH",
+                    supporting_evidence=(
+                        f"Elapsed days is negative ({elapsed_days}): {reason}",
+                        "Deposit date precedes payout arrival date",
+                    ),
+                    contradicting_evidence=(),
+                    recommended_action="VERIFY_CLOCK_SKEW",
+                )
             )
-        )
-        recommended_action = "ACCEPT_LAG"
-        draft_resolution = {
-            "action": "ACCEPT_LAG",
-            "reason": "Timing variance verified as clearing delay without monetary loss.",
-            "resolved_by": "settleiq_ai_agent",
-        }
+            recommended_action = "VERIFY_CLOCK_SKEW"
+            draft_resolution = {
+                "action": "VERIFY_CLOCK_SKEW",
+                "reason": "Pre-funding or timezone clock skew confirmed. Balance reconciled.",
+                "resolved_by": "settleiq_ai_agent",
+            }
+        elif elapsed_days <= 3:
+            # Contradictory evidence: declared window is 3, elapsed days <= 3
+            hypotheses.append(
+                Hypothesis(
+                    rank=1,
+                    title="Contradictory Evidence: Timing Within Permissible SLA Window",
+                    description=(
+                        "The discrepancy indicates TIMING_BREAK, but elapsed days do not exceed "
+                        "the declared SLA window of 3 days."
+                    ),
+                    confidence="INSUFFICIENT",
+                    supporting_evidence=(
+                        f"Recorded reason: {reason}",
+                    ),
+                    contradicting_evidence=(
+                        f"Elapsed days ({elapsed_days}) is within 3-day SLA window",
+                    ),
+                    recommended_action="MANUAL_REVIEW",
+                )
+            )
+            recommended_action = "MANUAL_REVIEW"
+            draft_resolution = {
+                "action": "MANUAL_REVIEW",
+                "reason": "Timing within declared SLA window; routed to manual review.",
+                "resolved_by": "settleiq_ai_agent",
+            }
+        else:
+            hypotheses.append(
+                Hypothesis(
+                    rank=1,
+                    title="Multi-Day Bank Clearing Lag / Banking Holiday Delay",
+                    description=(
+                        "The bank deposit posted outside the declared settlement SLA window. "
+                        "Amounts and references match, indicating a benign clearing latency."
+                    ),
+                    confidence="HIGH",
+                    supporting_evidence=(
+                        f"Timing analysis confirms delay: {reason}",
+                        "Payout and bank deposit references agree exactly",
+                        "Monetary amounts match with zero balance variance",
+                    ),
+                    contradicting_evidence=(),
+                    recommended_action="ACCEPT_LAG",
+                )
+            )
+            recommended_action = "ACCEPT_LAG"
+            draft_resolution = {
+                "action": "ACCEPT_LAG",
+                "reason": "Timing variance verified as clearing delay without monetary loss.",
+                "resolved_by": "settleiq_ai_agent",
+            }
 
     elif disc_type == DiscrepancyType.PHANTOM_PROCESSOR.value:
         hypotheses.append(

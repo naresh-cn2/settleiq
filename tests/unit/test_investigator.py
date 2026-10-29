@@ -21,7 +21,7 @@ def test_investigate_net_gross_break() -> None:
         "status": "OPEN",
         "reason": (
             "batch 'po_batch_42' nets 100.00|USD but the payout paid 96.00|USD; "
-            "residual -4.00|USD"
+            "residual 4.00|USD"
         ),
     }
     report = investigate_discrepancy(discrepancy)

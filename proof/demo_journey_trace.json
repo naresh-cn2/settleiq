@@ -1,0 +1,175 @@
+{
+  "verified_at": "2026-10-29T06:39:32.616877+00:00",
+  "workflow_status": "SUCCESS",
+  "total_steps": 8,
+  "steps": [
+    {
+      "step": 1,
+      "title": "Seed Enterprise Synthetic Ledger",
+      "path": "/v1/demo/seed",
+      "http_status": 201,
+      "timestamp": "2026-10-29T06:39:32.419095+00:00",
+      "data_summary": {
+        "status": "seeded",
+        "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+        "numerator": 19,
+        "denominator": 25,
+        "rate": 0.76,
+        "discrepancy_count": 7
+      }
+    },
+    {
+      "step": 2,
+      "title": "Inspect Calculated Reconciliation Metrics",
+      "path": "/v1/runs/bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a/metrics",
+      "http_status": 200,
+      "timestamp": "2026-10-29T06:39:32.452017+00:00",
+      "data_summary": {
+        "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+        "numerator": 19,
+        "denominator": 25,
+        "rate": 0.76,
+        "ambiguous": 1,
+        "conflict": 2,
+        "insufficient": 0,
+        "human_confirmed": 0,
+        "quarantined": 0,
+        "methodology_version": "1.0.0",
+        "rule_version": "1.0.0"
+      }
+    },
+    {
+      "step": 3,
+      "title": "Query Run Discrepancy Queue",
+      "path": "/v1/runs/bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a/discrepancies",
+      "http_status": 200,
+      "timestamp": "2026-10-29T06:39:32.479402+00:00",
+      "data_summary": {
+        "count": 7,
+        "types": [
+          "AMOUNT_BREAK",
+          "NET_GROSS_BREAK",
+          "PHANTOM_BANK",
+          "PHANTOM_PROCESSOR",
+          "TIMING_BREAK",
+          "UNKNOWN",
+          "AMBIGUOUS_MATCH"
+        ]
+      }
+    },
+    {
+      "step": 4,
+      "title": "Invoke Autonomous AI Forensic Investigator",
+      "path": "/v1/discrepancies/dsc:AMOUNT_BREAK:po_2/investigate",
+      "http_status": 200,
+      "timestamp": "2026-10-29T06:39:32.515195+00:00",
+      "data_summary": {
+        "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+        "type": "AMOUNT_BREAK",
+        "hypotheses_count": 1,
+        "top_hypothesis": "Intermediary Bank Wire Clearing Fee Deducted",
+        "confidence": "HIGH",
+        "recommended_action": "ACCEPT_TOLERANCE"
+      }
+    },
+    {
+      "step": 5,
+      "title": "Reconstruct Visual Fund Journey Trace",
+      "path": "/v1/runs/bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a/trace/po_2",
+      "http_status": 200,
+      "timestamp": "2026-10-29T06:39:32.535439+00:00",
+      "data_summary": {
+        "nodes_count": 0,
+        "gross": "0.00",
+        "fees": "0.00",
+        "net_expected": "0.00",
+        "net_paid": "0.00",
+        "residual": "0.00",
+        "is_closed": true
+      }
+    },
+    {
+      "step": 6,
+      "title": "Authorize and Commit Resolution",
+      "path": "/v1/discrepancies/dsc:AMOUNT_BREAK:po_2/resolve",
+      "http_status": 200,
+      "timestamp": "2026-10-29T06:39:32.573403+00:00",
+      "data_summary": {
+        "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+        "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+        "status": "RESOLVED",
+        "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
+        "selected_candidate": null,
+        "appended": true,
+        "discrepancy": {
+          "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+          "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+          "type": "AMOUNT_BREAK",
+          "severity": "HIGH",
+          "constituent_kind": "payout",
+          "constituent_id": "po_2",
+          "reason": "payout paid 80.00|USD but deposit posted 78.50|USD",
+          "age_days": 0,
+          "status": "RESOLVED",
+          "resolution_history": [
+            {
+              "resolution_id": "res_dsc:AMOUNT_BREAK:po_2_1793255628330",
+              "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+              "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+              "status": "RESOLVED",
+              "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
+              "selected_candidate": null,
+              "resolved_by": "demo_lead_auditor",
+              "resolved_at": "2026-10-29T06:33:48.330948+00:00"
+            },
+            {
+              "resolution_id": "res_dsc:AMOUNT_BREAK:po_2_1793255972553",
+              "discrepancy_id": "dsc:AMOUNT_BREAK:po_2",
+              "run_id": "bb9d87f56eab9804c521f0835e6014caa544c407c93e1b71a2812e47c899026a",
+              "status": "RESOLVED",
+              "reason": "Intermediary wire clearing difference confirmed within tolerance policy.",
+              "selected_candidate": null,
+              "resolved_by": "demo_lead_auditor",
+              "resolved_at": "2026-10-29T06:39:32.553778+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": 7,
+      "title": "Confirm Persistent Database State (RESOLVED)",
+      "path": "/v1/discrepancies/dsc:AMOUNT_BREAK:po_2",
+      "http_status": 200,
+      "timestamp": "2026-10-29T06:39:32.593826+00:00",
+      "data_summary": {
+        "status": "RESOLVED",
+        "resolution_history_count": 2
+      }
+    },
+    {
+      "step": 8,
+      "title": "Cryptographically Verify Hash-Chained Audit Journal",
+      "path": "/v1/journal/verify",
+      "http_status": 200,
+      "timestamp": "2026-10-29T06:39:32.616877+00:00",
+      "data_summary": {
+        "intact": true,
+        "findings": [],
+        "entries_verified": 3,
+        "head_digest": "895f3f25b5548af4f8a0aa11c5293facba63e4df031a54c76f816ba2e9d36dd2",
+        "detects": [
+          "payload modification",
+          "digest modification",
+          "deletion from the middle",
+          "reordering",
+          "duplication"
+        ],
+        "does_not_detect": [
+          "tail truncation without an externally anchored head",
+          "a wholesale rewrite from genesis"
+        ]
+      }
+    }
+  ]
+}
