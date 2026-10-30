@@ -12,7 +12,12 @@ if TYPE_CHECKING:
 
 
 class PostgresJournal:
-    """An append-only hash-chained journal backed by PostgreSQL."""
+    """An append-only hash-chained journal backed by PostgreSQL.
+
+    This implementation mirrors the SQLite `Journal` interface but uses a
+    PostgreSQL backend. It provides the same hash-chain integrity guarantees
+    and tamper-detection capabilities.
+    """
 
     def __init__(self, dsn: str) -> None:
         self.dsn = dsn
