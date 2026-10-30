@@ -2,18 +2,25 @@
 PostgreSQL integration tests for SettleIQ persistence layer.
 
 These tests require a real PostgreSQL instance. The DSN must be provided via the
-environment variable TEST_POSTGRES_DSN (or SETTLEIQ_TEST_POSTGRES_URL) e.g., a Docker container or managed DB.
-They will be skipped if the variable is not set.
+environment variable TEST_POSTGRES_DSN (or SETTLEIQ_TEST_POSTGRES_URL), e.g. a
+Docker container or managed DB. They will be skipped if the variable is not set.
 """
 import os
 import uuid
+
 import pytest
+
+from settleiq.engine import ReconciliationResult
 from settleiq.persistence.postgres import PostgresPersistence
-from settleiq.engine import ReconciliationResult, Discrepancy
 
-TEST_DSN = os.environ.get("TEST_POSTGRES_DSN") or os.environ.get("SETTLEIQ_TEST_POSTGRES_URL")
+TEST_DSN = os.environ.get("TEST_POSTGRES_DSN") or os.environ.get(
+    "SETTLEIQ_TEST_POSTGRES_URL"
+)
 
-pytestmark = pytest.mark.skipif(not TEST_DSN, reason="TEST_POSTGRES_DSN or SETTLEIQ_TEST_POSTGRES_URL not set")
+pytestmark = pytest.mark.skipif(
+    not TEST_DSN,
+    reason="TEST_POSTGRES_DSN or SETTLEIQ_TEST_POSTGRES_URL not set",
+)
 
 
 @pytest.fixture(scope="module")
@@ -264,7 +271,6 @@ def test_concurrent_operations(pg_store):
 def test_migration_concurrency(pg_store):
     """Simulate multiple workers attempting to run migrations concurrently."""
     import threading
-    import time
 
     errors = []
 
