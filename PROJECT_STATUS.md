@@ -1,89 +1,89 @@
 # SettleIQ Project Status
 
 ## Purpose
-SettleIQ is a payment settlement platform designed to streamline the reconciliation of funds between merchants and financial institutions. The core scope includes transaction data ingestion, calibration, and reconciliation against bank statements. The current release focuses on the core pipeline and CLI tooling, without live payment integration, multi‑tenant support, or production deployment.
+SettleIQ is a **payment settlement reconciliation** engine that verifies and resolves discrepancies between merchant payouts and bank statements. It is built as a verified financial engineering product governed by the
+[specification]
+(links to docs/specifications/SETTLEIQ-MASTER-SPEC.md).
 
 ## Architecture & Technology Stack
+- **Language**: Python 3.12
+- **Web API**: FastAPI 0.115+ (uvicorn server)
+- **Frontend**: React 18 / TypeScript, bundled with FastAPI via static file serving
+- **Persistence**: Dual‑storage – SQLite (file or memory for demos) *and* PostgreSQL 16 (migrations in `persistence/migrations`).
+- **Monetary arithmetic**: Strict `decimal.Decimal` calculations with static AST gate to forbid any binary‑float usage (`tests/gates/float_gate`).
+- **Reconciliation Engine**: Deterministic matching using precedence‑ordered rules, closed‑window taxonomies, and constituent‑level payout decomposition.
+- **Audit Journal**: SHA‑256 hash‑chained ledger that records every run state and detects payload tampering, digest changes, deletions, reordering, and duplication.
+- **CLI**: Single‑module `settleiq.cli` with sub‑commands:
+  - `run` – Execute the reference demonstration
+  - `gate` – Run the money‑safety static gate
+  - `verify` – Load a persisted store and verify the audit journal
+- **Testing**: pytest framework with 204 passing tests (unit, property, golden, determinism, integration).
+- **Code quality**: Ruff checks on `src tests scripts`.
+- **CI**: GitHub Actions `ci.yml` runs all tests, static linting, and headless browser E2E tests.
 
-| Layer | Technology |
-|-------|------------|
-| **Backend** | Node.js (TypeScript), async/await, Promise‑based IO |
-| **Task Queue** | Native in‑process async loops (no external message broker) |
-| **Data Store** | JSON‑formatted proofs + SQLite DB for status tracking |
-| **CLI** | `commander.js` + `chalk` for colored output |
-| **Frontend** | Vite + React (compiled but not deployed in this snapshot) |
-| **Testing** | Jest + ts-jest, 204 passing unit & integration tests |
-| **Linting** | Ruff (Python based) configured for the repository |
-| **CI** | GitHub Actions (`ci.yml`) on each push to `main` |
-| **Build** | Vite builds for front‑end bundled with Node.js worker |
-
-## Implemented Functionality (at verified commit `646458f6a24146a4fa0a7dc1a30861b99c8999f6`)
-
-* Transaction proof ingestion and canonicalization
-* Calibration engine generating ⚡‑proofs and updating merchant portfolios
-* Reconciliation logic comparing merchant proofs to bank statement proofs
-* CLI commands:
-  * `proof ingest` – read and store proofs
-  * `proof calc` – calculate calibration proofs
-  * `proof reconcile` – reconcile merchant and bank proofs
-  * `portfolio update` – trigger portfolio updates
-* Proof manifest generation and artifact validation
-* Automated unit & integration tests (204 tests)
-* Front‑end build artifacts generated (though not deployed)
+## Implemented Functionality
+1. **Exact Decimal Monetary Arithmetic** – Zero‑float enforcement, per‑currency serialization.
+2. **Deterministic Reconciliation** – Precedence rules (`R-EXACT-REFERENCE`, `R-EXACT-AMOUNT`), timed windows, tight match windows.
+3. **Closed Discrepancy Taxonomy** – Typed breaks: `NET_GROSS_BREAK`, `AMOUNT_BREAK`, `TIMING_BREAK`, `PHANTOM_PROCESSOR`, `PHANTOM_BANK`, `AMBIGUOUS_MATCH`, `UNKNOWN`.
+4. **AI‑Powered Forensic Investigator** – Generates ranked hypotheses backed by audit trail references.
+5. **Visual Transaction Journey Trace** – React SPA shows a graph of each fund journey with status indicators.
+6. **Tamper‑Evident Audit Journal** – SHA‑256 hash‑chained ledger with built‑in anomaly detection.
+7. **Dual Persistence Layer** – SQLite (local demos) and PostgreSQL 16 (enterprise migrations).
+8. **Secure REST API** – Constant‑time API key auth, rate limiting, size limits.
+9. **Reproducible CLI Demo** – `python -m settleiq.cli run` reproduces the same deterministic output every time.
 
 ## Verification Evidence
-
 | Check | Result | Reference |
-|-------|--------|----------|
-| Latest GitHub Actions run | ✅ Success (Run #11 at 2026‑10‑29 16:51:42Z) | [CI run #40915388357](https://github.com/naresh-cn2/settleiq/actions/runs/40915388357) |
-| Unit & integration tests | ✅ 204 passing | Run output in test logs |
-| Ruff lint | ✅ Pass | Run logs on CI |
-| CLI demonstration | ✅ Pass | Manual execution: `npx ts-node src/cli.ts --help` |
-| Front‑end build | ✅ Pass | `npm run build:front` logs |
-| Production deployment | ❌ Not yet completed | Not applicable |
-| Live payment integrations | ❌ Not yet completed | Not applicable |
-| Multi‑tenant architecture | ❌ Not yet completed | Not applicable |
-| Commercial validation | ❌ Not yet completed | Not applicable |
+|-------|--------|-----------|
+| Latest CI run | ✅ Success (Run #40915388357) | <https://github.com/naresh-cn2/settleiq/actions/runs/40915388357> |
+| Unit / integration tests | ✅ 204 passing | Log captured by CI |
+| Ruff lint | ✅ Pass | CI run |
+| FastAPI API | ✅ 200‑series responses on `/health` | Running `uvicorn src.settleiq.api.app:app` locally |
+| Front‑end build | ✅ Pass (`npm run build`) | CI build logs |
+| Static money‑safety gate | ✅ Pass (`python -m settleiq.cli gate`) | Local and CI |
+| Deterministic CLI demo | ✅ Matches reference output in README | `python -m settleiq.cli run` |
 
 ## Reproduction Instructions
-
 ```bash
-# 1. Clone the repository
+# 1. Clone
 git clone https://github.com/naresh-cn2/settleiq.git
 cd settleiq
 
-# 2. Install dependencies
-npm ci
+# 2. Install Python deps (editable with dev extras)
+pip install -e ".[dev]"
 
-# 3. Run unit/integration tests
-npm test
+# 3. Run the full test suite (204 tests)
+pytest -q
 
-# 4. Verify CI logs locally (optional with GitHub CLI)
-gh run list  # requires GitHub CLI with auth
+# 4. Verify the money‑safety static gate
+python -m settleiq.cli gate
 
-# 5. Execute CLI commands
-# Sample: list available commands
-npx ts-node src/cli.ts --help
-# Sample: ingest proofs
-node dist/proof-ingest.js ./proofs/sample.yaml
+# 5. Run the deterministic CLI demonstration
+python -m settleiq.cli run
+
+# 6. Verify the audit journal for a persisted run
+python -m settleiq.cli verify --database settleiq.sqlite3
+
+# 7. Build the front‑end assets (requires Node 20+)
+npm --prefix frontend install
+npm --prefix frontend run build
+
+# 8. Serve the API + static files (development mode)
+uvicorn src.settleiq.api.app:app --reload
 ```
 
-## Known Limitations
-
-- **Production deployment** – The built artefacts have not been deployed to any cloud environment.
-- **Live payment integrations** – Payment gateways and agent integration are pending.
-- **Multi‑tenant architecture** – Current code assumes a single‑tenant deployment.
-- **Commercial validation** – No external validation or beta‑test environments are available.
-- **Security hardening** – Basic authentication is not in place for the API endpoints.
-- **Scalability** – The current in‑process queue may not meet high‑throughput production demands.
-- **Data persistence** – Temporary SQLite DB – not replaced with a robust RDBMS for production.
+## Known Limitations & Production Gates
+- **Production deployment** – The application has not yet been deployed to any cloud provider.
+- **Live payment integrations** – Connections to real‑world merchant or bank APIs are not yet implemented.
+- **Multi‑tenant architecture** – Current persistence layer assumes a single‑tenant deployment; no namespace or schema isolation.
+- **Commercial validation** – No external beta‑testers or regulatory validation exists.
+- **Security hardening** – Basic API key auth is in place; however, finer‑grained RBAC, audit logging, and comprehensive threat modeling are pending.
+- **Scalability** – In‑process FastAPI/Uvicorn may need to be sharded behind a reverse proxy for production load.
 
 ## Engineering Completion Status
-
-- **Scope**: Engineering scope is *frozen*.
-- **CI pipeline**: All checks green.
-- **Feature set**: No new features or refactors will be added unless explicitly approved.
-- **Documentation**: README, docs, proof manifests, and the release checklist have been reviewed and align with the current state.
-- **Commit state**: The repository at `origin/main` contains the verified commit `646458f6a24146a4fa0a7dc1a30861b99c8999f6` or a newer commit.
-- **Work tree**: Clean with no uncommitted changes.
-- **Final status**: Officially out‑of‑scope for further engineering until the next project phase.
+- **Scope**: Engineering scope is *frozen* as of commit `c693519`.
+- **CI**: All checks green.
+- **Documentation**: README, architecture diagrams, and test manifests are up‑to‑date and reflect the repo state.
+- **Work tree**: Clean, no uncommitted changes.
+- **Release checklist**: All items marked as complete in the `docs` and `frontend` directories have been verified.
+- **Future work**: The next phase is portfolio presentation and commercial deployment preparation.
