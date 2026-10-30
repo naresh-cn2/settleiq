@@ -217,29 +217,29 @@ def test_concurrent_operations(pg_store):
     """Simulate two threads inserting runs concurrently."""
     import threading
 
-    results = []
+    derived_ids = []
     errors = []
 
-    def insert_run(run_id):
+    def insert_run(prefix):
         try:
-            result = _make_result(run_id)
+            result = _make_result(prefix)
             pg_store.record_run(result)
-            results.append(run_id)
+            derived_ids.append(result.identity.run_id)
         except Exception as e:
-            errors.append((run_id, e))
+            errors.append((prefix, e))
 
-    run_id1 = _unique_id("concurrent")
-    run_id2 = _unique_id("concurrent")
-    t1 = threading.Thread(target=insert_run, args=(run_id1,))
-    t2 = threading.Thread(target=insert_run, args=(run_id2,))
+    prefix1 = _unique_id("concurrent")
+    prefix2 = _unique_id("concurrent")
+    t1 = threading.Thread(target=insert_run, args=(prefix1,))
+    t2 = threading.Thread(target=insert_run, args=(prefix2,))
     t1.start()
     t2.start()
     t1.join()
     t2.join()
 
     assert not errors, f"Concurrent inserts raised: {errors}"
-    assert len(results) == 2
-    for rid in results:
+    assert len(derived_ids) == 2
+    for rid in derived_ids:
         run = pg_store.find_run(rid)
         assert run is not None
 

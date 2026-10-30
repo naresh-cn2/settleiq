@@ -5,17 +5,12 @@ Mirrors the SQLite Journal interface but uses a PostgreSQL connection.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from contextlib import closing, contextmanager
+from typing import Any
 
 from settleiq.canonical.serialization import digest
 from settleiq.journal.chain import JournalEntry, TamperReport, TamperType
-
-try:
-    import psycopg
-    PSYCOPG_VERSION = 3
-except ImportError:
-    import psycopg2 as psycopg
-    PSYCOPG_VERSION = 2
 
 
 class PostgresJournal:
@@ -25,12 +20,29 @@ class PostgresJournal:
         self.dsn = dsn
 
     @contextmanager
-    def _connect(self):
-        conn = psycopg.connect(self.dsn) if PSYCOPG_VERSION == 3 else psycopg.connect(self.dsn)
+    def _connect(self) -> Iterator[Any]:
+        # Attempt to load available postgres driver (psycopg, psycopg2)
+        conn = None
+        try:
+            import psycopg
+
+            conn = psycopg.connect(self.dsn)
+        except ImportError:
+            try:
+                import psycopg2
+
+                conn = psycopg2.connect(self.dsn)
+            except ImportError as exc:
+                raise RuntimeError(
+                    "PostgreSQL driver (psycopg or psycopg2) is not installed. "
+                    "Install via 'pip install psycopg[binary]' or use SQLite backend."
+                ) from exc
+
         try:
             yield conn
         finally:
-            conn.close()
+            if conn is not None:
+                conn.close()
 
     def migrate(self) -> None:
         """Create the journal_entry table if it doesn't exist."""
