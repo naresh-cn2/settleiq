@@ -12,7 +12,7 @@ from collections.abc import Iterable
 from decimal import Decimal
 from typing import Any
 
-__all__ = ["canonical_bytes", "canonical_scalar", "digest", "sort_key"]
+__all__ = ["canonical_bytes", "canonical_json_dumps", "canonical_scalar", "digest", "sort_key"]
 
 
 def sort_key(value: Any) -> str:
@@ -79,6 +79,12 @@ def canonical_bytes(value: Any) -> bytes:
 def digest(value: Any) -> str:
     """SHA-256 over the canonical serialization, lowercase hex."""
     return hashlib.sha256(canonical_bytes(value)).hexdigest()
+
+
+def canonical_json_dumps(value: Any) -> str:
+    """Serialize to canonical JSON (compact, sorted keys)."""
+    import json
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
 
 def sorted_by(items: Iterable[Any], key: Any) -> list[Any]:

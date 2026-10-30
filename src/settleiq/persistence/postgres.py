@@ -11,7 +11,6 @@ Implements the Persistence contract over PostgreSQL with:
 
 from __future__ import annotations
 
-import json
 import logging
 import time
 from collections.abc import Iterator, Mapping, Sequence
@@ -20,7 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final, Protocol
 
-from settleiq.canonical.serialization import digest
+from settleiq.canonical.serialization import canonical_json_dumps, digest
 from settleiq.engine import ReconciliationResult
 from settleiq.journal.chain import Journal
 
@@ -164,15 +163,14 @@ class PostgresPersistence:
 
                 if journal is not None:
                     # Append journal event within PostgreSQL transaction
-                    serialized = json.dumps(
+                    serialized = canonical_json_dumps(
                         {
                             "kind": "ReconciliationRunRecorded",
                             "run_id": run_id,
                             "input_digest": result.identity.input_digest,
                             "numerator": metrics.numerator,
                             "denominator": metrics.denominator,
-                        },
-                        sort_keys=True,
+                        }
                     )
                     cursor.execute(
                         "SELECT sequence, entry_digest FROM journal_entry "
@@ -333,7 +331,7 @@ class PostgresPersistence:
                 )
 
                 if journal is not None:
-                    serialized = json.dumps(
+                    serialized = canonical_json_dumps(
                         {
                             "kind": "DiscrepancyResolved",
                             "resolution_id": res_id,
@@ -344,8 +342,7 @@ class PostgresPersistence:
                             "selected_candidate": selected_candidate,
                             "resolved_by": resolved_by,
                             "recorded_at": ts,
-                        },
-                        sort_keys=True,
+                        }
                     )
                     cursor.execute(
                         "SELECT sequence, entry_digest FROM journal_entry "

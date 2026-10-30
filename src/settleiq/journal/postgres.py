@@ -5,7 +5,7 @@ from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from typing import TYPE_CHECKING, Any
 
-from settleiq.canonical.serialization import digest
+from settleiq.canonical.serialization import canonical_json_dumps, digest
 
 if TYPE_CHECKING:
     from settleiq.journal.chain import TamperReport
@@ -109,7 +109,7 @@ class PostgresJournal:
                     f"expected sequence {expected_sequence}",
                 ))
             # Recompute digest
-            serialized = json.dumps(dict(entry.payload), sort_keys=True, separators=(",", ":"))
+            serialized = canonical_json_dumps(dict(entry.payload))
             computed = digest({"prev": entry.prev_digest, "payload": serialized})
             if entry.prev_digest != expected_prev:
                 findings.append(

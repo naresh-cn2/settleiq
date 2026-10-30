@@ -45,7 +45,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 
-from settleiq.canonical.serialization import digest
+from settleiq.canonical.serialization import canonical_json_dumps, digest
 
 __all__ = [
     "GENESIS_DIGEST",
@@ -214,7 +214,7 @@ class Journal:
         Lets the journal append commit atomically with the rows it attests to,
         which is the only ordering that cannot produce a false attestation.
         """
-        serialized = json.dumps(dict(payload), sort_keys=True, separators=(",", ":"))
+        serialized = canonical_json_dumps(dict(payload))
         stored_payload = json.loads(serialized)
         sequence, prev_digest = self._head(cursor)
         entry_digest = digest({"prev": prev_digest, "payload": serialized})
@@ -241,7 +241,7 @@ class Journal:
         # The stored form is JSON with sorted keys and no whitespace, so a third
         # party can recompute the digest from the stored text alone. The custom
         # canonical byte format is used for the digest preimage, not for storage.
-        serialized = json.dumps(dict(payload), sort_keys=True, separators=(",", ":"))
+        serialized = canonical_json_dumps(dict(payload))
 
         with self._connect() as connection, closing(connection.cursor()) as cursor:
             cursor.execute("BEGIN IMMEDIATE")
@@ -326,7 +326,7 @@ class Journal:
             # is the JSON text, not the parsed dict: hashing the dict would
             # silently change the preimage and make verification compare two
             # different things.
-            serialized = json.dumps(entry.payload, sort_keys=True, separators=(",", ":"))
+            serialized = canonical_json_dumps(entry.payload)
             recomputed = digest({"prev": expected_prev, "payload": serialized})
             if recomputed != entry.entry_digest:
                 findings.append(
