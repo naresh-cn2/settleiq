@@ -1,16 +1,14 @@
-"""PostgreSQL implementation of the hash-chained audit journal.
-
-Mirrors the SQLite Journal interface but uses a PostgreSQL connection.
-"""
 from __future__ import annotations
 
 import json
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from settleiq.canonical.serialization import digest
-from settleiq.journal.chain import JournalEntry, TamperReport, TamperType
+
+if TYPE_CHECKING:
+    from settleiq.journal.chain import TamperReport
 
 
 class PostgresJournal:
@@ -69,6 +67,7 @@ class PostgresJournal:
         return int(row[0]), str(row[1])
 
     def entries(self) -> list:
+        from settleiq.journal.chain import JournalEntry
         with self._connect() as conn, closing(conn.cursor()) as cur:
             cur.execute("""
                 SELECT sequence, prev_digest, entry_digest, payload, recorded_at
@@ -90,6 +89,7 @@ class PostgresJournal:
 
     def verify(self) -> TamperReport:
         """Recompute every digest from the stored payloads and compare."""
+        from settleiq.journal.chain import TamperReport, TamperType
         stored = self.entries()
         findings = []
         expected_prev = "0" * 64

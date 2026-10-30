@@ -47,11 +47,6 @@ from typing import Final
 
 from settleiq.canonical.serialization import digest
 
-try:
-    from .postgres import PostgresJournal
-except ImportError:
-    PostgresJournal = None
-
 __all__ = [
     "GENESIS_DIGEST",
     "JOURNAL_SCHEMA",
@@ -392,8 +387,10 @@ def open_journal(path: Path | str = ":memory:") -> Journal:
     """
     path_str = str(path)
     if path_str.startswith("postgresql://") or path_str.startswith("postgres://"):
-        if PostgresJournal is None:
-            raise RuntimeError("PostgreSQL journal requires psycopg or psycopg2")
+        try:
+            from .postgres import PostgresJournal
+        except ImportError as exc:
+            raise RuntimeError("PostgreSQL journal requires psycopg or psycopg2") from exc
         journal = PostgresJournal(path_str)
         journal.migrate()
         return journal
