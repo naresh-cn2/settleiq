@@ -17,10 +17,20 @@ export function AuthScreen() {
     }
     setLoading(true)
     try {
-      // Test the API key by making a simple authenticated request
-      await api.runs.list()
+      // Test the API key by making a simple authenticated request with the provided key
+      const testKey = apiKey.trim()
+      const res = await fetch('/v1/runs', {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': testKey,
+        },
+      })
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({ detail: 'Unknown error' }))
+        throw new Error(detail.detail || `HTTP ${res.status}`)
+      }
       // If successful, store the key and redirect to home
-      api.auth.setKey(apiKey.trim())
+      api.auth.setKey(testKey)
       navigate('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed')

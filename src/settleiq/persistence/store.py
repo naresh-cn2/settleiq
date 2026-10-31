@@ -20,16 +20,13 @@ from collections.abc import Iterator, Mapping, Sequence
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Final
+from typing import Final
 
 from settleiq.canonical.serialization import digest
 from settleiq.engine import ReconciliationResult
 from settleiq.journal.chain import Journal
 
-__all__ = ["ALLOWED_TABLES", "SCHEMA_STATEMENTS", "Persistence", "open_store"]
-
-# Module-level flag to track if migrations have been run in this process
-_migrations_run: dict[str, bool] = {}
+__all__ = ["ALLOWED_TABLES", "SCHEMA_STATEMENTS", "Persistence", "open_store", "ensure_migrations"]
 
 SCHEMA_STATEMENTS: Final[tuple[str, ...]] = (
     """
@@ -419,22 +416,41 @@ def _canonical_row(row: Mapping[str, object]) -> dict[str, object]:
     return {str(k): v for k, v in sorted(row.items())}
 
 
-def open_store(path_or_url: Path | str = ":memory:") -> Persistence:
+def ensure_migrations(path_or_url: Path | str = ":memory:") -> None:
+    """Run migrations for the given DSN. Safe to call multiple times.
+
+    This should be called during application startup or deployment before
+    opening any stores. It is idempotent and safe for concurrent calls.
+    """
     path_str = str(path_or_url)
     if path_str.startswith("postgresql://") or path_str.startswith("postgres://"):
         from settleiq.persistence.postgres import PostgresPersistence
 
-        pg_store: Any = PostgresPersistence(path_str)
-        # Only run migrations once per process per DSN
-        if not _migrations_run.get(path_str, False):
+        pg_store = PostgresPersistence(path_str)
+        pg_store.migrate()
+    else:
+        store = Persistence(path_str)
+        store.migrate()
+
+
+def open_store(path_or_url: Path | str = ":memory:", *, run_migrations: bool = True) -> Persistence:
+    """Open a persistence store.
+
+    For SQLite (including in-memory), migrations are run by default.
+    For PostgreSQL, migrations are NOT run by default - call `ensure_migrations()` explicitly.
+    """
+    path_str = str(path_or_url)
+    if path_str.startswith("postgresql://") or path_str.startswith("postgres://"):
+        from settleiq.persistence.postgres import PostgresPersistence
+
+        pg_store = PostgresPersistence(path_str)
+        if run_migrations:
             pg_store.migrate()
-            _migrations_run[path_str] = True
         return pg_store
 
     store = Persistence(path_str)
-    if not _migrations_run.get(path_str, False):
+    if run_migrations:
         store.migrate()
-        _migrations_run[path_str] = True
     return store
 
 

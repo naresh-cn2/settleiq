@@ -15,7 +15,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from settleiq.persistence.store import open_store
+from settleiq.persistence.store import ensure_migrations
 
 
 def main() -> int:
@@ -27,11 +27,7 @@ def main() -> int:
     print(f"Running migrations for: {dsn.split('@')[-1] if '@' in dsn else dsn}")
 
     try:
-        store = open_store(dsn)
-        # The open_store function will run migrations automatically
-        # but we can also explicitly call migrate to be sure
-        if hasattr(store, 'migrate'):
-            store.migrate()
+        ensure_migrations(dsn)
         print("Migrations completed successfully")
         return 0
     except Exception as e:

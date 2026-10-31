@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 from settleiq.engine.discrepancy import Discrepancy, DiscrepancyStatus
 from settleiq.engine.reconcile import RunParameters, reconcile
 from settleiq.journal.chain import Journal, open_journal
-from settleiq.persistence.store import Persistence, open_store
+from settleiq.persistence.store import Persistence, ensure_migrations, open_store
 from settleiq.validation.ingest import validate_records
 
 logger = logging.getLogger(__name__)
@@ -202,6 +202,7 @@ def _db_path() -> str:
 
 def _store() -> Persistence:
     # Each request gets its own connection to avoid SQLite threading issues
+    ensure_migrations(_db_path())
     return open_store(_db_path())
 
 
