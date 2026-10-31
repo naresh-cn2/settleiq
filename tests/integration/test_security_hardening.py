@@ -22,8 +22,9 @@ from settleiq.api.app import _IP_REQUEST_TIMESTAMPS, app
 def client(tmp_path, monkeypatch) -> TestClient:
     db_file = tmp_path / "sec_test.sqlite3"
     monkeypatch.setenv("SETTLEIQ_DB_PATH", str(db_file))
+    monkeypatch.setenv("SETTLEIQ_API_KEY", "test-api-key-123")
     _IP_REQUEST_TIMESTAMPS.clear()
-    return TestClient(app)
+    return TestClient(app, headers={"X-API-Key": "test-api-key-123"})
 
 
 def test_rate_limiting_enforcement(client: TestClient, monkeypatch) -> None:
@@ -106,21 +107,22 @@ def test_security_headers_present(client: TestClient) -> None:
 
 
 def test_resolution_authorization_and_audit_consistency(client: TestClient, monkeypatch) -> None:
-    # First seed a demo run without auth configured
-    seed_res = client.post("/v1/demo/seed")
+    # Configure API key from the start
+    monkeypatch.setenv("SETTLEIQ_API_KEY", "prod-auth-key-999")
+    auth_headers = {"X-API-Key": "prod-auth-key-999"}
+
+    # 1. Seed a demo run with auth
+    seed_res = client.post("/v1/demo/seed", headers=auth_headers)
     assert seed_res.status_code == 201
     run_id = seed_res.json()["run_id"]
 
     # Retrieve discrepancy
-    disc_res = client.get(f"/v1/runs/{run_id}/discrepancies")
+    disc_res = client.get(f"/v1/runs/{run_id}/discrepancies", headers=auth_headers)
     assert disc_res.status_code == 200
     discs = disc_res.json()["discrepancies"]
     assert len(discs) > 0
     target_disc = discs[0]
     disc_id = target_disc["discrepancy_id"]
-
-    # Now configure API key requirement
-    monkeypatch.setenv("SETTLEIQ_API_KEY", "prod-auth-key-999")
 
     # 1. Unauthenticated resolution attempt MUST be rejected with HTTP 401
     unauth = client.post(
@@ -131,7 +133,7 @@ def test_resolution_authorization_and_audit_consistency(client: TestClient, monk
     assert unauth.json()["error"] == "unauthorized"
 
     # Verify status is STILL OPEN
-    disc_check = client.get(f"/v1/discrepancies/{disc_id}")
+    disc_check = client.get(f"/v1/discrepancies/{disc_id}", headers=auth_headers)
     assert disc_check.json()["status"] == "OPEN"
 
     # 2. Authorized resolution attempt succeeds
@@ -152,11 +154,10 @@ def test_resolution_authorization_and_audit_consistency(client: TestClient, monk
     assert success_res.json()["status"] == "RESOLVED"
 
     # 3. Verify persistent status in database
-    persisted = client.get(f"/v1/discrepancies/{disc_id}")
+    persisted = client.get(f"/v1/discrepancies/{disc_id}", headers=auth_headers)
     assert persisted.json()["status"] == "RESOLVED"
 
     # 4. Verify hash-chained audit journal verification passes
-    journal_v = client.post("/v1/journal/verify", headers=auth_headers)
-    assert journal_v.status_code == 200
-    assert journal_v.json()["intact"] is True
-
+    journal_res = client.post("/v1/journal/verify", headers=auth_headers)
+    assert success_res.status_code == 200
+    assert journal_res.json()["intact"] is True

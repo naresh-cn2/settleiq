@@ -1,11 +1,27 @@
-import { Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom'
 import { RunsPage } from './pages/RunsPage'
 import { DiscrepanciesPage } from './pages/DiscrepanciesPage'
 import { InvestigationPage } from './pages/InvestigationPage'
 import { MetricsPage } from './pages/MetricsPage'
 import { HistoryPage } from './pages/HistoryPage'
+import { AuthScreen, HeaderAuth } from './components/AuthScreen'
+import { api } from './api'
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  if (!api.auth.hasKey()) {
+    return <Navigate to="/auth" replace />
+  }
+  return <>{children}</>
+}
 
 function App() {
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    api.auth.clearKey()
+    navigate('/auth', { replace: true })
+  }
+
   return (
     <div className="app">
       <header className="header">
@@ -17,15 +33,52 @@ function App() {
           <NavLink to="/discrepancies">Discrepancies</NavLink>
           <NavLink to="/metrics">Metrics</NavLink>
           <NavLink to="/history">History</NavLink>
+          <HeaderAuth onLogout={handleLogout} />
         </nav>
       </header>
       <main className="main">
         <Routes>
-          <Route path="/" element={<RunsPage />} />
-          <Route path="/discrepancies" element={<DiscrepanciesPage />} />
-          <Route path="/discrepancies/:id" element={<InvestigationPage />} />
-          <Route path="/metrics" element={<MetricsPage />} />
-          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/auth" element={<AuthScreen />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <RunsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/discrepancies"
+            element={
+              <ProtectedRoute>
+                <DiscrepanciesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/discrepancies/:id"
+            element={
+              <ProtectedRoute>
+                <InvestigationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/metrics"
+            element={
+              <ProtectedRoute>
+                <MetricsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute>
+                <HistoryPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </main>
       <footer className="footer">

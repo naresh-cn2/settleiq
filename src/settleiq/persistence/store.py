@@ -28,6 +28,9 @@ from settleiq.journal.chain import Journal
 
 __all__ = ["ALLOWED_TABLES", "SCHEMA_STATEMENTS", "Persistence", "open_store"]
 
+# Module-level flag to track if migrations have been run in this process
+_migrations_run: dict[str, bool] = {}
+
 SCHEMA_STATEMENTS: Final[tuple[str, ...]] = (
     """
     CREATE TABLE IF NOT EXISTS reconciliation_run (
@@ -422,11 +425,16 @@ def open_store(path_or_url: Path | str = ":memory:") -> Persistence:
         from settleiq.persistence.postgres import PostgresPersistence
 
         pg_store: Any = PostgresPersistence(path_str)
-        pg_store.migrate()
+        # Only run migrations once per process per DSN
+        if not _migrations_run.get(path_str, False):
+            pg_store.migrate()
+            _migrations_run[path_str] = True
         return pg_store
 
     store = Persistence(path_str)
-    store.migrate()
+    if not _migrations_run.get(path_str, False):
+        store.migrate()
+        _migrations_run[path_str] = True
     return store
 
 

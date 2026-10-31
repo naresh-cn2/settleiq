@@ -51,14 +51,20 @@ app = FastAPI(
 
 # --------------------------------------------------------------------------- middleware
 
+# CORS configuration: development origins + production origin from env
+_cors_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+_prod_origin = os.environ.get("SETTLEIQ_CORS_ORIGIN")
+if _prod_origin:
+    _cors_origins.append(_prod_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
@@ -99,19 +105,32 @@ async def security_and_limits_middleware(request: Request, call_next) -> Respons
         )
 
     # Auth boundary: Constant-time comparison for API key
+    # Production must fail closed if SETTLEIQ_API_KEY is not configured
     api_key_required = os.environ.get("SETTLEIQ_API_KEY")
-    if (
-        api_key_required
-        and request.url.path.startswith(f"{API_PREFIX}/")
-        and request.method in ("POST", "PUT", "PATCH", "DELETE")
-    ):
-        client_key = request.headers.get("X-API-Key", "")
-        if not hmac.compare_digest(client_key.encode("utf-8"), api_key_required.encode("utf-8")):
+    if not api_key_required:
+        # Fail closed in production: if no API key configured, reject all /v1/* requests
+        if request.url.path.startswith(f"{API_PREFIX}/"):
+            logger.critical(
+                "SETTLEIQ_API_KEY not configured; rejecting request to %s",
+                request.url.path,
+            )
             return Response(
-                content='{"error":"unauthorized","detail":"Invalid or missing API key"}',
+                content='{"error":"unauthorized","detail":"API authentication not configured"}',
                 status_code=401,
                 media_type="application/json",
             )
+    else:
+        # Require authentication for ALL /v1/* endpoints (including GET)
+        if request.url.path.startswith(f"{API_PREFIX}/"):
+            client_key = request.headers.get("X-API-Key", "")
+            client_key_bytes = client_key.encode("utf-8")
+            required_key_bytes = api_key_required.encode("utf-8")
+            if not hmac.compare_digest(client_key_bytes, required_key_bytes):
+                return Response(
+                    content='{"error":"unauthorized","detail":"Invalid or missing API key"}',
+                    status_code=401,
+                    media_type="application/json",
+                )
 
     response = await call_next(request)
 

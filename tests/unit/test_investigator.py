@@ -148,9 +148,9 @@ def test_reconstruct_trace_with_explicit_records() -> None:
 
 
 def test_api_investigate_and_trace_endpoints(monkeypatch) -> None:
-    monkeypatch.setenv("SETTLEIQ_API_TOKEN", "test-token")
-    client = TestClient(app)
-    headers = {"Authorization": "Bearer test-token"}
+    monkeypatch.setenv("SETTLEIQ_API_KEY", "test-api-key-123")
+    headers = {"X-API-Key": "test-api-key-123"}
+    client = TestClient(app, headers=headers)
 
     # Test seed demo run
     seed_resp = client.post("/v1/demo/seed", headers=headers)

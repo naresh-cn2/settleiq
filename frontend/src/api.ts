@@ -1,12 +1,38 @@
 const API_BASE = '/v1'
 
+function getApiKey(): string | null {
+  return sessionStorage.getItem('settleiq_api_key')
+}
+
+function clearApiKey(): void {
+  sessionStorage.removeItem('settleiq_api_key')
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const apiKey = getApiKey()
+  return apiKey ? { 'X-API-Key': apiKey } : {}
+}
+
 async function fetchApi<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const apiKey = getApiKey()
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    ...options.headers,
+  })
+  if (apiKey) {
+    headers.set('X-API-Key', apiKey)
+  }
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers,
     ...options,
   })
   if (!res.ok) {
     const detail = await res.json().catch(() => ({ detail: 'Unknown error' }))
+    if (res.status === 401) {
+      clearApiKey()
+      // Redirect to auth screen - the App component will handle this
+      window.location.href = '/auth'
+    }
     throw new Error(detail.detail || `HTTP ${res.status}`)
   }
   return res.json()
@@ -66,9 +92,9 @@ export const api = {
   runs: {
     list: () => fetchApi<{ count: number; runs: any[] }>('/runs'),
     create: (payload: any) =>
-      fetch('/v1/runs', {
+      fetch(`${API_BASE}/runs`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify(payload),
       }).then(r => {
         if (!r.ok) return r.json().then(d => { throw new Error(d.detail) })
@@ -104,9 +130,9 @@ export const api = {
     },
     get: (id: string) => fetchApi<any>(`/discrepancies/${id}`),
     resolve: (id: string, reason: string, selectedCandidate?: string) =>
-      fetch(`/v1/discrepancies/${id}/resolve`, {
+      fetch(`${API_BASE}/discrepancies/${id}/resolve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ reason, selected_candidate: selectedCandidate }),
       }).then(r => {
         if (!r.ok) return r.json().then(d => { throw new Error(d.detail) })
@@ -140,5 +166,12 @@ export const api = {
         entries_verified: number
         head_digest: string
       }>('/journal/verify', { method: 'POST' }),
+  },
+
+  // Auth helpers
+  auth: {
+    setKey: (key: string) => sessionStorage.setItem('settleiq_api_key', key),
+    clearKey: () => sessionStorage.removeItem('settleiq_api_key'),
+    hasKey: () => !!sessionStorage.getItem('settleiq_api_key'),
   },
 }
