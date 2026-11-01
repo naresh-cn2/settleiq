@@ -52,7 +52,12 @@ app = FastAPI(
 
 @app.on_event("startup")
 def _run_startup_migrations() -> None:
-    ensure_migrations()
+    db_path = _db_path()
+    # Only run migrations at startup if using a PostgreSQL DSN.
+    # For SQLite (default dev path), migrations are handled per-request
+    # so that test fixtures with monkeypatched DB paths work correctly.
+    if db_path.startswith("postgresql://") or db_path.startswith("postgres://"):
+        ensure_migrations(db_path)
 
 # --------------------------------------------------------------------------- middleware
 
@@ -206,8 +211,17 @@ def _db_path() -> str:
 
 
 def _store() -> Persistence:
-    # Each request gets its own connection to avoid SQLite threading issues
-    return open_store(_db_path())
+    # Each request gets its own connection to avoid SQLite threading issues.
+    # For PostgreSQL, migrations are handled once at startup and not repeated.
+    # For SQLite, migrations are run per-request to support test fixtures
+    # that monkeypatch SETTLEIQ_DB_PATH to temporary database paths.
+    db_path = _db_path()
+    if db_path.startswith("postgresql://") or db_path.startswith("postgres://"):
+        # PostgreSQL: migrations run once at startup; do not repeat per request
+        return open_store(db_path, run_migrations=False)
+    # SQLite: run migrations per-request to support test fixtures with
+    # monkeypatched database paths (CREATE TABLE IF NOT EXISTS is idempotent)
+    return open_store(db_path, run_migrations=True)
 
 
 def _journal() -> Journal:
