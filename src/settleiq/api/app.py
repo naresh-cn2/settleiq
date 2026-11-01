@@ -49,6 +49,11 @@ app = FastAPI(
     ),
 )
 
+
+@app.on_event("startup")
+def _run_startup_migrations() -> None:
+    ensure_migrations()
+
 # --------------------------------------------------------------------------- middleware
 
 # CORS configuration: development origins + production origin from env
@@ -202,7 +207,6 @@ def _db_path() -> str:
 
 def _store() -> Persistence:
     # Each request gets its own connection to avoid SQLite threading issues
-    ensure_migrations(_db_path())
     return open_store(_db_path())
 
 
