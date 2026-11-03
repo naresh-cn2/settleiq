@@ -61,4 +61,4 @@ strict = true
 warn_unused_configs = true
 
 [tool.vercel]
-entrypoint = "settleiq.api.app"
+entrypoint = "settleiq.api.app:app"
