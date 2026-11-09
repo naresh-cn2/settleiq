@@ -245,6 +245,12 @@ def health() -> dict[str, object]:
     return {"status": "ok", "api_version": API_VERSION}
 
 
+@app.get(f"{API_PREFIX}/health")
+def health_v1() -> dict[str, object]:
+    """Liveness under /v1 prefix for Vercel routing."""
+    return {"status": "ok", "api_version": API_VERSION}
+
+
 @app.post(f"{API_PREFIX}/runs", status_code=201)
 def create_run(
     request: RunRequest,
