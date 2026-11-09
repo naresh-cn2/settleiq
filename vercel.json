@@ -3,7 +3,8 @@
   "services": {
     "app": {
       "root": "src/",
-      "framework": "fastapi"
+      "framework": "fastapi",
+      "entrypoint": "settleiq/api/app.py"
     },
     "frontend": {
       "root": "frontend",
