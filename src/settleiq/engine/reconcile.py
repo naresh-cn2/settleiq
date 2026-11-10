@@ -171,7 +171,7 @@ def reconcile(
     # A payout/deposit pair whose amounts disagree is reported once, not once per
     # direction, so the discrepancy count is not inflated.
     reported_amount_breaks: set[str] = set()
-    counts: dict[str, int] = {
+    counts: dict[str, object] = {
         "eligible": 0,
         "deterministic": 0,
         "ambiguous": 0,
@@ -383,6 +383,14 @@ def reconcile(
         )
         counts["eligible"] += 1
         counts["unknown"] = counts.get("unknown", 0) + 1
+
+    # Reconciliation rate: deterministic matches / eligible records.
+    # Eligible = every charge/fee/refund/adjustment/payout/deposit record
+    # presented to the matching engine. Deterministic = records matched by
+    # exactly one rule (no ambiguity, no conflict, no insufficient evidence).
+    eligible = counts.get("eligible", 0)
+    deterministic = counts.get("deterministic", 0)
+    counts["rate"] = (deterministic / eligible) if eligible > 0 else 0.0
 
     identity = RunIdentity.derive(
         inputs={

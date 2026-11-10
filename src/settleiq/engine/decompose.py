@@ -127,6 +127,12 @@ def decompose(
     paid = _money(payout)
     currency = paid.currency
 
+    # When a payout carries a settlement reference, only constituents whose
+    # reference matches may be part of its composition. This prevents a payout
+    # from claiming charge/fee records from a different settlement reference
+    # that merely happens to share the same batch.
+    payout_reference = str(payout.get("reference", ""))
+
     constituents: list[Constituent] = []
     for entry in records:
         if not isinstance(entry, Mapping):
@@ -139,6 +145,8 @@ def decompose(
         if kind not in _CONTRIBUTIONS:
             continue
         if _batch(record) != batch:
+            continue
+        if payout_reference and str(record.get("reference", "")) != payout_reference:
             continue
         amount = _money(record)
         if amount.currency != currency:
