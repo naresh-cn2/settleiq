@@ -9,7 +9,7 @@ Tests the three-record synthetic dataset:
 from __future__ import annotations
 
 from settleiq.engine.discrepancy import DiscrepancyType
-from settleiq.engine.reconcile import reconcile, RunParameters
+from settleiq.engine.reconcile import RunParameters, reconcile
 from settleiq.money import Money
 
 SYNTHETIC_RECORDS = [
@@ -181,10 +181,7 @@ def test_reconciliation_rate_formula():
     eligible = counts["eligible"]
     deterministic = counts["deterministic"]
 
-    if eligible > 0:
-        expected_rate = deterministic / eligible
-    else:
-        expected_rate = 0.0
+    expected_rate = deterministic / eligible if eligible > 0 else 0.0
 
     assert counts["rate"] == expected_rate, (
         f"Rate {counts['rate']} != {deterministic}/{eligible} = {expected_rate}"
