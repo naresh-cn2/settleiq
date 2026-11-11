@@ -1,0 +1,142 @@
+"""Test latest Vercel deployment with three-record scenario."""
+import urllib.request
+import json
+import sys
+
+BASE = "https://settleiq-n6e0qja8u-naresh-cn2s-projects.vercel.app"
+API_KEY = "settleiq-test-key-2024"
+PASS = 0
+FAIL = 0
+
+
+def api(method, path, data=None):
+    url = BASE + path
+    req = urllib.request.Request(url, method=method)
+    req.add_header("X-API-Key", API_KEY)
+    req.add_header("Content-Type", "application/json")
+    if data:
+        req.data = json.dumps(data).encode()
+    try:
+        resp = urllib.request.urlopen(req)
+        return resp.status, json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        try:
+            body = json.loads(e.read().decode())
+        except Exception:
+            body = {"error": str(e)}
+        return e.code, body
+
+
+def check(name, condition, detail=""):
+    global PASS, FAIL
+    if condition:
+        PASS += 1
+        print(f"  PASS: {name}")
+    else:
+        FAIL += 1
+        print(f"  FAIL: {name} {detail}")
+
+
+records = [
+    {"kind": "charge", "records": [
+        {"id": "chg-001", "amount": "100.00", "currency": "USD",
+         "batch": "BATCH-001", "reference": "REF-001",
+         "created": "2026-10-01", "narration": "Charge REF-001"},
+    ]},
+    {"kind": "fee", "records": [
+        {"id": "fee-001", "amount": "10.00", "currency": "USD",
+         "batch": "BATCH-001", "reference": "REF-001",
+         "created": "2026-10-01", "narration": "Fee REF-001"},
+    ]},
+    {"kind": "charge", "records": [
+        {"id": "chg-002", "amount": "200.00", "currency": "USD",
+         "batch": "BATCH-001", "reference": "REF-002",
+         "created": "2026-10-02", "narration": "Charge REF-002"},
+    ]},
+    {"kind": "fee", "records": [
+        {"id": "fee-002", "amount": "20.00", "currency": "USD",
+         "batch": "BATCH-001", "reference": "REF-002",
+         "created": "2026-10-02", "narration": "Fee REF-002"},
+    ]},
+    {"kind": "charge", "records": [
+        {"id": "chg-003", "amount": "300.00", "currency": "USD",
+         "batch": "BATCH-002", "reference": "REF-003",
+         "created": "2026-10-03", "narration": "Charge REF-003"},
+    ]},
+    {"kind": "fee", "records": [
+        {"id": "fee-003", "amount": "30.00", "currency": "USD",
+         "batch": "BATCH-002", "reference": "REF-003",
+         "created": "2026-10-03", "narration": "Fee REF-003"},
+    ]},
+    {"kind": "payout", "records": [
+        {"id": "pay-001", "amount": "90.00", "currency": "USD",
+         "batch": "BATCH-001", "reference": "REF-001",
+         "created": "2026-10-05", "narration": "Payout REF-001"},
+    ]},
+    {"kind": "payout", "records": [
+        {"id": "pay-002", "amount": "150.00", "currency": "USD",
+         "batch": "BATCH-001", "reference": "REF-002",
+         "created": "2026-10-06", "narration": "Payout REF-002 (short paid)"},
+    ]},
+]
+
+print("=== TESTING LATEST DEPLOYMENT ===")
+print(f"URL: {BASE}")
+
+status, body = api("POST", "/v1/runs", {
+    "records": records,
+    "window_start": "2026-10-01",
+    "window_end": "2026-10-31",
+    "settlement_window_days": 3,
+})
+check("Create run: 201", status == 201, f"got {status} {body}")
+check("Run has discrepancies", body.get("discrepancy_count", 0) > 0, f"got {body.get('discrepancy_count')}")
+run_id = body["run_id"]
+print(f"  Run ID: {run_id}")
+check("Run not replayed", body.get("replayed") == False, f"got {body.get('replayed')}")
+
+status, metrics = api("GET", f"/v1/runs/{run_id}/metrics")
+check("Metrics: 200", status == 200, f"got {status}")
+if status == 200:
+    print(f"  Metrics: numerator={metrics.get('numerator')}, denominator={metrics.get('denominator')}, rate={metrics.get('rate')}")
+    check("Rate is 0.25 (2 deterministic / 8 eligible)", metrics.get("rate") == 0.25, f"got rate={metrics.get('rate')}")
+    check("Denominator is 8", metrics.get("denominator") == 8, f"got {metrics.get('denominator')}")
+    check("Numerator is 2", metrics.get("numerator") == 2, f"got {metrics.get('numerator')}")
+
+status, disc_body = api("GET", f"/v1/runs/{run_id}/discrepancies")
+check("Discrepancies: 200", status == 200)
+check("Has at least 3 discrepancies", disc_body.get("count", 0) >= 3, f"got {disc_body.get('count')}")
+
+for d in disc_body.get("discrepancies", []):
+    print(f"  {d['discrepancy_id']}: type={d['type']} constituent={d['constituent_kind']}:{d['constituent_id']} severity={d['severity']}")
+    print(f"    reason: {d['reason'][:100]}")
+
+# REF-001: No NET_GROSS_BREAK for pay-001
+pay001_breaks = [d for d in disc_body.get("discrepancies", []) if d["discrepancy_id"] == "dsc:NET_GROSS_BREAK:pay-001"]
+check("REF-001: no NET_GROSS_BREAK for pay-001 (closes exactly)", len(pay001_breaks) == 0, f"got {len(pay001_breaks)}")
+
+# REF-002: NET_GROSS_BREAK for pay-002 with $30 short
+pay002_breaks = [d for d in disc_body.get("discrepancies", []) if d["discrepancy_id"] == "dsc:NET_GROSS_BREAK:pay-002"]
+check("REF-002: NET_GROSS_BREAK for pay-002", len(pay002_breaks) == 1, f"got {len(pay002_breaks)}")
+if pay002_breaks:
+    check("REF-002: reason mentions residual 30.00", "30.00" in pay002_breaks[0]["reason"], f"got: {pay002_breaks[0]['reason']}")
+    check("REF-002: severity HIGH", pay002_breaks[0]["severity"] == "HIGH", f"got {pay002_breaks[0]['severity']}")
+
+# REF-003: PHANTOM_PROCESSOR for chg-003 and fee-003
+phantom_chg = [d for d in disc_body.get("discrepancies", []) if d["discrepancy_id"] == "dsc:PHANTOM_PROCESSOR:chg-003"]
+check("REF-003: PHANTOM_PROCESSOR for chg-003", len(phantom_chg) == 1, f"got {len(phantom_chg)}")
+
+phantom_fee = [d for d in disc_body.get("discrepancies", []) if d["discrepancy_id"] == "dsc:PHANTOM_PROCESSOR:fee-003"]
+check("REF-003: PHANTOM_PROCESSOR for fee-003", len(phantom_fee) == 1, f"got {len(phantom_fee)}")
+
+if phantom_chg:
+    check("REF-003: chg-003 reason mentions BATCH-002", "BATCH-002" in phantom_chg[0]["reason"], f"got: {phantom_chg[0]['reason']}")
+    check("REF-003: chg-003 severity HIGH", phantom_chg[0]["severity"] == "HIGH", f"got {phantom_chg[0]['severity']}")
+
+# Verify discrepancy->source mapping
+input_ids = {"chg-001", "fee-001", "chg-002", "fee-002", "chg-003", "fee-003", "pay-001", "pay-002"}
+for d in disc_body.get("discrepancies", []):
+    check(f"Discrepancy {d['discrepancy_id']} maps to valid source record", d["constituent_id"] in input_ids, f"constituent_id={d['constituent_id']} not in {input_ids}")
+
+print(f"\n=== RESULTS: {PASS} passed, {FAIL} failed ===")
+sys.exit(0 if FAIL == 0 else 1)

@@ -1,0 +1,57 @@
+Vercel CLI 65.12.1
+Deploying settleiq
+Uploading [--------------------] (0.0B/38B)
+Uploading [====================] (38.0B/38B)
+  Inspect         https://vercel.com/naresh-cn2s-projects/settleiq/ADkes26GQL3yFHZnR45NFNziVEcz
+  Production      https://settleiq-iid454tze-naresh-cn2s-projects.vercel.app
+Building…
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Retrieving list of deployment files...
+Downloading 236 deployment files...
+Restored build cache from previous deployment (8JdMh57zNJe7CbJwQaDfzGSA2VS5)
+Running "vercel build"
+Vercel CLI 65.11.0
+Installing dependencies...
+npm warn Unknown env config "cache-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+up to date in 659ms
+51 packages are looking for funding
+run `npm fund` for details
+npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
+npm warn install-scripts   esbuild@0.21.5 (postinstall: node install.js)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+Running "npm run build"
+npm warn Unknown env config "cache-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+> settleiq-dashboard@0.1.0 build
+> tsc && vite build
+vite v5.4.21 building for production...
+transforming...
+✓ 41 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.42 kB │ gzip:  0.29 kB
+dist/assets/index-Cxr3j5vt.css    8.37 kB │ gzip:  2.02 kB
+dist/assets/index-BM3ux4Qk.js   199.90 kB │ gzip: 61.63 kB
+✓ built in 1.30s
+Using Python 3.12 from pyproject.toml
+Writing .python-version file with version 3.12
+Using uv 0.13.5 (x86_64-unknown-linux-gnu)
+Installing required dependencies from pyproject.toml...
+Compiling Python bytecode...
+Build Completed in /vercel/output [10s]
+Deploying outputs...
+[2K[1A[2K[G  Production      https://settleiq-iid454tze-naresh-cn2s-projects.vercel.app
+Completing…
+▲ Aliased         https://settleiq-zeta.vercel.app
+
+✓ Ready in 21s
+
+Next steps:
+- Check the production response:
+  vercel curl https://settleiq-zeta.vercel.app
+- View build logs:
+  vercel inspect settleiq-iid454tze-naresh-cn2s-projects.vercel.app --logs
+- Create a new deployment from the same source:
+  vercel redeploy settleiq-iid454tze-naresh-cn2s-projects.vercel.app
