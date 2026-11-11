@@ -8,6 +8,8 @@
 [![Tests: 205 Passing](https://img.shields.io/badge/Tests-205%20Passing-brightgreen.svg)](tests/)
 [![Money Safety: Zero-Float Enforced](https://img.shields.io/badge/Money%20Safety-Zero--Float%20AST-success.svg)](src/settleiq/money/)
 [![Proof-of-Work: Verified](https://img.shields.io/badge/Proof--of--Work-Verified%20LATEST-blueviolet.svg)](proof/PROOF_MANIFEST.md)
+[![CI Status](https://github.com/naresh-cn2/settleiq/actions/workflows/ci.yml/badge.svg)](https://github.com/naresh-cn2/settleiq/actions/workflows/ci.yml)
+[![Production: Vercel](https://img.shields.io/badge/Production-settleiq--zeta.vercel.app-blue.svg?logo=vercel)](https://settleiq-zeta.vercel.app)
 
 A high-performance payment settlement reconciliation and discrepancy investigation application, built as an independent, fully verified financial engineering product.
 

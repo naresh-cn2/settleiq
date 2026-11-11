@@ -33,6 +33,7 @@ frontend/.vite/
 # Local configuration that must never be committed
 .env
 *.local.json
+.new_api_key
 
 .vercel
 .env*
