@@ -13,6 +13,7 @@ export function RunsPage() {
     discrepancy_count: number
   } | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  const isDemo = api.auth.isDemo()
 
   const fetchRuns = async () => {
     try {
@@ -128,9 +129,11 @@ export function RunsPage() {
           >
             {seeding ? '⚡ Seeding Enterprise Batch...' : '⚡ 60-Second Demo Seed'}
           </button>
-          <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
-            + New Custom Run
-          </button>
+          {!isDemo && (
+            <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
+              + New Custom Run
+            </button>
+          )}
         </div>
       </div>
 
@@ -163,7 +166,7 @@ export function RunsPage() {
         </div>
       )}
 
-      {showCreate && (
+      {!isDemo && showCreate && (
         <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">

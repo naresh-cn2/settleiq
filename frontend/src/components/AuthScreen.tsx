@@ -6,6 +6,8 @@ export function AuthScreen() {
   const [apiKey, setApiKey] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
+  const [demoError, setDemoError] = useState('')
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,6 +38,22 @@ export function AuthScreen() {
       setError(err instanceof Error ? err.message : 'Authentication failed')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleExploreDemo = async () => {
+    setDemoError('')
+    setDemoLoading(true)
+    try {
+      const res = await api.demo.session()
+      api.auth.setDemoToken(res.demo_token)
+      navigate('/')
+    } catch (err) {
+      setDemoError(
+        err instanceof Error ? err.message : 'Unable to start the public demo'
+      )
+    } finally {
+      setDemoLoading(false)
     }
   }
 
@@ -76,9 +94,29 @@ export function AuthScreen() {
           </button>
         </form>
 
+        <div className="auth-divider">
+          <span>Or</span>
+        </div>
+
+        <button
+          type="button"
+          className="auth-submit btn-primary"
+          onClick={handleExploreDemo}
+          disabled={demoLoading}
+        >
+          {demoLoading ? 'Starting demo...' : 'Explore Public Demo'}
+        </button>
+
+        {demoError && <div className="auth-error" role="alert">{demoError}</div>}
+
         <div className="auth-footer">
           <p>Your API key is stored in session storage for this browser tab only.</p>
           <p>It is never sent to any third party or persisted beyond this session.</p>
+          <p className="demo-note">
+            The public demo uses synthetic demonstration data and requires no
+            API key. API keys are provisioned by the SettleIQ administrator —
+            contact your administrator to request developer API access.
+          </p>
         </div>
       </div>
     </div>

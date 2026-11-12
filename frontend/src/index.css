@@ -467,6 +467,62 @@ td {
   outline-offset: 2px;
 }
 
+/* Demo status banner (visible throughout the demo session) */
+.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(210, 153, 34, 0.12);
+  border: 1px solid var(--warning);
+  color: var(--warning);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.demo-label {
+  white-space: nowrap;
+}
+
+/* Auth screen divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.auth-divider span {
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.auth-divider span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.demo-note {
+  margin-top: 12px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  text-align: center;
+}
+
 /* Header logout button */
 .header-logout {
   display: inline-flex;

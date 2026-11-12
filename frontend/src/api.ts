@@ -1,35 +1,59 @@
 const API_BASE = '/v1'
 
-function getApiKey(): string | null {
-  return sessionStorage.getItem('settleiq_api_key')
+export type AuthMode = 'none' | 'api-key' | 'demo'
+
+const API_KEY_STORAGE_KEY = 'settleiq_api_key'
+const DEMO_TOKEN_STORAGE_KEY = 'settleiq_demo_token'
+
+function getAuthMode(): AuthMode {
+  const demoToken = sessionStorage.getItem(DEMO_TOKEN_STORAGE_KEY)
+  const apiKey = sessionStorage.getItem(API_KEY_STORAGE_KEY)
+  if (demoToken) return 'demo'
+  if (apiKey) return 'api-key'
+  return 'none'
 }
 
-function clearApiKey(): void {
-  sessionStorage.removeItem('settleiq_api_key')
+function clearAuth(): void {
+  sessionStorage.removeItem(API_KEY_STORAGE_KEY)
+  sessionStorage.removeItem(DEMO_TOKEN_STORAGE_KEY)
 }
 
 function getAuthHeaders(): Record<string, string> {
-  const apiKey = getApiKey()
+  const mode = getAuthMode()
+  if (mode === 'demo') {
+    const token = sessionStorage.getItem(DEMO_TOKEN_STORAGE_KEY)
+    return token ? { 'X-Demo-Token': token } : {}
+  }
+  const apiKey = sessionStorage.getItem(API_KEY_STORAGE_KEY)
   return apiKey ? { 'X-API-Key': apiKey } : {}
 }
 
+function demoPath(path: string): string {
+  return path.startsWith('/demo/') ? path : `/demo/${path.replace(/^\//, '')}`
+}
+
 async function fetchApi<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const apiKey = getApiKey()
+  const mode = getAuthMode()
+  const targetPath = mode === 'demo' ? demoPath(path) : path
   const headers = new Headers({
     'Content-Type': 'application/json',
     ...options.headers,
   })
-  if (apiKey) {
-    headers.set('X-API-Key', apiKey)
+  if (mode === 'demo') {
+    const token = sessionStorage.getItem(DEMO_TOKEN_STORAGE_KEY)
+    if (token) headers.set('X-Demo-Token', token)
+  } else {
+    const apiKey = sessionStorage.getItem(API_KEY_STORAGE_KEY)
+    if (apiKey) headers.set('X-API-Key', apiKey)
   }
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${API_BASE}${targetPath}`, {
     headers,
     ...options,
   })
   if (!res.ok) {
     const detail = await res.json().catch(() => ({ detail: 'Unknown error' }))
-    if (res.status === 401) {
-      clearApiKey()
+    if (res.status === 401 || res.status === 403) {
+      clearAuth()
       // Redirect to auth screen - the App component will handle this
       window.location.href = '/auth'
     }
@@ -147,6 +171,14 @@ export const api = {
   },
 
   demo: {
+    session: () =>
+      fetch(`${API_BASE}/demo/session`, { method: 'POST' }).then(async r => {
+        if (!r.ok) {
+          const detail = await r.json().catch(() => ({ detail: 'Unknown error' }))
+          throw new Error(detail.detail || `HTTP ${r.status}`)
+        }
+        return r.json()
+      }),
     seed: () =>
       fetchApi<{
         status: string
@@ -170,8 +202,14 @@ export const api = {
 
   // Auth helpers
   auth: {
-    setKey: (key: string) => sessionStorage.setItem('settleiq_api_key', key),
-    clearKey: () => sessionStorage.removeItem('settleiq_api_key'),
-    hasKey: () => !!sessionStorage.getItem('settleiq_api_key'),
+    setKey: (key: string) => sessionStorage.setItem(API_KEY_STORAGE_KEY, key),
+    clearKey: clearAuth,
+    hasKey: () => !!sessionStorage.getItem(API_KEY_STORAGE_KEY),
+    getMode: getAuthMode,
+    isDemo: () => getAuthMode() === 'demo',
+    setDemoToken: (token: string) =>
+      sessionStorage.setItem(DEMO_TOKEN_STORAGE_KEY, token),
+    clearDemoToken: () => sessionStorage.removeItem(DEMO_TOKEN_STORAGE_KEY),
+    getDemoToken: () => sessionStorage.getItem(DEMO_TOKEN_STORAGE_KEY),
   },
 }

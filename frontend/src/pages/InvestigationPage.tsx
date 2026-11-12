@@ -13,6 +13,7 @@ export function InvestigationPage() {
   const [resolutionReason, setResolutionReason] = useState('')
   const [selectedCandidate, setSelectedCandidate] = useState('')
   const [appliedAction, setAppliedAction] = useState<string | null>(null)
+  const isDemo = api.auth.isDemo()
 
   useEffect(() => {
     if (!id) return
@@ -345,57 +346,69 @@ export function InvestigationPage() {
         <div style={{ display: 'grid', gap: '20px', alignContent: 'start' }}>
           {/* Resolution Form */}
           {discrepancy.status === 'OPEN' ? (
-            <div className="card" style={{ borderColor: 'var(--accent)' }}>
-              <div className="card-header">
-                <h3 className="card-title">Resolve Discrepancy</h3>
-                {appliedAction && (
-                  <span className="badge" style={{ background: 'rgba(56, 139, 253, 0.2)', color: 'var(--accent)' }}>
-                    Action: {appliedAction}
-                  </span>
-                )}
-              </div>
-              <form onSubmit={handleResolve}>
-                <div className="form-group" style={{ marginBottom: '16px' }}>
-                  <label className="label">Resolution Justification Reason (required)</label>
-                  <textarea
-                    className="textarea"
-                    rows={4}
-                    value={resolutionReason}
-                    onChange={e => setResolutionReason(e.target.value)}
-                    placeholder="Document forensic justification for resolving this break..."
-                    required
-                  />
-                </div>
-                {discrepancy.decision?.surviving_candidates && discrepancy.decision.surviving_candidates.length > 1 && (
-                  <div className="form-group" style={{ marginBottom: '16px' }}>
-                    <label className="label">Selected Candidate (required for ambiguous match)</label>
-                    <select
-                      className="select"
-                      value={selectedCandidate}
-                      onChange={e => setSelectedCandidate(e.target.value)}
-                      required
-                    >
-                      <option value="">Select candidate tie-breaker...</option>
-                      {discrepancy.decision.surviving_candidates.map((c: any, i: number) => (
-                        <option key={i} value={c.candidate_id}>
-                          {c.candidate_id} — {c.amount} {c.currency} ({c.date})
-                        </option>
-                      ))}
-                    </select>
+            <>
+              {!isDemo && (
+                <div className="card" style={{ borderColor: 'var(--accent)' }}>
+                  <div className="card-header">
+                    <h3 className="card-title">Resolve Discrepancy</h3>
+                    {appliedAction && (
+                      <span className="badge" style={{ background: 'rgba(56, 139, 253, 0.2)', color: 'var(--accent)' }}>
+                        Action: {appliedAction}
+                      </span>
+                    )}
                   </div>
-                )}
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={!resolutionReason.trim() || resolving}
-                    style={{ width: '100%', justifyContent: 'center' }}
-                  >
-                    {resolving ? 'Recording in Ledger...' : 'Commit Immutable Resolution'}
-                  </button>
+                  <form onSubmit={handleResolve}>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label className="label">Resolution Justification Reason (required)</label>
+                      <textarea
+                        className="textarea"
+                        rows={4}
+                        value={resolutionReason}
+                        onChange={e => setResolutionReason(e.target.value)}
+                        placeholder="Document forensic justification for resolving this break..."
+                        required
+                      />
+                    </div>
+                    {discrepancy.decision?.surviving_candidates && discrepancy.decision.surviving_candidates.length > 1 && (
+                      <div className="form-group" style={{ marginBottom: '16px' }}>
+                        <label className="label">Selected Candidate (required for ambiguous match)</label>
+                        <select
+                          className="select"
+                          value={selectedCandidate}
+                          onChange={e => setSelectedCandidate(e.target.value)}
+                          required
+                        >
+                          <option value="">Select candidate tie-breaker...</option>
+                          {discrepancy.decision.surviving_candidates.map((c: any, i: number) => (
+                            <option key={i} value={c.candidate_id}>
+                              {c.candidate_id} — {c.amount} {c.currency} ({c.date})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={!resolutionReason.trim() || resolving}
+                        style={{ width: '100%', justifyContent: 'center' }}
+                      >
+                        {resolving ? 'Recording in Ledger...' : 'Commit Immutable Resolution'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
-              </form>
-            </div>
+              )}
+              {isDemo && (
+                <div className="card">
+                  <p className="text-muted">
+                    Demo mode is read-only: resolution writes are disabled. The
+                    seeded run and discrepancies are synthetic demonstration data.
+                  </p>
+                </div>
+              )}
+            </>
           ) : (
             <div className="card" style={{ borderColor: 'var(--success)' }}>
               <div className="card-header">

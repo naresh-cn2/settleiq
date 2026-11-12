@@ -8,14 +8,32 @@ import { AuthScreen, HeaderAuth } from './components/AuthScreen'
 import { api } from './api'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  if (!api.auth.hasKey()) {
+  const mode = api.auth.getMode()
+  if (mode === 'none') {
     return <Navigate to="/auth" replace />
   }
   return <>{children}</>
 }
 
+function DemoBanner() {
+  const navigate = useNavigate()
+  const handleExitDemo = () => {
+    api.auth.clearKey()
+    navigate('/auth', { replace: true })
+  }
+  return (
+    <div className="demo-banner">
+      <span className="demo-label">PUBLIC DEMO — synthetic data only</span>
+      <button className="btn btn-danger btn-sm" onClick={handleExitDemo}>
+        Exit demo
+      </button>
+    </div>
+  )
+}
+
 function App() {
   const navigate = useNavigate()
+  const isDemo = api.auth.isDemo()
 
   const handleLogout = () => {
     api.auth.clearKey()
@@ -33,7 +51,7 @@ function App() {
           <NavLink to="/discrepancies">Discrepancies</NavLink>
           <NavLink to="/metrics">Metrics</NavLink>
           <NavLink to="/history">History</NavLink>
-          <HeaderAuth onLogout={handleLogout} />
+          {isDemo ? <DemoBanner /> : <HeaderAuth onLogout={handleLogout} />}
         </nav>
       </header>
       <main className="main">
