@@ -51,13 +51,19 @@ async function fetchApi<T>(path: string, options: RequestInit = {}): Promise<T> 
     ...options,
   })
   if (!res.ok) {
-    const detail = await res.json().catch(() => ({ detail: 'Unknown error' }))
+    let detail: { detail?: string } = {}
+    try {
+      detail = await res.json()
+    } catch {
+      // Non-JSON response (e.g. HTML error page) - surface status info
+      detail = { detail: res.statusText || `HTTP ${res.status}` }
+    }
     if (res.status === 401 || res.status === 403) {
       clearAuth()
       // Redirect to auth screen - the App component will handle this
       window.location.href = '/auth'
     }
-    throw new Error(detail.detail || `HTTP ${res.status}`)
+    throw new Error(detail.detail || `HTTP ${res.status} ${res.statusText}`)
   }
   return res.json()
 }
@@ -174,8 +180,13 @@ export const api = {
     session: () =>
       fetch(`${API_BASE}/demo/session`, { method: 'POST' }).then(async r => {
         if (!r.ok) {
-          const detail = await r.json().catch(() => ({ detail: 'Unknown error' }))
-          throw new Error(detail.detail || `HTTP ${r.status}`)
+          let detail: { detail?: string } = {}
+          try {
+            detail = await r.json()
+          } catch {
+            detail = { detail: r.statusText || `HTTP ${r.status}` }
+          }
+          throw new Error(detail.detail || `HTTP ${r.status} ${r.statusText}`)
         }
         return r.json()
       }),
