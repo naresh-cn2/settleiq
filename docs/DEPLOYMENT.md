@@ -112,10 +112,15 @@ docker exec -t settleiq-postgres pg_restore -U settleiq -d settleiq_db --clean -
 ## 6. Vercel Deployment (Public Demo)
 
 The public deployment at `https://settleiq-zeta.vercel.app` is defined by
-[`vercel.json`](../vercel.json), which builds two Vercel services:
+[`vercel.json`](../vercel.json), which deploys a single Vercel service:
 
-* `app`: FastAPI backend (`src/settleiq/api/app.py`) handling `/health` and `/v1/*`.
-* `frontend`: the Vite React dashboard, serving all other routes.
+* `app`: FastAPI (`src/settleiq/api/app.py`) handling `/health`, `/v1/*`, and
+  the compiled React dashboard from `src/settleiq/static` (including SPA
+  fallback for deep links such as `/auth` and `/runs/:runId`).
+
+The frontend bundle must be rebuilt and copied into `src/settleiq/static`
+before deploying (`npm --prefix frontend run build`, then copy `frontend/dist`
+over `src/settleiq/static`). The Docker image performs this step automatically.
 
 ### Required Environment Variables
 

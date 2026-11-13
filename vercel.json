@@ -5,15 +5,11 @@
       "root": "src/",
       "framework": "fastapi",
       "entrypoint": "settleiq/api/app.py"
-    },
-    "frontend": {
-      "root": "frontend",
-      "framework": "vite"
     }
   },
   "rewrites": [
     { "source": "/health", "destination": { "service": "app" } },
     { "source": "/v1/(.*)", "destination": { "service": "app" } },
-    { "source": "/(.*)", "destination": { "service": "frontend" } }
+    { "source": "/(.*)", "destination": { "service": "app" } }
   ]
 }
