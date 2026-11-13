@@ -37,3 +37,8 @@ frontend/.vite/
 
 .vercel
 .env*
+
+# Generated E2E artifacts (the *_latest.json summaries are committed as evidence)
+proof/e2e/failure_*.png
+proof/e2e/public_demo_local_1*.json
+proof/e2e/public_demo_production_1*.json

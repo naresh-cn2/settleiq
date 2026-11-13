@@ -17,7 +17,7 @@ SettleIQ is a **payment settlement reconciliation** engine that verifies and res
   - `run` – Execute the reference demonstration
   - `gate` – Run the money‑safety static gate
   - `verify` – Load a persisted store and verify the audit journal
-- **Testing**: pytest framework with 204 passing tests (unit, property, golden, determinism, integration).
+- **Testing**: pytest framework with 226 passing tests (unit, property, golden, determinism, integration).
 - **Code quality**: Ruff checks on `src tests scripts`.
 - **CI**: GitHub Actions `ci.yml` runs all tests, static linting, and headless browser E2E tests.
 
@@ -36,7 +36,7 @@ SettleIQ is a **payment settlement reconciliation** engine that verifies and res
 | Check | Result | Reference |
 |-------|--------|-----------|
 | Latest CI run | ✅ Success (Run #40915388357) | <https://github.com/naresh-cn2/settleiq/actions/runs/40915388357> |
-| Unit / integration tests | ✅ 204 passing | Log captured by CI |
+| Unit / integration tests | ✅ 226 passing | Log captured by CI |
 | Ruff lint | ✅ Pass | CI run |
 | FastAPI API | ✅ 200‑series responses on `/health` | Running `uvicorn src.settleiq.api.app:app` locally |
 | Front‑end build | ✅ Pass (`npm run build`) | CI build logs |
@@ -52,7 +52,7 @@ cd settleiq
 # 2. Install Python deps (editable with dev extras)
 pip install -e ".[dev]"
 
-# 3. Run the full test suite (204 tests)
+# 3. Run the full test suite (226 tests)
 pytest -q
 
 # 4. Verify the money‑safety static gate

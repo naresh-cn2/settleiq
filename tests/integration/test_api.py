@@ -102,6 +102,25 @@ def test_list_runs_includes_computed_rate(
     assert data["count"] >= 1
     assert "rate" in data["runs"][0]
     assert isinstance(data["runs"][0]["rate"], float)
+    assert data["runs"][0]["discrepancy_count"] == 7
+
+
+def test_run_history_endpoint(
+    client: TestClient, run_payload: dict[str, object]
+) -> None:
+    created = client.post("/v1/runs", json=run_payload).json()
+    run_id = created["run_id"]
+
+    res = client.get(f"/v1/runs/{run_id}/history")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["run_id"] == run_id
+    assert body["count"] == len(body["entries"])
+    assert body["entries"][0]["event"] == "RUN_COMPLETED"
+    assert any(entry["event"] == "DISCREPANCY_DETECTED" for entry in body["entries"])
+
+    missing = client.get("/v1/runs/does-not-exist/history")
+    assert missing.status_code == 404
 
 
 def test_get_run_detail_and_not_found(

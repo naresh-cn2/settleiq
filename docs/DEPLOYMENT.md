@@ -28,6 +28,18 @@ SettleIQ is packaged as a dual-service containerized application:
    POSTGRES_PASSWORD=your_strong_password_here
    POSTGRES_DB=settleiq_db
    SETTLEIQ_API_KEY=your_secure_api_key_here
+   # Optional: enables the read-only "Explore Public Demo" experience.
+   # Must be at least 32 characters of high-entropy random data.
+   SETTLEIQ_DEMO_SECRET=your_64_character_random_demo_signing_secret
+   ```
+
+   `SETTLEIQ_DEMO_SECRET` signs stateless demo tokens with HMAC-SHA256. It is
+   optional: when it is absent (or shorter than 32 characters) the public demo
+   fails closed with HTTP 503, while API-key authentication keeps working.
+   Never reuse `SETTLEIQ_API_KEY` as the demo secret, and never commit either
+   value. Generate the demo secret with:
+   ```bash
+   python -c "import secrets; print(secrets.token_urlsafe(48))"
    ```
 
 2. **Launch Services**:
@@ -89,6 +101,68 @@ docker exec -t settleiq-postgres pg_restore -U settleiq -d settleiq_db --clean -
 
 * **Non-Root Execution**: Container runs under UID 1000 (`settleiq`).
 * **Mutating API Protection**: When `SETTLEIQ_API_KEY` is set, all mutating requests (`POST /v1/*`) require header `X-API-Key`.
+* **Public Demo Isolation**: Demo tokens are HMAC-SHA256 signed, expire after `SETTLEIQ_DEMO_TOKEN_TTL_SECS` (default 1800 seconds), and are only accepted by `/v1/demo/*` routes. Demo sessions never read or write production reconciliation data.
+* **Demo Fail-Closed Behavior**: If `SETTLEIQ_DEMO_SECRET` is missing or shorter than 32 characters, `POST /v1/demo/session` returns HTTP 503 instead of issuing a weak token.
 * **Payload Size Limit**: Request bodies exceeding 10MB are rejected with HTTP 413.
 * **Security Headers**: All HTTP responses include `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and strict Content Security Policy.
+* **No Caching of API Responses**: `/v1/*` and `/health` responses are sent with `Cache-Control: no-store` so session tokens and mutable audit data are never cached.
+
+---
+
+## 6. Vercel Deployment (Public Demo)
+
+The public deployment at `https://settleiq-zeta.vercel.app` is defined by
+[`vercel.json`](../vercel.json), which builds two Vercel services:
+
+* `app`: FastAPI backend (`src/settleiq/api/app.py`) handling `/health` and `/v1/*`.
+* `frontend`: the Vite React dashboard, serving all other routes.
+
+### Required Environment Variables
+
+Configure these in **Vercel → Project → Settings → Environment Variables** for
+both **Production** and **Preview**:
+
+| Variable | Required | Purpose |
+|:---|:---|:---|
+| `SETTLEIQ_API_KEY` | Yes | Protects production `POST /v1/*` endpoints. |
+| `SETTLEIQ_DEMO_SECRET` | For demo | HMAC key for stateless demo tokens. Minimum 32 characters. |
+| `SETTLEIQ_CORS_ORIGIN` | Recommended | Exact browser origin allowed to call the API. |
+| `SETTLEIQ_DB_PATH` | Recommended | Persistence path or PostgreSQL URL for production runs. |
+
+Environment variable changes do **not** apply to existing deployments. After
+adding or rotating `SETTLEIQ_DEMO_SECRET`, create a new production deployment
+(for example `vercel --prod` or redeploy the latest commit). Rotating the secret
+immediately invalidates every previously issued demo token, which is the
+intended revocation mechanism.
+
+### Verifying the Deployed Public Demo
+
+The production-equivalent browser verifier drives real headless Chrome through
+the public auth page and demo workflow:
+
+```bash
+node frontend/scripts/verify_public_demo_e2e.mjs \
+  --mode production \
+  --app-url https://settleiq-zeta.vercel.app \
+  --api-key "$SETTLEIQ_API_KEY"
+```
+
+If you prefer not to put the key on the command line, pass
+`--api-key-file ./local_api_key.txt` and keep that file out of version control.
+
+Expected evidence is written to `proof/e2e/public_demo_production_latest.json`.
+A healthy deployment reports `POST /v1/demo/session` as HTTP 201, loads the
+dashboard, discrepancies, investigation trace, metrics, and history, and rejects
+demo tokens on production `/v1/runs` routes.
+
+### Common Failure: Demo Returns HTTP 503
+
+```
+{"error":"unavailable","detail":"Public demo is temporarily unavailable: the server demo secret is not configured."}
+```
+
+This means the running deployment cannot see `SETTLEIQ_DEMO_SECRET`, or the
+value is shorter than 32 characters. Confirm the variable exists in the target
+environment, then trigger a fresh deployment. The backend logs a warning at
+startup when the secret is missing and an error when it is too short.
 

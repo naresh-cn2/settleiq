@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 
 export function DiscrepanciesPage() {
@@ -7,11 +8,18 @@ export function DiscrepanciesPage() {
   const [error, setError] = useState<string | null>(null)
   const [filterType, setFilterType] = useState('')
   const [filterSeverity, setFilterSeverity] = useState('')
+  const [searchParams] = useSearchParams()
+  const runId = searchParams.get('run_id') || undefined
 
   const fetchDiscrepancies = async () => {
     try {
       setLoading(true)
-      const data = await api.discrepancies.list({ type: filterType || undefined, severity: filterSeverity || undefined })
+      setError(null)
+      const data = await api.discrepancies.list({
+        run_id: runId,
+        type: filterType || undefined,
+        severity: filterSeverity || undefined,
+      })
       setDiscrepancies(data.discrepancies)
     } catch (err: any) {
       setError(err.message)
@@ -22,7 +30,7 @@ export function DiscrepanciesPage() {
 
   useEffect(() => {
     fetchDiscrepancies()
-  }, [filterType, filterSeverity])
+  }, [filterType, filterSeverity, runId])
 
   const severityColors: Record<string, string> = {
     HIGH: 'badge-high',
@@ -51,6 +59,7 @@ export function DiscrepanciesPage() {
               style={{ width: 'auto', minWidth: '180px' }}
               value={filterType}
               onChange={e => setFilterType(e.target.value)}
+              data-testid="filter-type"
             >
               <option value="">All Types</option>
               {types.map(t => <option key={t} value={t}>{t}</option>)}
@@ -60,12 +69,20 @@ export function DiscrepanciesPage() {
               style={{ width: 'auto', minWidth: '140px' }}
               value={filterSeverity}
               onChange={e => setFilterSeverity(e.target.value)}
+              data-testid="filter-severity"
             >
               <option value="">All Severities</option>
               {severities.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <span className="text-muted">{discrepancies.length} discrepancies</span>
+          <span className="text-muted" data-testid="discrepancy-count">
+            {discrepancies.length} discrepancies
+          </span>
+          {runId && (
+            <span className="badge badge-primary mono" title={runId}>
+              Run {runId.slice(0, 12)}…
+            </span>
+          )}
         </div>
       </div>
 
@@ -85,8 +102,15 @@ export function DiscrepanciesPage() {
               </tr>
             </thead>
             <tbody>
+              {discrepancies.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="text-muted" data-testid="discrepancies-empty">
+                    No discrepancies match the current filters.
+                  </td>
+                </tr>
+              )}
               {discrepancies.map((d: any) => (
-                <tr key={d.discrepancy_id}>
+                <tr key={d.discrepancy_id} data-testid="discrepancy-row">
                   <td className="mono text-truncate">{d.discrepancy_id}</td>
                   <td><span className="badge">{d.type}</span></td>
                   <td><span className={`badge ${severityColors[d.severity] || 'badge-neutral'}`}>{d.severity}</span></td>
@@ -98,6 +122,7 @@ export function DiscrepanciesPage() {
                     <button
                       className="btn btn-ghost btn-sm"
                       onClick={() => window.location.href = `/discrepancies/${d.discrepancy_id}`}
+                      data-testid="investigate-discrepancy"
                     >
                       Investigate
                     </button>

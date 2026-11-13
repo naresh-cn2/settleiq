@@ -31,14 +31,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python production dependencies
 COPY pyproject.toml ./
+COPY src/ /app/src/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir . "psycopg[binary]>=3.1"
 
-# Copy source code
-COPY src/ /app/src/
-
 # Copy compiled frontend assets from Stage 1 into the static directory
-COPY --from=frontend-builder /app/src/settleiq/static /app/src/settleiq/static
+COPY --from=frontend-builder /app/frontend/dist /app/src/settleiq/static
 
 # Create non-root user and assign permissions
 RUN useradd -m -u 1000 settleiq && \

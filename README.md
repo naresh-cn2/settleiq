@@ -116,7 +116,7 @@ pip install -e ".[dev]"
 ### 2. Verify Core Gates in One Step
 
 ```bash
-# 1. Run the entire automated test suite (204 passing tests across unit, property, and integration)
+# 1. Run the entire automated test suite (226 passing tests across unit, property, and integration)
 pytest -v
 
 # 2. Verify the Money-Safety Static Gate (AST zero-float verification)
@@ -203,6 +203,10 @@ RESULT: every injected defect classified as recorded.
 # Build frontend static bundle (if modifying TypeScript code):
 npm --prefix frontend run build
 
+# Optional: enable the read-only public demo (32+ random characters).
+# Without it, /auth still supports API-key login and the demo fails closed.
+export SETTLEIQ_DEMO_SECRET="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+
 # Start the application server:
 uvicorn settleiq.api.app:app --reload --port 8000
 ```
@@ -246,7 +250,7 @@ This autonomously verifies all quality gates and partitions machine-readable ver
 
 ### Tier 1: Execution Evidence (`proof/builds/LATEST/tier1_execution_evidence.json`)
 - AST Zero-Float Static Gate (`gate_results.json`)
-- 204 Automated Tests Clean (`test_results.json`) across unit, property, and integration
+- 226 Automated Tests Clean (`test_results.json`) across unit, property, and integration
 - Ruff Static Analysis Clean (0 warnings)
 - Scaled Performance Benchmark (`benchmark_results.json` for 1k, 10k, 50k, 100k workloads)
 - Engine Hot Path Profiling (`proof/engine_profile_stats.txt`): -45.1% function calls and 34.3% execution speedup via serialization fast-paths & decimal caching

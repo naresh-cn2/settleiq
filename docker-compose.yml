@@ -32,6 +32,8 @@ services:
     environment:
       SETTLEIQ_DB_PATH: "postgresql://${POSTGRES_USER:-settleiq}:${POSTGRES_PASSWORD:-settleiq_secure_pass}@postgres:5432/${POSTGRES_DB:-settleiq_db}"
       SETTLEIQ_API_KEY: ${SETTLEIQ_API_KEY:-settleiq-secret-api-key}
+      SETTLEIQ_DEMO_SECRET: ${SETTLEIQ_DEMO_SECRET:-}
+      SETTLEIQ_CORS_ORIGIN: ${SETTLEIQ_CORS_ORIGIN:-}
       ENVIRONMENT: "production"
     ports:
       - "8000:8000"

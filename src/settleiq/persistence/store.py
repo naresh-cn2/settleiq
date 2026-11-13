@@ -384,7 +384,11 @@ class Persistence:
     def all_runs(self) -> Sequence[Mapping[str, object]]:
         with self._connect() as connection, closing(connection.cursor()) as cursor:
             cursor.execute(
-                "SELECT * FROM reconciliation_run ORDER BY input_digest, rule_version"
+                "SELECT r.*, "
+                "(SELECT COUNT(*) FROM discrepancy d WHERE d.run_id = r.run_id) "
+                "AS discrepancy_count "
+                "FROM reconciliation_run r "
+                "ORDER BY r.input_digest, r.rule_version"
             )
             columns = [d[0] for d in cursor.description]
             runs = [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]

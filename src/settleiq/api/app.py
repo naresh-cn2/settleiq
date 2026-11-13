@@ -49,13 +49,24 @@ _IP_REQUEST_TIMESTAMPS: dict[str, list[float]] = defaultdict(list)
 # stateless tokens. No process-local session dictionaries, no shared database,
 # and no SQLite files. Every serverless instance validates tokens identically
 # using HMAC-SHA256 over SETTLEIQ_DEMO_SECRET alone.
+# A demo secret shorter than 32 characters is treated as not configured. The
+# demo is public and the secret is the only thing protecting token forgery, so
+# fail closed rather than accept a weak secret.
+_DEMO_SECRET_MIN_LENGTH: Final[int] = 32
+
+
 def _demo_secret() -> str:
-    return os.environ.get("SETTLEIQ_DEMO_SECRET", "")
+    value = os.environ.get("SETTLEIQ_DEMO_SECRET", "").strip()
+    if len(value) < _DEMO_SECRET_MIN_LENGTH:
+        return ""
+    return value
+
+
 _DEMO_TOKEN_TTL_SECS: Final[float] = float(
     os.environ.get("SETTLEIQ_DEMO_TOKEN_TTL_SECS", "1800")
 )
 _DEMO_SESSION_RATE_LIMIT: Final[int] = int(
-    os.environ.get("SETTLEIQ_DEMO_SESSION_RATE_LIMIT", "10")
+    os.environ.get("SETTLEIQ_DEMO_SESSION_RATE_LIMIT", "30")
 )
 _DEMO_SESSION_RATE_WINDOW_SECS: Final[float] = 60.0
 # Demo session *creation* is rate limited separately, per IP (best-effort per
@@ -80,6 +91,19 @@ def _run_startup_migrations() -> None:
     # so that test fixtures with monkeypatched DB paths work correctly.
     if db_path.startswith("postgresql://") or db_path.startswith("postgres://"):
         ensure_migrations(db_path)
+
+    raw_demo_secret = os.environ.get("SETTLEIQ_DEMO_SECRET", "")
+    if not raw_demo_secret:
+        logger.warning(
+            "SETTLEIQ_DEMO_SECRET is not configured; the public demo is disabled "
+            "and POST /v1/demo/session will return 503."
+        )
+    elif not _demo_secret():
+        logger.error(
+            "SETTLEIQ_DEMO_SECRET is shorter than %d characters; the public demo "
+            "is disabled. Configure a stronger random secret.",
+            _DEMO_SECRET_MIN_LENGTH,
+        )
 
 # --------------------------------------------------------------------------- middleware
 
@@ -195,6 +219,12 @@ async def security_and_limits_middleware(request: Request, call_next) -> Respons
                     )
 
     response = await call_next(request)
+
+    # API responses can contain a session token or mutable audit data. Never
+    # let a browser or intermediary serve a cached copy.
+    if request.url.path.startswith(API_PREFIX) or request.url.path == "/health":
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Pragma"] = "no-cache"
 
     # Security headers
     response.headers["X-Content-Type-Options"] = "nosniff"
@@ -331,7 +361,7 @@ def _validate_demo_token(token: str) -> bool:
     has not expired. No server-side state is consulted.
     """
     secret = _demo_secret()
-    if not token or not secret:
+    if not token or not secret or len(token) > 4096:
         return False
     try:
         payload_b64, sig_b64 = token.split(".")
@@ -343,10 +373,17 @@ def _validate_demo_token(token: str) -> bool:
         if not hmac.compare_digest(signature, expected):
             return False
         data = json.loads(payload)
+        if not isinstance(data, dict):
+            return False
         now = time.time()
         exp = float(data.get("exp", 0))
         iat = float(data.get("iat", 0))
-        return exp > now and iat <= now
+        nonce = data.get("nonce")
+        if not isinstance(nonce, str) or len(nonce) < 8:
+            return False
+        # Tolerate a small clock skew between serverless instances, but do not
+        # accept a token that claims to have been issued in the future.
+        return exp > now and iat <= now + 60 and exp > iat
     except Exception:
         return False
 
@@ -405,22 +442,39 @@ def _get_demo_data() -> dict[str, object]:
 
     run_id = result.identity.run_id
 
+    demo_records_by_id: dict[str, dict[str, object]] = {}
+    for kind, record in dataset.records:
+        record_id = str(record.get("id", ""))
+        if not record_id:
+            continue
+        demo_records_by_id[record_id] = {
+            "candidate_id": record_id,
+            "kind": kind,
+            "amount": str(record.get("amount", "")),
+            "currency": str(record.get("currency", "")),
+            "date": str(
+                record.get("created")
+                or record.get("arrival_date")
+                or record.get("posted")
+                or ""
+            ),
+            "reference": str(
+                record.get("batch")
+                or record.get("reference")
+                or record.get("narration")
+                or ""
+            ),
+        }
+
     discrepancy_records = []
     for d in result.discrepancies:
         canonical = d.to_canonical()
-        discrepancy_records.append(
-            {
-                "discrepancy_id": canonical["discrepancy_id"],
-                "type": canonical["type"],
-                "severity": canonical["severity"],
-                "constituent_kind": canonical["constituent_kind"],
-                "constituent_id": canonical["constituent_id"],
-                "reason": canonical["reason"],
-                "age_days": canonical["age_days"],
-                "status": canonical["status"],
-                "resolution_history": [],
-            }
-        )
+        canonical["run_id"] = run_id
+        canonical["resolution_history"] = []
+        if not canonical.get("contributing_records"):
+            constituent = demo_records_by_id.get(str(canonical["constituent_id"]))
+            canonical["contributing_records"] = [constituent] if constituent else []
+        discrepancy_records.append(canonical)
 
     run_record = {
         "run_id": run_id,
@@ -433,6 +487,7 @@ def _get_demo_data() -> dict[str, object]:
         "denominator": result.metrics.denominator,
         "rate": result.metrics.rate,
         "methodology_version": "1.0.0",
+        "discrepancy_count": len(discrepancy_records),
     }
 
     metrics_record = {
@@ -453,11 +508,57 @@ def _get_demo_data() -> dict[str, object]:
         "rule_version": result.identity.rule_version,
     }
 
+    history_entries = [
+        {
+            "sequence": 1,
+            "run_id": run_id,
+            "event": "RUN_COMPLETED",
+            "timestamp": "2026-10-31T23:59:59Z",
+            "actor": "settleiq-engine",
+            "detail": (
+                f"Reconciled {result.metrics.denominator} eligible constituents "
+                f"against {result.metrics.numerator} deterministic matches."
+            ),
+        },
+        {
+            "sequence": 2,
+            "run_id": run_id,
+            "event": "DISCREPANCIES_CLASSIFIED",
+            "timestamp": "2026-10-31T23:59:59Z",
+            "actor": "settleiq-engine",
+            "detail": (
+                f"Classified {len(discrepancy_records)} discrepancies across "
+                f"{len({d['type'] for d in discrepancy_records})} break types."
+            ),
+        },
+        {
+            "sequence": 3,
+            "run_id": run_id,
+            "event": "AUDIT_JOURNAL_VERIFIED",
+            "timestamp": "2026-10-31T23:59:59Z",
+            "actor": "settleiq-journal",
+            "detail": "Hash-chained audit journal verified with no findings.",
+        },
+    ]
+    for index, d in enumerate(discrepancy_records, start=4):
+        history_entries.append(
+            {
+                "sequence": index,
+                "run_id": run_id,
+                "event": "DISCREPANCY_DETECTED",
+                "timestamp": "2026-10-31T23:59:59Z",
+                "actor": "settleiq-engine",
+                "detail": f"{d['type']} on {d['constituent_kind']}:{d['constituent_id']}",
+                "discrepancy_id": d["discrepancy_id"],
+            }
+        )
+
     _DEMO_DATA = {
         "run_id": run_id,
         "run": run_record,
         "discrepancies": discrepancy_records,
         "metrics": metrics_record,
+        "history": history_entries,
         "discrepancy_count": len(discrepancy_records),
     }
     return _DEMO_DATA
@@ -565,6 +666,63 @@ def get_run(run_id: str) -> dict[str, object]:
     return {"run": stored, "discrepancy_count": len(discrepancies)}
 
 
+@app.get(f"{API_PREFIX}/runs/{{run_id}}/history")
+def get_run_history(run_id: str) -> dict[str, object]:
+    """Deterministic audit history for a run.
+
+    The history is derived from persisted run and discrepancy rows, so it is
+    stable across refreshes and serverless instances.
+    """
+    stored = _store().find_run(run_id)
+    if stored is None:
+        raise HTTPException(status_code=404, detail={"error": "run_not_found"})
+    discrepancies = list(_store().discrepancies_for(run_id))
+    timestamp = str(
+        stored.get("created_at")
+        or stored.get("recorded_at")
+        or stored.get("declared_window")
+        or ""
+    )
+    entries: list[dict[str, object]] = [
+        {
+            "sequence": 1,
+            "run_id": run_id,
+            "event": "RUN_COMPLETED",
+            "timestamp": timestamp,
+            "actor": "settleiq-engine",
+            "detail": (
+                f"Reconciled {stored.get('denominator', 0)} eligible constituents "
+                f"against {stored.get('numerator', 0)} deterministic matches."
+            ),
+        },
+        {
+            "sequence": 2,
+            "run_id": run_id,
+            "event": "DISCREPANCIES_CLASSIFIED",
+            "timestamp": timestamp,
+            "actor": "settleiq-engine",
+            "detail": f"Classified {len(discrepancies)} discrepancies.",
+        },
+    ]
+    for index, discrepancy in enumerate(discrepancies, start=3):
+        entries.append(
+            {
+                "sequence": index,
+                "run_id": run_id,
+                "event": "DISCREPANCY_DETECTED",
+                "timestamp": timestamp,
+                "actor": "settleiq-engine",
+                "detail": (
+                    f"{discrepancy.get('type')} on "
+                    f"{discrepancy.get('constituent_kind')}:"
+                    f"{discrepancy.get('constituent_id')}"
+                ),
+                "discrepancy_id": discrepancy.get("discrepancy_id"),
+            }
+        )
+    return {"run_id": run_id, "count": len(entries), "entries": entries}
+
+
 @app.get(f"{API_PREFIX}/runs/{{run_id}}/discrepancies")
 def list_run_discrepancies(
     run_id: str, type: str | None = None, severity: str | None = None
@@ -625,15 +783,23 @@ def get_constituent_trace_endpoint(
     constituent_id: str,
 ) -> dict[str, object]:
     """Visual transaction trace for a constituent within a reconciliation run."""
-    stored = _store().find_discrepancy(constituent_id)
+    if _store().find_run(run_id) is None:
+        raise HTTPException(status_code=404, detail={"error": "run_not_found"})
+    target = next(
+        (
+            d
+            for d in _store().all_discrepancies(run_id=run_id)
+            if d.get("constituent_id") == constituent_id
+        ),
+        None,
+    )
+    if target is None:
+        raise HTTPException(status_code=404, detail={"error": "constituent_not_found"})
     from settleiq.engine.investigator import build_transaction_trace
 
-    dummy_disc = stored or {
-        "constituent_id": constituent_id,
-        "type": "NET_GROSS_BREAK",
-        "reason": "",
-    }
-    trace = build_transaction_trace(dummy_disc)
+    trace = build_transaction_trace(
+        target, target.get("contributing_records") or None
+    )
     return trace.to_canonical()
 
 
@@ -688,8 +854,16 @@ def create_demo_session(request: Request) -> dict[str, object]:
     carries no privileged claims.
     """
     if not _demo_secret():
+        logger.critical(
+            "Demo session refused: SETTLEIQ_DEMO_SECRET is missing, shorter than "
+            "%d characters, or otherwise invalid. Configure it and redeploy.",
+            _DEMO_SECRET_MIN_LENGTH,
+        )
         return Response(
-            content='{"error":"unavailable","detail":"Demo not configured on this server"}',
+            content=(
+                '{"error":"unavailable","detail":"Public demo is temporarily '
+                'unavailable: the server demo secret is not configured."}'
+            ),
             status_code=503,
             media_type="application/json",
         )
@@ -716,7 +890,18 @@ def create_demo_session(request: Request) -> dict[str, object]:
         )
     _DEMO_SESSION_CREATION_TIMESTAMPS[client_ip].append(now)
 
-    token, exp = _issue_demo_token()
+    try:
+        token, exp = _issue_demo_token()
+    except RuntimeError:
+        logger.exception("Demo token issuance failed")
+        return Response(
+            content=(
+                '{"error":"unavailable","detail":"Public demo is temporarily '
+                'unavailable: token signing failed."}'
+            ),
+            status_code=503,
+            media_type="application/json",
+        )
     return {
         "demo_token": token,
         "expires_in": int(exp - now),
@@ -770,6 +955,16 @@ def get_demo_metrics(run_id: str, request: Request) -> dict[str, object]:
     return data["metrics"]
 
 
+@app.get(f"{API_PREFIX}/demo/runs/{{run_id}}/history")
+def get_demo_run_history(run_id: str, request: Request) -> dict[str, object]:
+    _require_demo(request)
+    data = _get_demo_data()
+    if data["run"]["run_id"] != run_id:
+        raise HTTPException(status_code=404, detail={"error": "run_not_found"})
+    entries = data["history"]
+    return {"run_id": run_id, "count": len(entries), "entries": entries}
+
+
 @app.get(f"{API_PREFIX}/demo/runs/{{run_id}}/export")
 def export_demo_run(run_id: str, request: Request) -> dict[str, object]:
     _require_demo(request)
@@ -793,12 +988,19 @@ def get_demo_constituent_trace(
         raise HTTPException(status_code=404, detail={"error": "run_not_found"})
     from settleiq.engine.investigator import build_transaction_trace
 
-    dummy_disc = {
-        "constituent_id": constituent_id,
-        "type": "NET_GROSS_BREAK",
-        "reason": "",
-    }
-    trace = build_transaction_trace(dummy_disc)
+    target = next(
+        (
+            d
+            for d in data["discrepancies"]
+            if d["constituent_id"] == constituent_id
+        ),
+        None,
+    )
+    if target is None:
+        raise HTTPException(status_code=404, detail={"error": "constituent_not_found"})
+    trace = build_transaction_trace(
+        target, target.get("contributing_records") or None
+    )
     return trace.to_canonical()
 
 

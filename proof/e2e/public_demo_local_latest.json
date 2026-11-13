@@ -1,0 +1,193 @@
+{
+  "generated_at": "2026-11-13T13:31:16.450Z",
+  "mode": "local",
+  "app_url": "http://127.0.0.1:5582",
+  "api_url": "http://127.0.0.1:5577",
+  "api_b_url": "http://127.0.0.1:5578",
+  "counts": {
+    "total": 27,
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "name": "auth page renders login and public demo entry points",
+      "status": "pass",
+      "detail": "login + demo controls visible",
+      "ms": 26
+    },
+    {
+      "name": "Explore Public Demo creates a session and lands on the dashboard",
+      "status": "pass",
+      "detail": "demo session established",
+      "ms": 122
+    },
+    {
+      "name": "dashboard shows deterministic run data and discrepancy count",
+      "status": "pass",
+      "detail": "one completed run at 76.00% with 7 discrepancies",
+      "ms": 27
+    },
+    {
+      "name": "runs page can execute the demo seed endpoint",
+      "status": "pass",
+      "detail": "demo seed executed in the browser",
+      "ms": 44
+    },
+    {
+      "name": "discrepancies page lists every synthetic break",
+      "status": "pass",
+      "detail": "7 discrepancies listed",
+      "ms": 88
+    },
+    {
+      "name": "investigation and transaction trace render evidence and hypotheses",
+      "status": "pass",
+      "detail": "2 hypotheses, 1 contributing records",
+      "ms": 173
+    },
+    {
+      "name": "metrics page loads the run automatically and shows the rate",
+      "status": "pass",
+      "detail": "metrics loaded automatically at 76.00% (19/25)",
+      "ms": 74
+    },
+    {
+      "name": "history page shows an audit timeline for the run",
+      "status": "pass",
+      "detail": "10 audit history entries",
+      "ms": 92
+    },
+    {
+      "name": "browser refresh preserves the demo session",
+      "status": "pass",
+      "detail": "session and page state survive refresh",
+      "ms": 1055
+    },
+    {
+      "name": "direct navigation to an application route works",
+      "status": "pass",
+      "detail": "direct route loads without a server-side 404",
+      "ms": 2184
+    },
+    {
+      "name": "empty result set renders an explicit empty state",
+      "status": "pass",
+      "detail": "empty dataset handled with an explicit message",
+      "ms": 1115
+    },
+    {
+      "name": "demo token cannot access production API endpoints",
+      "status": "pass",
+      "detail": "demo token rejected by production routes and accepted by demo routes",
+      "ms": 1044
+    },
+    {
+      "name": "production API-key authentication still works",
+      "status": "pass",
+      "detail": "wrong key rejected, valid key accepted",
+      "ms": 29
+    },
+    {
+      "name": "invalid demo token is rejected and redirected with a useful message",
+      "status": "pass",
+      "detail": "invalid token rejected, cleared, and explained",
+      "ms": 958
+    },
+    {
+      "name": "expired demo token is rejected",
+      "status": "pass",
+      "detail": "expired token rejected and session cleared",
+      "ms": 1008
+    },
+    {
+      "name": "network failure renders an error state instead of a blank page",
+      "status": "pass",
+      "detail": "failed API request surfaced as an actionable error",
+      "ms": 162
+    },
+    {
+      "name": "logout clears the demo session and protects routes",
+      "status": "pass",
+      "detail": "session terminated and protected route redirected",
+      "ms": 1838
+    },
+    {
+      "name": "demo token validates on an independent serverless-equivalent instance",
+      "status": "pass",
+      "detail": "same signed token accepted by a separate backend process",
+      "ms": 38
+    },
+    {
+      "name": "tampered demo token is rejected",
+      "status": "pass",
+      "detail": "signature tampering rejected",
+      "ms": 9
+    },
+    {
+      "name": "demo token survives a backend cold start",
+      "status": "pass",
+      "detail": "token remains valid after the server process is replaced",
+      "ms": 1729
+    },
+    {
+      "name": "missing demo secret fails closed with an actionable 503",
+      "status": "pass",
+      "detail": "demo disabled when the secret is absent",
+      "ms": 16
+    },
+    {
+      "name": "a token signed with a different secret is rejected",
+      "status": "pass",
+      "detail": "tokens are bound to the configured secret",
+      "ms": 7
+    },
+    {
+      "name": "short-lived token expires",
+      "status": "pass",
+      "detail": "expiry enforced without server-side state",
+      "ms": 2219
+    },
+    {
+      "name": "unknown demo run returns 404 and empty filters return empty sets",
+      "status": "pass",
+      "detail": "404 and empty datasets handled explicitly",
+      "ms": 12
+    },
+    {
+      "name": "demo endpoints tolerate repeated requests",
+      "status": "pass",
+      "detail": "20 consecutive requests succeeded",
+      "ms": 97
+    },
+    {
+      "name": "demo trace endpoint returns real nodes for a constituent",
+      "status": "pass",
+      "detail": "1 trace nodes",
+      "ms": 19
+    },
+    {
+      "name": "browser still works against a replaced backend process",
+      "status": "pass",
+      "detail": "refreshing against a new process keeps the demo session",
+      "ms": 2953
+    }
+  ],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: net::ERR_FAILED"
+  ],
+  "page_errors": [],
+  "failed_requests": [
+    {
+      "url": "http://127.0.0.1:5582/v1/demo/runs",
+      "error": "net::ERR_FAILED"
+    }
+  ]
+}

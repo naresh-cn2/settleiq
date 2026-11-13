@@ -32,6 +32,33 @@ function demoPath(path: string): string {
   return path.startsWith('/demo/') ? path : `/demo/${path.replace(/^\//, '')}`
 }
 
+interface ApiErrorBody {
+  detail?: string | { error?: string; detail?: string }
+  error?: string
+}
+
+function errorMessage(body: ApiErrorBody, status: number, statusText: string): string {
+  const detail = body?.detail
+  if (typeof detail === 'string' && detail.trim()) return detail
+  if (detail && typeof detail === 'object') {
+    if (typeof detail.detail === 'string' && detail.detail.trim()) return detail.detail
+    if (typeof detail.error === 'string' && detail.error.trim()) return detail.error
+  }
+  if (typeof body?.error === 'string' && body.error.trim()) return body.error
+  return `HTTP ${status}${statusText ? ` ${statusText}` : ''}`
+}
+
+async function parseError(res: Response): Promise<string> {
+  let body: ApiErrorBody = {}
+  try {
+    body = (await res.json()) as ApiErrorBody
+  } catch {
+    // Non-JSON response (e.g. a gateway HTML page) - surface status info.
+    body = {}
+  }
+  return errorMessage(body, res.status, res.statusText)
+}
+
 async function fetchApi<T>(path: string, options: RequestInit = {}): Promise<T> {
   const mode = getAuthMode()
   const targetPath = mode === 'demo' ? demoPath(path) : path
@@ -51,19 +78,14 @@ async function fetchApi<T>(path: string, options: RequestInit = {}): Promise<T> 
     ...options,
   })
   if (!res.ok) {
-    let detail: { detail?: string } = {}
-    try {
-      detail = await res.json()
-    } catch {
-      // Non-JSON response (e.g. HTML error page) - surface status info
-      detail = { detail: res.statusText || `HTTP ${res.status}` }
-    }
+    const message = await parseError(res)
     if (res.status === 401 || res.status === 403) {
       clearAuth()
-      // Redirect to auth screen - the App component will handle this
-      window.location.href = '/auth'
+      const reason = mode === 'demo' ? 'demo-expired' : 'unauthorized'
+      // Redirect to auth screen - the App component will handle this.
+      window.location.href = `/auth?reason=${reason}`
     }
-    throw new Error(detail.detail || `HTTP ${res.status} ${res.statusText}`)
+    throw new Error(message)
   }
   return res.json()
 }
@@ -126,8 +148,8 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify(payload),
-      }).then(r => {
-        if (!r.ok) return r.json().then(d => { throw new Error(d.detail) })
+      }).then(async r => {
+        if (!r.ok) throw new Error(await parseError(r))
         return r.json()
       }),
     get: (id: string) => fetchApi<{ run: any; discrepancy_count: number }>(`/runs/${id}`),
@@ -148,12 +170,25 @@ export const api = {
       }>(`/runs/${id}/metrics`),
     export: (id: string) => fetchApi<any>(`/runs/${id}/export`),
     history: (id: string) =>
-      fetchApi<any>(`/runs/${id}/history`),
+      fetchApi<{
+        run_id: string
+        count: number
+        entries: Array<{
+          sequence: number
+          run_id: string
+          event: string
+          timestamp: string
+          actor: string
+          detail: string
+          discrepancy_id?: string
+        }>
+      }>(`/runs/${id}/history`),
   },
 
   discrepancies: {
-    list: (params?: { type?: string; severity?: string }) => {
+    list: (params?: { run_id?: string; type?: string; severity?: string }) => {
       const search = new URLSearchParams()
+      if (params?.run_id) search.set('run_id', params.run_id)
       if (params?.type) search.set('type', params.type)
       if (params?.severity) search.set('severity', params.severity)
       return fetchApi<{ count: number; discrepancies: any[] }>(`/discrepancies?${search.toString()}`)
@@ -164,8 +199,8 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ reason, selected_candidate: selectedCandidate }),
-      }).then(r => {
-        if (!r.ok) return r.json().then(d => { throw new Error(d.detail) })
+      }).then(async r => {
+        if (!r.ok) throw new Error(await parseError(r))
         return r.json()
       }),
   },
@@ -178,16 +213,11 @@ export const api = {
 
   demo: {
     session: () =>
-      fetch(`${API_BASE}/demo/session`, { method: 'POST' }).then(async r => {
-        if (!r.ok) {
-          let detail: { detail?: string } = {}
-          try {
-            detail = await r.json()
-          } catch {
-            detail = { detail: r.statusText || `HTTP ${r.status}` }
-          }
-          throw new Error(detail.detail || `HTTP ${r.status} ${r.statusText}`)
-        }
+      fetch(`${API_BASE}/demo/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).then(async r => {
+        if (!r.ok) throw new Error(await parseError(r))
         return r.json()
       }),
     seed: () =>

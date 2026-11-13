@@ -148,8 +148,20 @@ def test_valid_demo_token_accesses_demo_data(demo_env: None) -> None:
     assert res.status_code == 200
     assert res.json()["format"] == "json"
 
-    res = client.get(f"/v1/demo/runs/{run_id}/trace/ch_0", headers=headers)
+    discrepancies = client.get(
+        f"/v1/demo/runs/{run_id}/discrepancies", headers=headers
+    ).json()["discrepancies"]
+    constituent_id = discrepancies[0]["constituent_id"]
+    res = client.get(
+        f"/v1/demo/runs/{run_id}/trace/{constituent_id}", headers=headers
+    )
     assert res.status_code == 200
+    assert len(res.json()["nodes"]) > 0
+
+    res = client.get(f"/v1/demo/runs/{run_id}/history", headers=headers)
+    assert res.status_code == 200
+    assert res.json()["count"] >= 2
+    assert res.json()["entries"][0]["event"] == "RUN_COMPLETED"
 
     res = client.post("/v1/demo/journal/verify", headers=headers)
     assert res.status_code == 200
@@ -267,4 +279,101 @@ def test_demo_seed_with_demo_token(demo_env: None) -> None:
     assert body["numerator"] > 0
     assert body["denominator"] > 0
     assert body["discrepancy_count"] > 0
+
+
+def test_demo_run_and_discrepancy_records_are_complete(demo_env: None) -> None:
+    client = TestClient(app)
+    token = _issue_session(client)
+    headers = {"X-Demo-Token": token}
+
+    runs = client.get("/v1/demo/runs", headers=headers).json()["runs"]
+    assert len(runs) == 1
+    run = runs[0]
+    assert run["discrepancy_count"] == 7
+    assert len(run["run_id"]) == 64
+
+    discrepancies = client.get("/v1/demo/discrepancies", headers=headers).json()[
+        "discrepancies"
+    ]
+    assert len(discrepancies) == run["discrepancy_count"]
+    for discrepancy in discrepancies:
+        assert discrepancy["run_id"] == run["run_id"]
+        assert "contributing_records" in discrepancy
+        assert "resolution_history" in discrepancy
+
+    detail = client.get(
+        f"/v1/demo/discrepancies/{discrepancies[0]['discrepancy_id']}",
+        headers=headers,
+    )
+    assert detail.status_code == 200
+    assert detail.json()["run_id"] == run["run_id"]
+
+
+def test_demo_history_is_deterministic_and_stable(demo_env: None) -> None:
+    client = TestClient(app)
+    token = _issue_session(client)
+    headers = {"X-Demo-Token": token}
+    run_id = client.get("/v1/demo/runs", headers=headers).json()["runs"][0]["run_id"]
+
+    first = client.get(f"/v1/demo/runs/{run_id}/history", headers=headers)
+    second = client.get(f"/v1/demo/runs/{run_id}/history", headers=headers)
+    assert first.status_code == 200
+    assert first.json() == second.json()
+    entries = first.json()["entries"]
+    assert first.json()["count"] == len(entries)
+    assert entries[0]["event"] == "RUN_COMPLETED"
+    assert any(entry["event"] == "DISCREPANCY_DETECTED" for entry in entries)
+
+
+def test_demo_trace_uses_real_constituent_records(demo_env: None) -> None:
+    client = TestClient(app)
+    token = _issue_session(client)
+    headers = {"X-Demo-Token": token}
+    discrepancies = client.get("/v1/demo/discrepancies", headers=headers).json()[
+        "discrepancies"
+    ]
+    target = next(
+        d for d in discrepancies if len(d.get("contributing_records") or []) > 0
+    )
+    run_id = target["run_id"]
+
+    trace = client.get(
+        f"/v1/demo/runs/{run_id}/trace/{target['constituent_id']}",
+        headers=headers,
+    )
+    assert trace.status_code == 200
+    assert len(trace.json()["nodes"]) > 0
+
+    missing = client.get(
+        f"/v1/demo/runs/{run_id}/trace/does-not-exist", headers=headers
+    )
+    assert missing.status_code == 404
+
+
+def test_short_demo_secret_is_rejected_as_unconfigured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SETTLEIQ_DEMO_SECRET", "too-short")
+    app_module._IP_REQUEST_TIMESTAMPS.clear()
+    app_module._DEMO_SESSION_CREATION_TIMESTAMPS.clear()
+    client = TestClient(app)
+    res = client.post("/v1/demo/session")
+    assert res.status_code == 503
+    assert "demo secret" in res.json()["detail"].lower()
+
+
+def test_demo_token_issued_in_the_future_is_rejected(demo_env: None) -> None:
+    client = TestClient(app)
+    future = _issue_test_token(iat_offset=3600.0)
+    res = client.get("/v1/demo/runs", headers={"X-Demo-Token": future})
+    assert res.status_code == 401
+
+
+def test_api_responses_are_not_cacheable(demo_env: None) -> None:
+    client = TestClient(app)
+    token = _issue_session(client)
+    res = client.get("/v1/demo/runs", headers={"X-Demo-Token": token})
+    assert res.headers["Cache-Control"] == "no-store"
+    session = client.post("/v1/demo/session")
+    assert session.headers["Cache-Control"] == "no-store"
 

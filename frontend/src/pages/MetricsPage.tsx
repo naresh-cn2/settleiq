@@ -6,19 +6,22 @@ export function MetricsPage() {
   const [runs, setRuns] = useState<any[]>([])
   const [selectedRun, setSelectedRun] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true)
-        const [runsData, metricsData] = await Promise.all([
-          api.runs.list(),
-          Promise.resolve(null),
-        ])
+        setError(null)
+        const runsData = await api.runs.list()
         setRuns(runsData.runs)
-        setMetrics(metricsData)
+        const first = runsData.runs[0]
+        if (first) {
+          setSelectedRun(first.run_id)
+          setMetrics(await api.runs.metrics(first.run_id))
+        }
       } catch (err: any) {
-        // ignore
+        setError(err.message)
       } finally {
         setLoading(false)
       }
@@ -39,9 +42,10 @@ export function MetricsPage() {
   }
 
   if (loading) return <div className="loading">Loading metrics...</div>
+  if (error) return <div className="error">Failed to load metrics: {error}</div>
 
   return (
-    <div className="page">
+    <div className="page" data-testid="metrics-page">
       <div className="page-header">
         <h1 className="page-title">Metrics</h1>
       </div>
@@ -54,6 +58,7 @@ export function MetricsPage() {
             value={selectedRun || ''}
             onChange={handleRunChange}
             style={{ width: '100%', marginBottom: '16px' }}
+            data-testid="metrics-run-select"
           >
             <option value="">Select a run</option>
             {runs.map((r: any) => (
@@ -70,7 +75,7 @@ export function MetricsPage() {
               <h2 className="card-title">Auto-Match Rate</h2>
               <span className="badge badge-neutral">v{metrics?.methodology_version || '—'}</span>
             </div>
-            <div style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--accent)', fontFamily: 'var(--font-mono)', marginTop: '8px' }}>
+            <div style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--accent)', fontFamily: 'var(--font-mono)', marginTop: '8px' }} data-testid="auto-match-rate">
               {metrics ? (metrics.rate * 100).toFixed(2) + '%' : '—'}
             </div>
             <div className="text-muted" style={{ marginTop: '8px', fontSize: '0.8125rem' }}>

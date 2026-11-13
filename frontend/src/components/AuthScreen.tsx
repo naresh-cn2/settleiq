@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 
 export function AuthScreen() {
@@ -8,7 +8,18 @@ export function AuthScreen() {
   const [loading, setLoading] = useState(false)
   const [demoLoading, setDemoLoading] = useState(false)
   const [demoError, setDemoError] = useState('')
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+
+  const reason = searchParams.get('reason')
+  const sessionNotice =
+    reason === 'demo-expired'
+      ? 'Your public demo session expired. Start a new demo to continue.'
+      : reason === 'unauthorized'
+        ? 'Your session is no longer valid. Please sign in again.'
+        : reason === 'demo-unavailable'
+          ? 'The public demo is temporarily unavailable. Please try again shortly.'
+          : ''
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,11 +88,18 @@ export function AuthScreen() {
               autoComplete="off"
               disabled={loading}
               aria-describedby="apiKeyHelp"
+              data-testid="api-key-input"
             />
             <small id="apiKeyHelp" className="form-help">
               Enter your SettleIQ API key to access the dashboard
             </small>
           </div>
+
+          {sessionNotice && (
+            <div className="auth-error" role="status" data-testid="session-notice">
+              {sessionNotice}
+            </div>
+          )}
 
           {error && <div className="auth-error" role="alert">{error}</div>}
 
@@ -89,6 +107,7 @@ export function AuthScreen() {
             type="submit"
             className="auth-submit"
             disabled={loading || !apiKey.trim()}
+            data-testid="api-key-submit"
           >
             {loading ? 'Verifying...' : 'Access Dashboard'}
           </button>
@@ -103,11 +122,16 @@ export function AuthScreen() {
           className="auth-submit btn-primary"
           onClick={handleExploreDemo}
           disabled={demoLoading}
+          data-testid="explore-demo"
         >
           {demoLoading ? 'Starting demo...' : 'Explore Public Demo'}
         </button>
 
-        {demoError && <div className="auth-error" role="alert">{demoError}</div>}
+        {demoError && (
+          <div className="auth-error" role="alert" data-testid="demo-error">
+            {demoError}
+          </div>
+        )}
 
         <div className="auth-footer">
           <p>Your API key is stored in session storage for this browser tab only.</p>

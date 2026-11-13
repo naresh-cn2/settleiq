@@ -89,7 +89,7 @@ export function InvestigationPage() {
   }
 
   return (
-    <div className="page">
+    <div className="page" data-testid="investigation-page">
       <div className="page-header">
         <div>
           <h1 className="page-title">Discrepancy Investigation</h1>
@@ -107,7 +107,11 @@ export function InvestigationPage() {
 
       {/* Reconstructed Transaction Journey Trace */}
       {trace && (
-        <div className="card" style={{ marginBottom: '24px', borderColor: 'var(--accent)' }}>
+        <div
+          className="card"
+          style={{ marginBottom: '24px', borderColor: 'var(--accent)' }}
+          data-testid="transaction-trace"
+        >
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
             <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>🔍</span> Visual Transaction Journey Trace
@@ -206,7 +210,7 @@ export function InvestigationPage() {
 
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {report.hypotheses.map(hyp => (
-                    <div key={hyp.rank} style={{
+                    <div key={hyp.rank} data-testid="hypothesis" style={{
                       padding: '14px',
                       background: 'var(--bg-tertiary)',
                       borderRadius: 'var(--radius)',
@@ -302,8 +306,14 @@ export function InvestigationPage() {
             </div>
 
             <div style={{ display: 'grid', gap: '12px' }}>
+              {(!discrepancy.contributing_records || discrepancy.contributing_records.length === 0) && (
+                <p className="text-muted" data-testid="contributing-empty">
+                  No constituent records were attached to this discrepancy. The
+                  diagnostic reason above is the primary evidence.
+                </p>
+              )}
               {discrepancy.contributing_records && discrepancy.contributing_records.map((c: any, i: number) => (
-                <div key={i} className="card" style={{ padding: '12px' }}>
+                <div key={i} className="card" style={{ padding: '12px' }} data-testid="contributing-record">
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <strong>{c.kind}</strong>
                     <span className="mono">{c.candidate_id}</span>

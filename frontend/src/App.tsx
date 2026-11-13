@@ -1,4 +1,4 @@
-import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom'
+import { Routes, Route, Link, useNavigate, Navigate, useLocation } from 'react-router-dom'
 import { RunsPage } from './pages/RunsPage'
 import { DiscrepanciesPage } from './pages/DiscrepanciesPage'
 import { InvestigationPage } from './pages/InvestigationPage'
@@ -24,7 +24,11 @@ function DemoBanner() {
   return (
     <div className="demo-banner">
       <span className="demo-label">PUBLIC DEMO — synthetic data only</span>
-      <button className="btn btn-danger btn-sm" onClick={handleExitDemo}>
+      <button
+        className="btn btn-danger btn-sm"
+        onClick={handleExitDemo}
+        data-testid="exit-demo"
+      >
         Exit demo
       </button>
     </div>
@@ -33,7 +37,11 @@ function DemoBanner() {
 
 function App() {
   const navigate = useNavigate()
+  const location = useLocation()
+  // Re-evaluate on every navigation so logging in or out updates the header
+  // without requiring a full page reload.
   const isDemo = api.auth.isDemo()
+  void location.pathname
 
   const handleLogout = () => {
     api.auth.clearKey()
@@ -97,6 +105,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <footer className="footer">
@@ -113,6 +122,7 @@ function NavLink({ children, to }: { children: React.ReactNode; to: string }) {
       className="nav-link"
       onClick={() => navigate(to)}
       title={to}
+      data-testid={`nav-${to === '/' ? 'runs' : to.replace(/^\//, '')}`}
     >
       {children}
     </button>

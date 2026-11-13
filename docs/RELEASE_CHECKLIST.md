@@ -13,7 +13,7 @@ Every item in this section is verified by executable, reproducible code and cryp
 | Area | Requirement | Verification Artifact | Result |
 |:---|:---|:---|:---:|
 | **Money Safety** | Complete prohibition of IEEE 754 binary floats in financial path | `python -m settleiq.cli gate` | **CLEAN (0 floats)** |
-| **Automated Tests** | 100% pass rate across unit, property, and integration tests | `pytest` (204 tests) | **204 / 204 PASSED** |
+| **Automated Tests** | 100% pass rate across unit, property, and integration tests | `pytest` (226 tests) | **226 / 226 PASSED** |
 | **Static Code Quality** | PEP 8 / Flake8 / Ruff compliance with zero warnings | `ruff check src tests scripts benchmarks` | **0 WARNINGS** |
 | **Deterministic Matching** | Precedence-ordered matching with $O(N)$ candidate pre-indexing | `settleiq.engine.reconcile` | **100% DETERMINISTIC** |
 | **Investigator Accuracy** | Root-cause and recommended-action evaluation on labelled fixtures | `test_investigator_independent_validation.py` | **100% ACCURACY** |
@@ -73,7 +73,7 @@ pip install -e ".[dev]"
 # 3. Verify Money-Safety Static Gate (AST zero-float verification)
 python -m settleiq.cli gate
 
-# 4. Run full 204 automated test cases
+# 4. Run full 226 automated test cases
 pytest -v
 
 # 5. Run static code analysis with Ruff

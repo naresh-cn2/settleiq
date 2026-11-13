@@ -126,6 +126,7 @@ export function RunsPage() {
             onClick={handleSeedDemo}
             disabled={seeding}
             style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+            data-testid="seed-demo"
           >
             {seeding ? '⚡ Seeding Enterprise Batch...' : '⚡ 60-Second Demo Seed'}
           </button>
@@ -160,6 +161,7 @@ export function RunsPage() {
           <button
             className="btn btn-primary btn-sm"
             onClick={() => window.location.href = `/discrepancies?run_id=${seedNotice.run_id}`}
+            data-testid="investigate-breaks"
           >
             Investigate Detected Breaks ➔
           </button>
@@ -236,8 +238,15 @@ export function RunsPage() {
               </tr>
             </thead>
             <tbody>
+              {runs.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="text-muted" data-testid="runs-empty">
+                    No reconciliation runs yet. Use the demo seed to create one.
+                  </td>
+                </tr>
+              )}
               {runs.map((run: any) => (
-                <tr key={run.run_id}>
+                <tr key={run.run_id} data-testid="run-row">
                   <td className="mono">{run.run_id.slice(0, 16)}...</td>
                   <td className="mono">{run.input_digest?.slice(0, 16)}...</td>
                   <td>{run.rule_version}</td>
@@ -245,7 +254,7 @@ export function RunsPage() {
                   <td className="mono">{run.numerator}</td>
                   <td className="mono">{run.denominator}</td>
                   <td>{(run.rate * 100).toFixed(2)}%</td>
-                  <td>{run.discrepancy_count}</td>
+                  <td>{run.discrepancy_count ?? '—'}</td>
                   <td>
                     <button
                       className="btn btn-ghost btn-sm"
