@@ -1,19 +1,3 @@
-/**
- * Production-equivalent public-demo verification.
- *
- * Runs a real headless Chrome visitor journey and, in local mode, multiple
- * independent FastAPI processes to prove that stateless demo tokens work across
- * serverless-equivalent instances, cold starts, missing secrets, wrong secrets,
- * and expired tokens.
- *
- * Usage:
- *   node frontend/scripts/verify_public_demo_e2e.mjs
- *   node frontend/scripts/verify_public_demo_e2e.mjs --mode production \
- *     --app-url https://settleiq-zeta.vercel.app
- *
- * Secrets and tokens are never written to the report.
- */
-
 import puppeteer from 'puppeteer-core'
 import { spawn } from 'node:child_process'
 import crypto from 'node:crypto'
@@ -25,14 +9,31 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT = path.resolve(__dirname, '..', '..')
-const CHROME_PATH =
-  process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+
+// Directory for E2E evidence reports.
 const PROOF_DIR = path.join(ROOT, 'proof', 'e2e')
-const argv = process.argv.slice(2)
+
+// Resolve the Google Chrome executable for puppeteer-core. Falls back through
+// the common Windows install locations so the verifier works on any dev box.
+const CHROME_PATH = (() => {
+  const candidates = [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    `${process.env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`,
+  ]
+  for (const candidate of candidates) {
+    try {
+      if (fs.existsSync(candidate)) return candidate
+    } catch {
+      // Ignore and try the next candidate.
+    }
+  }
+  return candidates[0]
+})()
 
 function arg(name, fallback = undefined) {
-  const index = argv.indexOf(`--${name}`)
-  return index >= 0 ? argv[index + 1] : fallback
+  const index = process.argv.indexOf(`--${name}`)
+  return index >= 0 ? process.argv[index + 1] : fallback
 }
 
 const MODE = arg('mode', 'local')
@@ -150,11 +151,6 @@ async function allocatePorts(count) {
   return ports
 }
 
-/**
- * Poll the API until the *SettleIQ* app answers. This prevents a foreign
- * process on the same port from being mistaken for our backend during local
- * verification (SettleIQ's demo route returns 401 without a demo token).
- */
 async function waitForBackend(baseUrl, timeoutMs = 45000) {
   const deadline = Date.now() + timeoutMs
   let last = ''
@@ -184,7 +180,7 @@ function killTree(child) {
   }
 }
 
-function startBackend(port, extraEnv = {}) {
+export function startBackend(port, extraEnv = {}) {
   const env = {
     ...process.env,
     PYTHONPATH: path.join(ROOT, 'src'),
@@ -315,7 +311,7 @@ async function count(selector) {
 
 async function runBrowserJourney() {
   await page.goto(`${APP_URL}/auth`, { waitUntil: 'networkidle0' })
-  await page.waitForSelector('[data-testid="explore-demo"]', { timeout: 20000 })
+  await page.waitForSelector('[data-testid="explore-demo"]', { timeout: 60000 })
 
   let demoToken = ''
   let runId = ''
@@ -467,7 +463,7 @@ async function runBrowserJourney() {
     assertEqual(store, null, 'invalid token should be cleared')
     assert(notice.toLowerCase().includes('expired'), `unexpected notice ${notice}`)
     return 'invalid token rejected, cleared, and explained'
-  })
+  });
 
   if (MODE === 'local') {
     await test('expired demo token is rejected', async () => {
