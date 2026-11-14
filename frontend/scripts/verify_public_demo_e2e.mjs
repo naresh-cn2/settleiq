@@ -329,14 +329,23 @@ async function runBrowserJourney() {
   await test('Explore Public Demo creates a session and lands on the dashboard', async () => {
     await page.click('[data-testid="explore-demo"]')
     await page.waitForFunction(() => location.pathname === '/', { timeout: 20000 })
-    await page.waitForSelector('[data-testid="run-row"]', { timeout: 20000 })
     await waitForText('.demo-banner', 'PUBLIC DEMO')
     demoToken = await page.evaluate(() => sessionStorage.getItem('settleiq_demo_token') || '')
     assert(demoToken.length > 20, 'demo token was not stored')
-    return 'demo session established'
+    return 'demo session established on dashboard'
   })
 
-  await test('dashboard shows deterministic run data and discrepancy count', async () => {
+  await test('dashboard shows aggregate overview metrics', async () => {
+    await page.waitForSelector('h1', { timeout: 20000 })
+    const heading = await page.$eval('h1', el => el.textContent || '')
+    assert(heading.includes('Overview'), `unexpected heading ${heading}`)
+    return 'overview dashboard loaded'
+  })
+
+  await test('dashboard navigates to runs page showing run data', async () => {
+    await page.click('[data-testid="view-all-runs"]')
+    await page.waitForSelector('[data-testid="run-row"]', { timeout: 20000 })
+    await waitForText('.demo-banner', 'PUBLIC DEMO')
     const rows = await count('[data-testid="run-row"]')
     assertEqual(rows, 1, 'run row count')
     const text = await page.$eval('[data-testid="run-row"]', el => el.textContent || '')
@@ -484,6 +493,9 @@ async function runBrowserJourney() {
 
   await test('network failure renders an error state instead of a blank page', async () => {
     await page.click('[data-testid="explore-demo"]')
+    await page.waitForFunction(() => location.pathname === '/', { timeout: 20000 })
+    await page.waitForSelector('[data-testid="view-all-runs"]', { timeout: 20000 })
+    await page.click('[data-testid="view-all-runs"]')
     await page.waitForSelector('[data-testid="run-row"]', { timeout: 20000 })
     await page.setRequestInterception(true)
     const handler = request => {
@@ -495,7 +507,7 @@ async function runBrowserJourney() {
     }
     page.on('request', handler)
     try {
-      await page.goto(`${APP_URL}/`, { waitUntil: 'domcontentloaded' })
+      await page.goto(`${APP_URL}/runs`, { waitUntil: 'domcontentloaded' })
       await page.waitForFunction(
         () => (document.body.innerText || '').includes('Failed to load runs'),
         { timeout: 20000 }

@@ -1,5 +1,7 @@
 import { Routes, Route, Link, useNavigate, Navigate, useLocation } from 'react-router-dom'
+import { OverviewPage } from './pages/OverviewPage'
 import { RunsPage } from './pages/RunsPage'
+import { ImportPage } from './pages/ImportPage'
 import { DiscrepanciesPage } from './pages/DiscrepanciesPage'
 import { InvestigationPage } from './pages/InvestigationPage'
 import { MetricsPage } from './pages/MetricsPage'
@@ -55,7 +57,9 @@ function App() {
           <Link to="/" className="brand-link">SettleIQ</Link>
         </div>
         <nav className="header-nav">
-          <NavLink to="/">Runs</NavLink>
+          <NavLink to="/">Dashboard</NavLink>
+          <NavLink to="/runs">Runs</NavLink>
+          <NavLink to="/import">Import</NavLink>
           <NavLink to="/discrepancies">Discrepancies</NavLink>
           <NavLink to="/metrics">Metrics</NavLink>
           <NavLink to="/history">History</NavLink>
@@ -69,7 +73,23 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
+                <OverviewPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/runs"
+            element={
+              <ProtectedRoute>
                 <RunsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/import"
+            element={
+              <ProtectedRoute>
+                <ImportPage />
               </ProtectedRoute>
             }
           />

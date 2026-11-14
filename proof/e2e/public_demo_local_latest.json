@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-11-13T23:00:01.662Z",
+  "generated_at": "2026-11-14T03:55:09.424Z",
   "mode": "local",
-  "app_url": "http://127.0.0.1:1716",
-  "api_url": "http://127.0.0.1:1711",
-  "api_b_url": "http://127.0.0.1:1712",
+  "app_url": "http://127.0.0.1:12842",
+  "api_url": "http://127.0.0.1:12837",
+  "api_b_url": "http://127.0.0.1:12838",
   "counts": {
-    "total": 27,
-    "passed": 27,
+    "total": 28,
+    "passed": 28,
     "failed": 0,
     "skipped": 0
   },
@@ -15,163 +15,169 @@
       "name": "auth page renders login and public demo entry points",
       "status": "pass",
       "detail": "login + demo controls visible",
-      "ms": 75
+      "ms": 29
     },
     {
       "name": "Explore Public Demo creates a session and lands on the dashboard",
       "status": "pass",
-      "detail": "demo session established",
-      "ms": 242
+      "detail": "demo session established on dashboard",
+      "ms": 101
     },
     {
-      "name": "dashboard shows deterministic run data and discrepancy count",
+      "name": "dashboard shows aggregate overview metrics",
+      "status": "pass",
+      "detail": "overview dashboard loaded",
+      "ms": 39
+    },
+    {
+      "name": "dashboard navigates to runs page showing run data",
       "status": "pass",
       "detail": "one completed run at 76.00% with 7 discrepancies",
-      "ms": 46
+      "ms": 207
     },
     {
       "name": "runs page can execute the demo seed endpoint",
       "status": "pass",
       "detail": "demo seed executed in the browser",
-      "ms": 145
+      "ms": 73
     },
     {
       "name": "discrepancies page lists every synthetic break",
       "status": "pass",
       "detail": "7 discrepancies listed",
-      "ms": 228
+      "ms": 98
     },
     {
       "name": "investigation and transaction trace render evidence and hypotheses",
       "status": "pass",
       "detail": "2 hypotheses, 1 contributing records",
-      "ms": 505
+      "ms": 266
     },
     {
       "name": "metrics page loads the run automatically and shows the rate",
       "status": "pass",
       "detail": "metrics loaded automatically at 76.00% (19/25)",
-      "ms": 178
+      "ms": 105
     },
     {
       "name": "history page shows an audit timeline for the run",
       "status": "pass",
       "detail": "10 audit history entries",
-      "ms": 287
+      "ms": 161
     },
     {
       "name": "browser refresh preserves the demo session",
       "status": "pass",
       "detail": "session and page state survive refresh",
-      "ms": 865
+      "ms": 901
     },
     {
       "name": "direct navigation to an application route works",
       "status": "pass",
       "detail": "direct route loads without a server-side 404",
-      "ms": 1895
+      "ms": 1979
     },
     {
       "name": "empty result set renders an explicit empty state",
       "status": "pass",
       "detail": "empty dataset handled with an explicit message",
-      "ms": 1008
+      "ms": 1116
     },
     {
       "name": "demo token cannot access production API endpoints",
       "status": "pass",
       "detail": "demo token rejected by production routes and accepted by demo routes",
-      "ms": 1061
+      "ms": 743
     },
     {
       "name": "production API-key authentication still works",
       "status": "pass",
       "detail": "wrong key rejected, valid key accepted",
-      "ms": 51
+      "ms": 29
     },
     {
       "name": "invalid demo token is rejected and redirected with a useful message",
       "status": "pass",
       "detail": "invalid token rejected, cleared, and explained",
-      "ms": 900
+      "ms": 1085
     },
     {
       "name": "expired demo token is rejected",
       "status": "pass",
       "detail": "expired token rejected and session cleared",
-      "ms": 1001
+      "ms": 1144
     },
     {
       "name": "network failure renders an error state instead of a blank page",
       "status": "pass",
       "detail": "failed API request surfaced as an actionable error",
-      "ms": 336
+      "ms": 270
     },
     {
       "name": "logout clears the demo session and protects routes",
       "status": "pass",
       "detail": "session terminated and protected route redirected",
-      "ms": 1662
+      "ms": 1729
     },
     {
       "name": "demo token validates on an independent serverless-equivalent instance",
       "status": "pass",
       "detail": "same signed token accepted by a separate backend process",
-      "ms": 49
+      "ms": 42
     },
     {
       "name": "tampered demo token is rejected",
       "status": "pass",
       "detail": "signature tampering rejected",
-      "ms": 11
+      "ms": 8
     },
     {
       "name": "demo token survives a backend cold start",
       "status": "pass",
       "detail": "token remains valid after the server process is replaced",
-      "ms": 3283
+      "ms": 1964
     },
     {
       "name": "missing demo secret fails closed with an actionable 503",
       "status": "pass",
       "detail": "demo disabled when the secret is absent",
-      "ms": 24
+      "ms": 12
     },
     {
       "name": "a token signed with a different secret is rejected",
       "status": "pass",
       "detail": "tokens are bound to the configured secret",
-      "ms": 14
+      "ms": 5
     },
     {
       "name": "short-lived token expires",
       "status": "pass",
       "detail": "expiry enforced without server-side state",
-      "ms": 2244
+      "ms": 2217
     },
     {
       "name": "unknown demo run returns 404 and empty filters return empty sets",
       "status": "pass",
       "detail": "404 and empty datasets handled explicitly",
-      "ms": 18
+      "ms": 17
     },
     {
       "name": "demo endpoints tolerate repeated requests",
       "status": "pass",
       "detail": "20 consecutive requests succeeded",
-      "ms": 144
+      "ms": 126
     },
     {
       "name": "demo trace endpoint returns real nodes for a constituent",
       "status": "pass",
       "detail": "1 trace nodes",
-      "ms": 37
+      "ms": 26
     },
     {
       "name": "browser still works against a replaced backend process",
       "status": "pass",
       "detail": "refreshing against a new process keeps the demo session",
-      "ms": 5533
+      "ms": 3601
     }
   ],
   "console_errors": [
@@ -186,7 +192,7 @@
   "page_errors": [],
   "failed_requests": [
     {
-      "url": "http://127.0.0.1:1716/v1/demo/runs",
+      "url": "http://127.0.0.1:12842/v1/demo/runs",
       "error": "net::ERR_FAILED"
     }
   ]

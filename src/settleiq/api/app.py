@@ -8,8 +8,10 @@ work they can trigger, inspect, and reproduce.
 from __future__ import annotations
 
 import base64
+import csv
 import hashlib
 import hmac
+import io
 import json
 import logging
 import os
@@ -466,6 +468,11 @@ def _get_demo_data() -> dict[str, object]:
             ),
         }
 
+    decomposition_records: list[dict[str, object]] = []
+    for decomposition in result.decompositions:
+        canonical = decomposition.to_canonical()
+        decomposition_records.append(canonical)
+
     discrepancy_records = []
     for d in result.discrepancies:
         canonical = d.to_canonical()
@@ -557,6 +564,7 @@ def _get_demo_data() -> dict[str, object]:
         "run_id": run_id,
         "run": run_record,
         "discrepancies": discrepancy_records,
+        "decompositions": decomposition_records,
         "metrics": metrics_record,
         "history": history_entries,
         "discrepancy_count": len(discrepancy_records),
@@ -577,6 +585,58 @@ def health() -> dict[str, object]:
 def health_v1() -> dict[str, object]:
     """Liveness under /v1 prefix for Vercel routing."""
     return {"status": "ok", "api_version": API_VERSION}
+
+
+@app.post(f"{API_PREFIX}/import/validate")
+def validate_import(
+    request: RunRequest,
+) -> dict[str, object]:
+    """Validate and preview an import without reconciling.
+
+    Returns accepted, quarantined, and duplicate record counts so a reviewer
+    can inspect data quality before committing a run. No records are persisted
+    and no reconciliation is performed.
+    """
+    flattened = [
+        (group.kind, group.records[i].model_dump(exclude_none=True))
+        for group in request.records
+        for i in range(len(group.records))
+    ]
+    validated = validate_records(flattened)
+
+    accepted_preview = []
+    for entry in validated.accepted:
+        rec = entry["record"]
+        accepted_preview.append(
+            {
+                "kind": entry["kind"],
+                "id": rec.get("id", ""),
+                "amount": rec.get("amount", ""),
+                "currency": rec.get("currency", ""),
+                "digest": entry["digest"],
+            }
+        )
+
+    quarantined_preview = []
+    for index, reason, detail in validated.quarantined:
+        quarantined_preview.append(
+            {
+                "index": index,
+                "reason": reason,
+                "detail": detail,
+            }
+        )
+
+    return {
+        "accepted_count": len(validated.accepted),
+        "quarantined_count": len(validated.quarantined),
+        "duplicate_count": len(validated.duplicates),
+        "accepted": accepted_preview,
+        "quarantined": quarantined_preview,
+        "duplicates": list(validated.duplicates),
+        "window_start": request.window_start,
+        "window_end": request.window_end,
+    }
 
 
 @app.post(f"{API_PREFIX}/runs", status_code=201)
@@ -966,15 +1026,44 @@ def get_demo_run_history(run_id: str, request: Request) -> dict[str, object]:
 
 
 @app.get(f"{API_PREFIX}/demo/runs/{{run_id}}/export")
-def export_demo_run(run_id: str, request: Request) -> dict[str, object]:
+def export_demo_run(run_id: str, request: Request, format: str = "json"):
     _require_demo(request)
     data = _get_demo_data()
     if data["run"]["run_id"] != run_id:
         raise HTTPException(status_code=404, detail={"error": "run_not_found"})
+    if format not in ("json", "csv"):
+        raise _error("unsupported_format", "supported formats: json, csv")
+    discrepancies = data["discrepancies"]
+    if format == "csv":
+        buf = io.StringIO()
+        writer = csv.DictWriter(
+            buf,
+            fieldnames=[
+                "discrepancy_id",
+                "type",
+                "severity",
+                "constituent_kind",
+                "constituent_id",
+                "reason",
+                "age_days",
+                "status",
+            ],
+            extrasaction="ignore",
+        )
+        writer.writeheader()
+        for row in discrepancies:
+            writer.writerow(row)
+        return Response(
+            content=buf.getvalue(),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f'attachment; filename="demo_run_{run_id}_discrepancies.csv"'
+            },
+        )
     return {
         "format": "json",
         "run": data["run"],
-        "discrepancies": data["discrepancies"],
+        "discrepancies": discrepancies,
     }
 
 
@@ -1002,6 +1091,36 @@ def get_demo_constituent_trace(
         target, target.get("contributing_records") or None
     )
     return trace.to_canonical()
+
+
+@app.get(f"{API_PREFIX}/demo/runs/{{run_id}}/decomposition")
+def get_demo_decomposition(run_id: str, request: Request) -> dict[str, object]:
+    """Return payout decomposition detail for a demo run.
+
+    Shows how each payout was decomposed into charges, fees, refunds, and
+    adjustments, and whether the composition closed exactly or left a residual.
+    """
+    _require_demo(request)
+    data = _get_demo_data()
+    if data["run"]["run_id"] != run_id:
+        raise HTTPException(status_code=404, detail={"error": "run_not_found"})
+    return {
+        "run_id": run_id,
+        "decompositions": data["decompositions"],
+    }
+
+
+@app.get(f"{API_PREFIX}/runs/{{run_id}}/decomposition")
+def get_production_decomposition(run_id: str) -> dict[str, object]:
+    """Return payout decomposition detail for a production run.
+
+    Decompositions are not currently persisted to the store for production
+    runs; this endpoint returns 404 unless decomposition data is available.
+    """
+    raise HTTPException(
+        status_code=404,
+        detail={"error": "decomposition_not_available"},
+    )
 
 
 @app.get(f"{API_PREFIX}/demo/discrepancies")
@@ -1181,7 +1300,7 @@ def verify_journal() -> dict[str, object]:
 
 @app.get(f"{API_PREFIX}/runs/{{run_id}}/export")
 def export_run(run_id: str, format: str = "json") -> dict[str, object]:
-    """Export a run's results. JSON initially; CSV is a later addition.
+    """Export a run's results as JSON or CSV.
 
     The export carries run identity and rule version, because an export that
     cannot be traced to the inputs and rules that produced it is not evidence.
@@ -1189,12 +1308,39 @@ def export_run(run_id: str, format: str = "json") -> dict[str, object]:
     stored = _store().find_run(run_id)
     if stored is None:
         raise HTTPException(status_code=404, detail={"error": "run_not_found"})
-    if format not in ("json",):
-        raise _error("unsupported_format", "supported formats: json")
+    if format not in ("json", "csv"):
+        raise _error("unsupported_format", "supported formats: json, csv")
+    discrepancies = list(_store().discrepancies_for(run_id))
+    if format == "csv":
+        buf = io.StringIO()
+        writer = csv.DictWriter(
+            buf,
+            fieldnames=[
+                "discrepancy_id",
+                "type",
+                "severity",
+                "constituent_kind",
+                "constituent_id",
+                "reason",
+                "age_days",
+                "status",
+            ],
+            extrasaction="ignore",
+        )
+        writer.writeheader()
+        for row in discrepancies:
+            writer.writerow(row)
+        return Response(
+            content=buf.getvalue(),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f'attachment; filename="run_{run_id}_discrepancies.csv"'
+            },
+        )
     return {
         "format": "json",
         "run": stored,
-        "discrepancies": list(_store().discrepancies_for(run_id)),
+        "discrepancies": discrepancies,
     }
 
 
