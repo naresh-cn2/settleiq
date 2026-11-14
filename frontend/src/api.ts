@@ -1,21 +1,28 @@
 const API_BASE = '/v1'
+const AUTH_BASE = '/auth'
 
-export type AuthMode = 'none' | 'api-key' | 'demo'
+export type AuthMode = 'none' | 'api-key' | 'demo' | 'user'
 
 const API_KEY_STORAGE_KEY = 'settleiq_api_key'
 const DEMO_TOKEN_STORAGE_KEY = 'settleiq_demo_token'
+const USER_SESSION_STORAGE_KEY = 'settleiq_user_session'
+const USER_KEY_STORAGE_KEY = 'settleiq_user_id'
 
 function getAuthMode(): AuthMode {
   const demoToken = sessionStorage.getItem(DEMO_TOKEN_STORAGE_KEY)
   const apiKey = sessionStorage.getItem(API_KEY_STORAGE_KEY)
+  const userSession = sessionStorage.getItem(USER_SESSION_STORAGE_KEY)
   if (demoToken) return 'demo'
   if (apiKey) return 'api-key'
+  if (userSession) return 'user'
   return 'none'
 }
 
 function clearAuth(): void {
   sessionStorage.removeItem(API_KEY_STORAGE_KEY)
   sessionStorage.removeItem(DEMO_TOKEN_STORAGE_KEY)
+  sessionStorage.removeItem(USER_SESSION_STORAGE_KEY)
+  sessionStorage.removeItem(USER_KEY_STORAGE_KEY)
 }
 
 function getAuthHeaders(): Record<string, string> {
@@ -24,8 +31,25 @@ function getAuthHeaders(): Record<string, string> {
     const token = sessionStorage.getItem(DEMO_TOKEN_STORAGE_KEY)
     return token ? { 'X-Demo-Token': token } : {}
   }
-  const apiKey = sessionStorage.getItem(API_KEY_STORAGE_KEY)
-  return apiKey ? { 'X-API-Key': apiKey } : {}
+  if (mode === 'api-key') {
+    const apiKey = sessionStorage.getItem(API_KEY_STORAGE_KEY)
+    return apiKey ? { 'X-API-Key': apiKey } : {}
+  }
+  if (mode === 'user') {
+    const session = sessionStorage.getItem(USER_SESSION_STORAGE_KEY)
+    if (session) {
+      try {
+        const parsed = JSON.parse(session)
+        if (parsed.token) {
+          return { Cookie: `settleiq_session=${parsed.token}` }
+        }
+      } catch {
+        // Invalid session JSON, treat as unauthenticated
+      }
+    }
+    return {}
+  }
+  return {}
 }
 
 function demoPath(path: string): string {
@@ -140,6 +164,57 @@ export interface InvestigationReport {
   }
 }
 
+export interface User {
+  user_id: string
+  email: string
+  full_name: string | null
+  role: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface Organization {
+  organization_id: string
+  name: string
+  slug: string
+  plan: string
+  created_at: string
+  member_count: number
+}
+
+export interface UserSession {
+  user_id: string
+  email: string
+  full_name: string | null
+  organization_id: string | null
+  organization_name: string | null
+  role: string
+  token: string
+  expires_at: string
+}
+
+export interface RegisterRequest {
+  email: string
+  password: string
+  full_name?: string
+  organization_name?: string
+}
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface SessionResponse {
+  user_id: string
+  email: string
+  full_name: string | null
+  organization_id: string | null
+  organization_name: string | null
+  role: string
+  expires_at: string
+}
+
 export const api = {
   runs: {
     list: () => fetchApi<{ count: number; runs: any[] }>('/runs'),
@@ -252,5 +327,83 @@ export const api = {
       sessionStorage.setItem(DEMO_TOKEN_STORAGE_KEY, token),
     clearDemoToken: () => sessionStorage.removeItem(DEMO_TOKEN_STORAGE_KEY),
     getDemoToken: () => sessionStorage.getItem(DEMO_TOKEN_STORAGE_KEY),
+
+    // User session management
+    setUserSession: (session: UserSession) =>
+      sessionStorage.setItem(USER_SESSION_STORAGE_KEY, JSON.stringify(session)),
+    getUserSession: () => {
+      const raw = sessionStorage.getItem(USER_SESSION_STORAGE_KEY)
+      if (!raw) return null
+      try {
+        return JSON.parse(raw) as UserSession
+      } catch {
+        return null
+      }
+    },
+    clearUserSession: () =>
+      sessionStorage.removeItem(USER_SESSION_STORAGE_KEY),
+    setUserId: (id: string) =>
+      sessionStorage.setItem(USER_KEY_STORAGE_KEY, id),
+    getUserId: () => sessionStorage.getItem(USER_KEY_STORAGE_KEY),
+    clearUserId: () =>
+      sessionStorage.removeItem(USER_KEY_STORAGE_KEY),
+  },
+
+  // Authentication API
+  authApi: {
+    register: (payload: RegisterRequest) =>
+      fetch(`${AUTH_BASE}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).then(async r => {
+        if (!r.ok) throw new Error(await parseError(r))
+        return r.json() as Promise<SessionResponse>
+      }),
+
+    login: (payload: LoginRequest) =>
+      fetch(`${AUTH_BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).then(async r => {
+        if (!r.ok) throw new Error(await parseError(r))
+        return r.json() as Promise<SessionResponse>
+      }),
+
+    logout: () =>
+      fetch(`${AUTH_BASE}/logout`, {
+        method: 'POST',
+      }).then(async r => {
+        if (!r.ok) throw new Error(await parseError(r))
+      }),
+
+    getSession: () =>
+      fetch(`${AUTH_BASE}/session`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      }).then(async r => {
+        if (!r.ok) throw new Error(await parseError(r))
+        return r.json() as Promise<SessionResponse>
+      }),
+
+    listOrganizations: () =>
+      fetchApi<Organization[]>('${AUTH_BASE}/organizations'),
+
+    createOrganization: (payload: { name: string }) =>
+      fetch(`${AUTH_BASE}/organizations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(payload),
+      }).then(async r => {
+        if (!r.ok) throw new Error(await parseError(r))
+        return r.json() as Promise<Organization>
+      }),
+
+    getOrganization: (id: string) =>
+      fetchApi<Organization>(`${AUTH_BASE}/organizations/${id}`),
   },
 }
