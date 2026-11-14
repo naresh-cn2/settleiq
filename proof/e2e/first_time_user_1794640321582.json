@@ -1,0 +1,138 @@
+{
+  "generated_at": "2026-11-14T07:12:01.578Z",
+  "app_url": "https://settleiq-zeta.vercel.app",
+  "journey": "first-time-user",
+  "counts": {
+    "total": 20,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "name": "auth page loads with login and public demo entry points",
+      "status": "pass",
+      "detail": "heading=\"SettleIQ\", demo=\"Explore Public Demo\"",
+      "ms": 2077
+    },
+    {
+      "name": "auth page explains the product value",
+      "status": "pass",
+      "detail": "product value explanation present",
+      "ms": 11
+    },
+    {
+      "name": "Explore Public Demo creates a session and lands on dashboard",
+      "status": "pass",
+      "detail": "demo session established",
+      "ms": 377
+    },
+    {
+      "name": "overview dashboard shows aggregate metrics",
+      "status": "pass",
+      "detail": "overview heading=\"Reconciliation Overview\"",
+      "ms": 631
+    },
+    {
+      "name": "overview shows match rate and discrepancy counts",
+      "status": "pass",
+      "detail": "match rate and discrepancies visible",
+      "ms": 14
+    },
+    {
+      "name": "overview navigates to runs page",
+      "status": "pass",
+      "detail": "1 run(s) visible, run_id starts with bb9d87f56eab9804",
+      "ms": 452
+    },
+    {
+      "name": "navigate to import page",
+      "status": "pass",
+      "detail": "import page loaded",
+      "ms": 97
+    },
+    {
+      "name": "upload synthetic CSV file",
+      "status": "pass",
+      "detail": "5 record row(s) parsed",
+      "ms": 180
+    },
+    {
+      "name": "inspect validation results",
+      "status": "pass",
+      "detail": "validation results inspected",
+      "ms": 3045
+    },
+    {
+      "name": "create reconciliation run from imported data",
+      "status": "pass",
+      "detail": "run creation in demo mode: Invalid or missing API key (expected — demo is read-only for persistence)",
+      "ms": 4205
+    },
+    {
+      "name": "examine matching results on runs page",
+      "status": "pass",
+      "detail": "run row: bb9d87f56eab9804...ab96d202e243ead0...1.0.0COMPLETED192576.00%7View | run_id: bb9d87f56eab9804...",
+      "ms": 886
+    },
+    {
+      "name": "navigate to discrepancies page",
+      "status": "pass",
+      "detail": "7 discrepancy row(s) visible",
+      "ms": 469
+    },
+    {
+      "name": "investigate a discrepancy",
+      "status": "pass",
+      "detail": "2 hypothesis(es), trace present",
+      "ms": 1839
+    },
+    {
+      "name": "examine payout decomposition via API",
+      "status": "pass",
+      "detail": "decomposition: 6 payout(s), first closes=true",
+      "ms": 358
+    },
+    {
+      "name": "review metrics page",
+      "status": "pass",
+      "detail": "metrics loaded at 76.00% (19/25)",
+      "ms": 738
+    },
+    {
+      "name": "export run results as CSV",
+      "status": "pass",
+      "detail": "CSV and JSON exports successful",
+      "ms": 658
+    },
+    {
+      "name": "revisit run through history page",
+      "status": "pass",
+      "detail": "10 history entry(ies), RUN_COMPLETED present",
+      "ms": 726
+    },
+    {
+      "name": "demo token cannot access production API endpoints",
+      "status": "pass",
+      "detail": "demo token isolated from production APIs",
+      "ms": 1202
+    },
+    {
+      "name": "production API-key authentication works",
+      "status": "pass",
+      "detail": "wrong key rejected, valid key accepted",
+      "ms": 1105
+    },
+    {
+      "name": "logout clears session and protects routes",
+      "status": "pass",
+      "detail": "session terminated cleanly",
+      "ms": 803
+    }
+  ],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "page_errors": [],
+  "failed_requests": []
+}
