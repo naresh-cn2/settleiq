@@ -128,7 +128,10 @@ def _issue_session_token(
             status_code=503,
             detail={
                 "error": "unavailable",
-                "detail": "User sessions are temporarily unavailable: the server session secret is not configured.",
+                "detail": (
+                    "User sessions are temporarily unavailable: "
+                    "the server session secret is not configured."
+                ),
             },
         )
     now = time.time()
