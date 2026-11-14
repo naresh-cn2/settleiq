@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SettleIQ Feedback</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+  h1 { color: #2563eb; }
+  .form-group { margin-bottom: 15px; }
+  label { display: block; margin-bottom: 5px; font-weight: 600; }
+  input[type="text"], input[type="email"], select, textarea { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box; }
+  .checkbox-group { margin-bottom: 10px; }
+  .checkbox-group label { display: inline-flex; align-items: center; font-weight: normal; }
+  .checkbox-group input { margin-right: 8px; }
+  button { background: #2563eb; color: white; padding: 10px 24px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+  button:hover { background: #1d4ed8; }
+  .success { color: #059669; margin-top: 20px; }
+</style>
+</head>
+<body>
+  <h1>SettleIQ Feedback</h1>
+  <p>Thank you for trying SettleIQ! Your feedback helps us improve.</p>
+  <form id="feedbackForm">
+    <div class="form-group">
+      <label>What type of visitor are you?</label>
+      <select id="visitorType" required>
+        <option value="">Select one</option>
+        <option>Finance operations professional</value>
+        <option>Developer / Engineer</value>
+        <option>Accountant / Auditor</value>
+        <option>Small business owner</value>
+        <option>Student / Learner</value>
+        <option>Other</value>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>What type of business do you work for?</label>
+      <input type="text" id="businessType" placeholder="e.g., E-commerce, SaaS, Non-profit" />
+    </div>
+    <div class="form-group">
+      <label>What reconciliation problem do you face?</label>
+      <textarea id="reconciliationProblem" rows="4" placeholder="Describe your reconciliation challenges..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>What do you currently use for reconciliation?</label>
+      <input type="text" id="currentSolution" placeholder="e.g., Excel, BlackLine, Manual process" />
+    </div>
+    <div class="form-group">
+      <label>What did you try in SettleIQ?</label>
+      <select id="triedFeature">
+        <option value="">Select all that apply (hold Ctrl to select multiple)</option>
+        <option>Public demo</value>
+        <option>Import CSV/JSON data</value>
+        <input type="hidden" />
+        <option>Reconciliation run</value>
+        <option>Discrepancy investigation</value>
+        <option>Metrics view</value>
+        <option>Export results</value>
+        <option>API integration</value>
+        <option>Nothing yet</value>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>What did you find most useful?</label>
+      <input type="text" id="mostUseful" placeholder="e.g., The discrepancy investigation, the trace view, the export" />
+    </div>
+    <div class="form-group">
+      <label>What's missing or needs improvement?</label>
+      <textarea id="missingFeatures" rows="3" placeholder="What features would make SettleIQ more useful for you?"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Bugs or issues encountered?</label>
+      <textarea id="bugs" rows="3" placeholder="Describe any bugs or issues you encountered."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Would you use SettleIQ again?</label>
+      <select id="wouldUse">
+        <option value="">Select one</option>
+        <option>Yes, definitely</option>
+        <option>Maybe, if more features were added</option>
+        <option>Probably not</option>
+        <option>No</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Would you pay for SettleIQ?</label>
+      <select id="wouldPay">
+        <option value="">Select one</option>
+        <option>Yes, under $50/month</option>
+        <option>Yes, $50-100/month</option>
+        <option>Yes, $100-500/month</option>
+        <option>Yes, $500+/month</option>
+        <option>No</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Contact email (optional)</label>
+      <input type="email" id="contactEmail" placeholder="your@email.com" />
+      <p style="font-size: 0.875rem; color: #6b7280;">We'll only contact you if you agree to be contacted for follow-up.</p>
+    </div>
+    <div class="form-group">
+      <label><input type="checkbox" id="contactPermission" /> I agree to be contacted for follow-up</label>
+    </div>
+    <button type="submit">Submit Feedback</button>
+  </form>
+  <div id="successMessage" class="success" style="display:none;">
+    Thank you for your feedback! We appreciate your input.
+  </div>
+  <script>
+    document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const data = {};
+      for (let [key, value] of new FormData(this)) {
+        data[key] = value;
+      }
+      data.timestamp = new Date().toISOString();
+      console.log('Feedback submitted:', data);
+      document.getElementById('feedbackForm').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'block';
+    });
+  </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T13:25:43.421Z",
+  "generated_at": "2026-11-14T15:14:05.634Z",
   "mode": "production",
   "app_url": "https://settleiq-zeta.vercel.app",
   "api_url": "https://settleiq-zeta.vercel.app",
@@ -15,13 +15,13 @@
       "name": "auth page renders login and public demo entry points",
       "status": "pass",
       "detail": "login + demo controls visible",
-      "ms": 39
+      "ms": 34
     },
     {
       "name": "Explore Public Demo creates a session and lands on the dashboard",
       "status": "fail",
       "detail": "Waiting failed: 20000ms exceeded",
-      "ms": 20690
+      "ms": 20460
     }
   ],
   "console_errors": [],
