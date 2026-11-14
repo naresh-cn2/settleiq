@@ -20,7 +20,7 @@ from typing import Final
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -36,19 +36,19 @@ _PASSWORD_HASH_ROUNDS: Final[int] = 12  # bcrypt-style cost factor (PBKDF2)
 
 
 class UserRegisterRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str = Field(min_length=8, max_length=128)
     full_name: str | None = Field(default=None, max_length=255)
     organization_name: str | None = Field(default=None, max_length=255)
 
 
 class UserLoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 
 class PasswordResetRequest(BaseModel):
-    email: EmailStr
+    email: str
 
 
 class PasswordResetConfirm(BaseModel):
