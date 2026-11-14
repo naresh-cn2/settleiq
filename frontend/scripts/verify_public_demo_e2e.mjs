@@ -465,8 +465,9 @@ async function runBrowserJourney() {
 
   await test('invalid demo token is rejected and redirected with a useful message', async () => {
     await page.evaluate(() => sessionStorage.setItem('settleiq_demo_token', 'not-a-valid-token'))
-    await page.goto(`${APP_URL}/`, { waitUntil: 'networkidle0' })
+    await page.goto(`${APP_URL}/`, { waitUntil: 'domcontentloaded', timeout: 30000 })
     await page.waitForFunction(() => location.pathname === '/auth', { timeout: 20000 })
+    await page.waitForSelector('[data-testid="session-notice"]', { timeout: 10000 })
     const notice = await page.$eval('[data-testid="session-notice"]', el => el.textContent || '')
     const store = await page.evaluate(() => sessionStorage.getItem('settleiq_demo_token'))
     assertEqual(store, null, 'invalid token should be cleared')
