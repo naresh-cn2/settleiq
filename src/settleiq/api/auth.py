@@ -118,10 +118,19 @@ def _issue_session_token(
 
     Carries user identity, expiration, and a nonce, all covered by an
     HMAC-SHA256 signature over SETTLEIQ_SESSION_SECRET.
+
+    Raises HTTPException(503) if the session secret is not configured,
+    rather than an unhandled RuntimeError that would produce HTTP 500.
     """
     secret = _session_secret()
     if not secret:
-        raise RuntimeError("SETTLEIQ_SESSION_SECRET is not configured")
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "unavailable",
+                "detail": "User sessions are temporarily unavailable: the server session secret is not configured.",
+            },
+        )
     now = time.time()
     exp = now + _SESSION_TTL_SECS
     nonce = secrets.token_hex(16)
