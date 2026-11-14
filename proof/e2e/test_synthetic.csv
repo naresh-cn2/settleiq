@@ -1,0 +1,6 @@
+kind,id,amount,currency,created,arrival_date,posted,narration,batch,reference,type,charge
+charge,ch_1,100.00,USD,2026-10-01,,,,sb_test,ref_test,,
+charge,ch_2,50.00,USD,2026-10-01,,,,sb_test,ref_test,,
+fee,fee_1,3.50,USD,2026-10-01,,,,sb_test,ref_test,processing,
+payout,po_1,146.50,USD,,2026-10-03,,,sb_test,ref_test,,
+deposit,bd_1,146.50,USD,,,2026-10-04,STRIPE PAYOUT sb_test,sb_test,,

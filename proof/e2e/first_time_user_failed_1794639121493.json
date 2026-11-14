@@ -1,0 +1,91 @@
+{
+  "generated_at": "2026-11-14T06:52:01.490Z",
+  "app_url": "https://settleiq-zeta.vercel.app",
+  "journey": "first-time-user",
+  "counts": {
+    "total": 12,
+    "passed": 11,
+    "failed": 1,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "name": "auth page loads with login and public demo entry points",
+      "status": "pass",
+      "detail": "heading=\"SettleIQ\", demo=\"Explore Public Demo\"",
+      "ms": 1328
+    },
+    {
+      "name": "auth page explains the product value",
+      "status": "pass",
+      "detail": "product value explanation present",
+      "ms": 17
+    },
+    {
+      "name": "Explore Public Demo creates a session and lands on dashboard",
+      "status": "pass",
+      "detail": "demo session established",
+      "ms": 575
+    },
+    {
+      "name": "overview dashboard shows aggregate metrics",
+      "status": "pass",
+      "detail": "overview heading=\"Reconciliation Overview\"",
+      "ms": 873
+    },
+    {
+      "name": "overview shows match rate and discrepancy counts",
+      "status": "pass",
+      "detail": "match rate and discrepancies visible",
+      "ms": 20
+    },
+    {
+      "name": "overview navigates to runs page",
+      "status": "pass",
+      "detail": "1 run(s) visible, run_id starts with bb9d87f56eab9804",
+      "ms": 499
+    },
+    {
+      "name": "navigate to import page",
+      "status": "pass",
+      "detail": "import page loaded",
+      "ms": 78
+    },
+    {
+      "name": "upload synthetic CSV file",
+      "status": "pass",
+      "detail": "5 record row(s) parsed",
+      "ms": 179
+    },
+    {
+      "name": "inspect validation results",
+      "status": "pass",
+      "detail": "validation results inspected",
+      "ms": 3066
+    },
+    {
+      "name": "create reconciliation run from imported data",
+      "status": "pass",
+      "detail": "run creation in demo mode: Invalid or missing API key (expected — demo is read-only for persistence)",
+      "ms": 3977
+    },
+    {
+      "name": "examine matching results on runs page",
+      "status": "pass",
+      "detail": "run row: bb9d87f56eab9804...ab96d202e243ead0...1.0.0COMPLETED192576.00%7View",
+      "ms": 34
+    },
+    {
+      "name": "investigate a discrepancy",
+      "status": "fail",
+      "detail": "No element found for selector: [data-testid=\"investigate-discrepancy\"]",
+      "ms": 5
+    }
+  ],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "page_errors": [],
+  "failed_requests": [],
+  "fatal_error": "No element found for selector: [data-testid=\"investigate-discrepancy\"]"
+}

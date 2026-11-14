@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-11-14T06:42:46.506Z",
+  "app_url": "https://settleiq-zeta.vercel.app",
+  "journey": "first-time-user",
+  "counts": {
+    "total": 10,
+    "passed": 9,
+    "failed": 1,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "name": "auth page loads with login and public demo entry points",
+      "status": "pass",
+      "detail": "heading=\"SettleIQ\", demo=\"Explore Public Demo\"",
+      "ms": 1688
+    },
+    {
+      "name": "auth page explains the product value",
+      "status": "pass",
+      "detail": "product value explanation present",
+      "ms": 11
+    },
+    {
+      "name": "Explore Public Demo creates a session and lands on dashboard",
+      "status": "pass",
+      "detail": "demo session established",
+      "ms": 394
+    },
+    {
+      "name": "overview dashboard shows aggregate metrics",
+      "status": "pass",
+      "detail": "overview heading=\"Reconciliation Overview\"",
+      "ms": 677
+    },
+    {
+      "name": "overview shows match rate and discrepancy counts",
+      "status": "pass",
+      "detail": "match rate and discrepancies visible",
+      "ms": 33
+    },
+    {
+      "name": "overview navigates to runs page",
+      "status": "pass",
+      "detail": "1 run(s) visible, run_id starts with bb9d87f56eab9804",
+      "ms": 480
+    },
+    {
+      "name": "navigate to import page",
+      "status": "pass",
+      "detail": "import page loaded",
+      "ms": 71
+    },
+    {
+      "name": "upload synthetic CSV file",
+      "status": "pass",
+      "detail": "5 record row(s) parsed",
+      "ms": 198
+    },
+    {
+      "name": "inspect validation results",
+      "status": "pass",
+      "detail": "validation results inspected",
+      "ms": 3094
+    },
+    {
+      "name": "create reconciliation run from imported data",
+      "status": "fail",
+      "detail": "Waiting failed: 15000ms exceeded",
+      "ms": 15115
+    }
+  ],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "page_errors": [],
+  "failed_requests": [],
+  "fatal_error": "Waiting failed: 15000ms exceeded"
+}
