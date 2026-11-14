@@ -1,4 +1,9 @@
-import { Routes, Route, Link, useNavigate, Navigate, useLocation } from 'react-router-dom'
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from 'react-router-dom'
 import { OverviewPage } from './pages/OverviewPage'
 import { RunsPage } from './pages/RunsPage'
 import { ImportPage } from './pages/ImportPage'
@@ -6,71 +11,46 @@ import { DiscrepanciesPage } from './pages/DiscrepanciesPage'
 import { InvestigationPage } from './pages/InvestigationPage'
 import { MetricsPage } from './pages/MetricsPage'
 import { HistoryPage } from './pages/HistoryPage'
-import { AuthScreen, HeaderAuth } from './components/AuthScreen'
+import { HomePage } from './pages/HomePage'
+import { FeaturesPage } from './pages/FeaturesPage'
+import { PricingPage } from './pages/PricingPage'
+import { LoginPage } from './pages/LoginPage'
+import { SignupPage } from './pages/SignupPage'
+import { OnboardingPage } from './pages/OnboardingPage'
+import { AuthScreen } from './components/AuthScreen'
+import { Navbar, Footer } from './components/Navbar'
 import { api } from './api'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const mode = api.auth.getMode()
   if (mode === 'none') {
-    return <Navigate to="/auth" replace />
+    return <Navigate to="/login" replace />
   }
   return <>{children}</>
 }
 
-function DemoBanner() {
-  const navigate = useNavigate()
-  const handleExitDemo = () => {
-    api.auth.clearKey()
-    navigate('/auth', { replace: true })
-  }
-  return (
-    <div className="demo-banner">
-      <span className="demo-label">PUBLIC DEMO — synthetic data only</span>
-      <button
-        className="btn btn-danger btn-sm"
-        onClick={handleExitDemo}
-        data-testid="exit-demo"
-      >
-        Exit demo
-      </button>
-    </div>
-  )
-}
-
 function App() {
-  const navigate = useNavigate()
   const location = useLocation()
-  // Re-evaluate on every navigation so logging in or out updates the header
-  // without requiring a full page reload.
-  const isDemo = api.auth.isDemo()
   void location.pathname
-
-  const handleLogout = () => {
-    api.auth.clearKey()
-    navigate('/auth', { replace: true })
-  }
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-brand">
-          <Link to="/" className="brand-link">SettleIQ</Link>
-        </div>
-        <nav className="header-nav">
-          <NavLink to="/">Dashboard</NavLink>
-          <NavLink to="/runs">Runs</NavLink>
-          <NavLink to="/import">Import</NavLink>
-          <NavLink to="/discrepancies">Discrepancies</NavLink>
-          <NavLink to="/metrics">Metrics</NavLink>
-          <NavLink to="/history">History</NavLink>
-          {isDemo ? <DemoBanner /> : <HeaderAuth onLogout={handleLogout} />}
-        </nav>
-      </header>
+      <Navbar />
       <main className="main">
         <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+
+          {/* Auth route (demo + API key entry) */}
           <Route path="/auth" element={<AuthScreen />} />
+
+          {/* Protected routes */}
           <Route
-            path="/"
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <OverviewPage />
@@ -125,27 +105,19 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute>
+                <OnboardingPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <footer className="footer">
-        <span>SettleIQ - Financial Reconciliation Engine</span>
-      </footer>
+      <Footer />
     </div>
-  )
-}
-
-function NavLink({ children, to }: { children: React.ReactNode; to: string }) {
-  const navigate = useNavigate()
-  return (
-    <button
-      className="nav-link"
-      onClick={() => navigate(to)}
-      title={to}
-      data-testid={`nav-${to === '/' ? 'runs' : to.replace(/^\//, '')}`}
-    >
-      {children}
-    </button>
   )
 }
 

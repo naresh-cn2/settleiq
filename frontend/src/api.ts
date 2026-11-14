@@ -189,8 +189,8 @@ export interface UserSession {
   organization_id: string | null
   organization_name: string | null
   role: string
-  token: string
   expires_at: string
+  token?: string
 }
 
 export interface RegisterRequest {
