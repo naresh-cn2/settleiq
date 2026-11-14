@@ -328,7 +328,7 @@ async function runBrowserJourney() {
 
   await test('Explore Public Demo creates a session and lands on the dashboard', async () => {
     await page.click('[data-testid="explore-demo"]')
-    await page.waitForFunction(() => location.pathname === '/', { timeout: 20000 })
+    await page.waitForFunction(() => location.pathname === '/dashboard', { timeout: 20000 })
     await waitForText('.demo-banner', 'PUBLIC DEMO')
     demoToken = await page.evaluate(() => sessionStorage.getItem('settleiq_demo_token') || '')
     assert(demoToken.length > 20, 'demo token was not stored')
@@ -482,8 +482,8 @@ async function runBrowserJourney() {
       const signature = crypto.createHmac('sha256', local.secret).update(payload).digest()
       const token = `${Buffer.from(payload).toString('base64url')}.${signature.toString('base64url')}`
       await page.evaluate(t => sessionStorage.setItem('settleiq_demo_token', t), token)
-      await page.goto(`${APP_URL}/`, { waitUntil: 'networkidle0' })
-      await page.waitForFunction(() => location.pathname === '/auth', { timeout: 20000 })
+      await page.goto(`${APP_URL}/dashboard`, { waitUntil: 'networkidle0' })
+      await page.waitForFunction(() => location.pathname === '/login', { timeout: 20000 })
       const notice = await page.$eval('[data-testid="session-notice"]', el => el.textContent || '')
       assert(notice.toLowerCase().includes('expired'), `unexpected notice ${notice}`)
       return 'expired token rejected and session cleared'
@@ -494,7 +494,7 @@ async function runBrowserJourney() {
 
   await test('network failure renders an error state instead of a blank page', async () => {
     await page.click('[data-testid="explore-demo"]')
-    await page.waitForFunction(() => location.pathname === '/', { timeout: 20000 })
+    await page.waitForFunction(() => location.pathname === '/dashboard', { timeout: 20000 })
     await page.waitForSelector('[data-testid="view-all-runs"]', { timeout: 20000 })
     await page.click('[data-testid="view-all-runs"]')
     await page.waitForSelector('[data-testid="run-row"]', { timeout: 20000 })

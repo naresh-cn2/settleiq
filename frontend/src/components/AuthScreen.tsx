@@ -58,7 +58,7 @@ export function AuthScreen() {
     try {
       const res = await api.demo.session()
       api.auth.setDemoToken(res.demo_token)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       setDemoError(
         err instanceof Error ? err.message : 'Unable to start the public demo'
