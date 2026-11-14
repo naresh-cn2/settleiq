@@ -171,8 +171,8 @@ async def security_and_limits_middleware(request: Request, call_next) -> Respons
     # with constant-time comparison; production fails closed when
     # SETTLEIQ_API_KEY is not configured. Demo auth never weakens API-key auth.
     is_demo_path = request.url.path.startswith(f"{API_PREFIX}/demo/")
-    # /v1/import/validate is a read-only validation endpoint: it does not
-    # persist anything or reconcile, so it is safe to expose to demo sessions.
+    # /v1/import/validate is read-only (no persistence, no reconciliation), so
+    # it is safe to expose to both demo sessions and API-key clients.
     is_import_validate = (
         request.url.path == f"{API_PREFIX}/import/validate"
         and request.method == "POST"
@@ -183,6 +183,9 @@ async def security_and_limits_middleware(request: Request, call_next) -> Respons
             pass
         elif _validate_demo_token(request.headers.get("X-Demo-Token", "")):
             request.state.auth_mode = "demo"
+        elif is_import_validate and _api_key_valid(request):
+            # Authorized users can validate imports with an API key.
+            request.state.auth_mode = "api"
         elif (
             request.url.path == f"{API_PREFIX}/demo/seed"
             and request.method == "POST"
