@@ -27,6 +27,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from settleiq.api.auth import router as auth_router
 from settleiq.engine.discrepancy import Discrepancy, DiscrepancyStatus
 from settleiq.engine.reconcile import RunParameters, reconcile
 from settleiq.journal.chain import Journal, open_journal
@@ -84,6 +85,9 @@ app = FastAPI(
     ),
 )
 
+# Include auth routes (signup, login, logout, session, organizations)
+app.include_router(auth_router)
+
 
 @app.on_event("startup")
 def _run_startup_migrations() -> None:
@@ -93,6 +97,10 @@ def _run_startup_migrations() -> None:
     # so that test fixtures with monkeypatched DB paths work correctly.
     if db_path.startswith("postgresql://") or db_path.startswith("postgres://"):
         ensure_migrations(db_path)
+
+    # Initialize the persistence store and attach it to app state so auth
+    # routes can access users and organizations.
+    app.state.store = open_store(db_path, run_migrations=True)
 
     raw_demo_secret = os.environ.get("SETTLEIQ_DEMO_SECRET", "")
     if not raw_demo_secret:
@@ -105,6 +113,13 @@ def _run_startup_migrations() -> None:
             "SETTLEIQ_DEMO_SECRET is shorter than %d characters; the public demo "
             "is disabled. Configure a stronger random secret.",
             _DEMO_SECRET_MIN_LENGTH,
+        )
+
+    session_secret = os.environ.get("SETTLEIQ_SESSION_SECRET", "")
+    if not session_secret:
+        logger.warning(
+            "SETTLEIQ_SESSION_SECRET is not configured; user sessions will be "
+            "disabled and /auth/* endpoints will return 503."
         )
 
 # --------------------------------------------------------------------------- middleware

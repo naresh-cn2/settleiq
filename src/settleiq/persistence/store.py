@@ -82,6 +82,41 @@ SCHEMA_STATEMENTS: Final[tuple[str, ...]] = (
         "CREATE INDEX IF NOT EXISTS ix_resolution_discrepancy "
         "ON discrepancy_resolution(discrepancy_id)"
     ),
+    # --- Users and organizations (multi-tenancy)
+    """
+    CREATE TABLE IF NOT EXISTS organizations (
+        organization_id   TEXT PRIMARY KEY,
+        name              TEXT NOT NULL,
+        slug              TEXT NOT NULL UNIQUE,
+        plan              TEXT NOT NULL DEFAULT 'free',
+        created_at        TEXT NOT NULL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS users (
+        user_id       TEXT PRIMARY KEY,
+        email         TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        salt          TEXT NOT NULL,
+        full_name     TEXT,
+        organization_id TEXT,
+        role          TEXT NOT NULL DEFAULT 'member',
+        created_at    TEXT NOT NULL,
+        is_active     INTEGER NOT NULL DEFAULT 1
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS organization_members (
+        organization_id TEXT NOT NULL,
+        user_id         TEXT NOT NULL,
+        role            TEXT NOT NULL DEFAULT 'member',
+        joined_at       TEXT NOT NULL,
+        PRIMARY KEY (organization_id, user_id)
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS ix_users_email ON users(email)",
+    "CREATE INDEX IF NOT EXISTS ix_org_members_user ON organization_members(user_id)",
+    "CREATE INDEX IF NOT EXISTS ix_org_members_org ON organization_members(organization_id)",
 )
 
 ALLOWED_TABLES: Final[frozenset[str]] = frozenset({
@@ -90,6 +125,9 @@ ALLOWED_TABLES: Final[frozenset[str]] = frozenset({
     "discrepancy_resolution",
     "supersession",
     "journal_entry",
+    "users",
+    "organizations",
+    "organization_members",
 })
 
 
@@ -397,6 +435,163 @@ class Persistence:
                 num = r.get("numerator", 0)
                 r["rate"] = (num / den) if den else 0.0
             return runs
+
+    # --------------------------------------------------------------------------- users
+
+    def create_user(
+        self,
+        *,
+        user_id: str,
+        email: str,
+        password_hash: str,
+        salt: str,
+        full_name: str | None = None,
+        organization_id: str | None = None,
+        role: str = "member",
+    ) -> None:
+        """Create a new user."""
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO users
+                (user_id, email, password_hash, salt, full_name, organization_id, role, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user_id,
+                    email,
+                    password_hash,
+                    salt,
+                    full_name,
+                    organization_id,
+                    role,
+                    datetime.now(UTC).isoformat(),
+                ),
+            )
+
+    def find_user_by_email(self, email: str) -> Mapping[str, object] | None:
+        """Find a user by email address."""
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            columns = [d[0] for d in cursor.description]
+            return dict(zip(columns, row, strict=False))
+
+    def find_user_by_id(self, user_id: str) -> Mapping[str, object] | None:
+        """Find a user by ID."""
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            columns = [d[0] for d in cursor.description]
+            return dict(zip(columns, row, strict=False))
+
+    # --------------------------------------------------------------------------- organizations
+
+    def create_organization(
+        self,
+        *,
+        organization_id: str,
+        name: str,
+        slug: str,
+        plan: str = "free",
+    ) -> None:
+        """Create a new organization."""
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO organizations
+                (organization_id, name, slug, plan, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    organization_id,
+                    name,
+                    slug,
+                    plan,
+                    datetime.now(UTC).isoformat(),
+                ),
+            )
+
+    def find_organization(self, organization_id: str) -> Mapping[str, object] | None:
+        """Find an organization by ID."""
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(
+                "SELECT * FROM organizations WHERE organization_id = ?",
+                (organization_id,),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            columns = [d[0] for d in cursor.description]
+            return dict(zip(columns, row, strict=False))
+
+    def find_organization_by_slug(self, slug: str) -> Mapping[str, object] | None:
+        """Find an organization by slug."""
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute("SELECT * FROM organizations WHERE slug = ?", (slug,))
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            columns = [d[0] for d in cursor.description]
+            return dict(zip(columns, row, strict=False))
+
+    def list_organizations_for_user(self, user_id: str) -> Sequence[Mapping[str, object]]:
+        """List organizations a user is a member of."""
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(
+                """
+                SELECT o.*, COUNT(om.user_id) AS member_count
+                FROM organizations o
+                JOIN organization_members om ON om.organization_id = o.organization_id
+                WHERE om.user_id = ?
+                GROUP BY o.organization_id
+                ORDER BY o.created_at DESC
+                """,
+                (user_id,),
+            )
+            columns = [d[0] for d in cursor.description]
+            return [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
+
+    def find_organization_membership(
+        self, organization_id: str, user_id: str
+    ) -> Mapping[str, object] | None:
+        """Find a user's membership in an organization."""
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(
+                "SELECT * FROM organization_members WHERE organization_id = ? AND user_id = ?",
+                (organization_id, user_id),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                return None
+            columns = [d[0] for d in cursor.description]
+            return dict(zip(columns, row, strict=False))
+
+    def add_organization_member(
+        self,
+        organization_id: str,
+        user_id: str,
+        role: str = "member",
+    ) -> None:
+        """Add a user to an organization."""
+        with self._connect() as connection, closing(connection.cursor()) as cursor:
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO organization_members
+                (organization_id, user_id, role, joined_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    organization_id,
+                    user_id,
+                    role,
+                    datetime.now(UTC).isoformat(),
+                ),
+            )
 
     def digest_of(self, table: str) -> str:
         """A tamper-evident digest over a whole table, computed on read.
