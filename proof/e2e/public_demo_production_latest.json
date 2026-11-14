@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T15:14:05.634Z",
+  "generated_at": "2026-11-14T16:21:10.962Z",
   "mode": "production",
   "app_url": "https://settleiq-zeta.vercel.app",
   "api_url": "https://settleiq-zeta.vercel.app",
@@ -21,7 +21,7 @@
       "name": "Explore Public Demo creates a session and lands on the dashboard",
       "status": "fail",
       "detail": "Waiting failed: 20000ms exceeded",
-      "ms": 20460
+      "ms": 20354
     }
   ],
   "console_errors": [],
