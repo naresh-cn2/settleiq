@@ -171,7 +171,13 @@ async def security_and_limits_middleware(request: Request, call_next) -> Respons
     # with constant-time comparison; production fails closed when
     # SETTLEIQ_API_KEY is not configured. Demo auth never weakens API-key auth.
     is_demo_path = request.url.path.startswith(f"{API_PREFIX}/demo/")
-    if is_demo_path:
+    # /v1/import/validate is a read-only validation endpoint: it does not
+    # persist anything or reconcile, so it is safe to expose to demo sessions.
+    is_import_validate = (
+        request.url.path == f"{API_PREFIX}/import/validate"
+        and request.method == "POST"
+    )
+    if is_demo_path or is_import_validate:
         if request.url.path == f"{API_PREFIX}/demo/session":
             # Public session issuer: no credentials required.
             pass
