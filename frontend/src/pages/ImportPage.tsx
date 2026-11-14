@@ -130,9 +130,17 @@ export function ImportPage() {
       }
 
       // Call the validate endpoint directly via fetch.
+      // Include the demo token or API key so the request is authenticated.
+      const mode = api.auth.getMode()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (mode === 'demo') {
+        const token = api.auth.getDemoToken()
+        if (token) headers['X-Demo-Token'] = token
+      }
+
       const res = await fetch('/v1/import/validate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(payload),
       })
       if (!res.ok) {
