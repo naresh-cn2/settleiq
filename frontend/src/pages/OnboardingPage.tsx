@@ -152,7 +152,7 @@ export function OnboardingPage() {
                   <Link to="/import" className="btn btn-primary">
                     Import data &raquo;
                   </Link>
-                  <Link to="/" className="btn btn-outline">
+                  <Link to="/dashboard" className="btn btn-outline">
                     Go to dashboard
                   </Link>
                 </div>
@@ -169,7 +169,7 @@ export function OnboardingPage() {
             <button
               className="btn btn-primary"
               onClick={handleNext}
-              disabled={step === steps.length}
+              disabled={false}
             >
               {step === steps.length ? 'Finish setup' : 'Next'}
             </button>
