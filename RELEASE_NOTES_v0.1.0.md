@@ -25,7 +25,8 @@ SettleIQ is now publicly available as an open-source financial reconciliation pl
 - `GET /v1/discrepancies/{id}` — Get discrepancy detail
 - `GET /v1/discrepancies/{id}/investigate` — Get investigation report
 - `GET /v1/runs/{id}/trace/{constituent_id}` — Get transaction trace
-- `POST /v1/discrepancies/{id}/resolve` — Resolve discrepancy
+- `POST /v1/discrepancies/{id}/resolve` — Resolve discrepancy (production)
+- `POST /v1/demo/discrepancies/{id}/resolve` — Resolve discrepancy (demo)
 - `POST /v1/demo/session` — Create public demo session
 - `GET /v1/demo/runs` — Get demo runs
 - `GET /v1/demo/runs/{id}/decomposition` — Get payout decomposition
@@ -51,7 +52,7 @@ SettleIQ is now publicly available as an open-source financial reconciliation pl
 
 ### Limitations
 
-- Demo mode is read-only (requires API key for persistence)
+- Demo mode supports read-only resolution preview (requires API key for persistence)
 - Production decomposition endpoint not yet persisted for production runs
 - CSV export UI button not yet on frontend (backend supports it)
 - PostgreSQL tests require live DSN (8 skipped)
