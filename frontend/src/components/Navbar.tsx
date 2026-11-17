@@ -32,7 +32,7 @@ export function Navbar() {
         <div className="navbar-menu">
           {!isPublicPage && (
             <>
-              <Link to="/" className="nav-link">Dashboard</Link>
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
               <Link to="/runs" className="nav-link">Runs</Link>
               <Link to="/discrepancies" className="nav-link">Discrepancies</Link>
               <Link to="/metrics" className="nav-link">Metrics</Link>
@@ -123,7 +123,7 @@ export function Footer() {
             <h3>Product</h3>
             <Link to="/features">Features</Link>
             <Link to="/pricing">Pricing</Link>
-            <Link to="/">Dashboard</Link>
+            <Link to="/dashboard">Dashboard</Link>
           </div>
           <div className="footer-link-group">
             <h3>Company</h3>

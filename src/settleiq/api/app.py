@@ -1217,6 +1217,57 @@ def verify_demo_journal(request: Request) -> dict[str, object]:
     }
 
 
+@app.post(f"{API_PREFIX}/demo/discrepancies/{{discrepancy_id}}/resolve")
+def resolve_demo_discrepancy(
+    discrepancy_id: str,
+    body: ResolveRequest,
+    request: Request,
+) -> dict[str, object]:
+    """Resolve a demo discrepancy (read-only synthetic data, no persistence).
+
+    Demo resolutions are validated and accepted but not persisted, since the
+    demonstration dataset is deterministic and regenerated identically on every
+    request. Returns a resolved status so the frontend can complete the
+    resolution workflow in demo mode.
+    """
+    _require_demo(request)
+    data = _get_demo_data()
+    target = None
+    for d in data["discrepancies"]:
+        if d["discrepancy_id"] == discrepancy_id:
+            target = d
+            break
+    if target is None:
+        raise HTTPException(status_code=404, detail={"error": "discrepancy_not_found"})
+
+    reason = body.reason.strip()
+    if not reason:
+        raise _error("reason_required", "a resolution requires a stated reason")
+
+    selected = body.selected_candidate
+    if target.get("type") == "AMBIGUOUS_MATCH" and not selected:
+        raise _error(
+            "selection_required",
+            "resolving an ambiguous discrepancy requires naming the selected candidate",
+        )
+
+    resolved = dict(target)
+    resolved["status"] = DiscrepancyStatus.RESOLVED.value
+    resolved["resolution_reason"] = reason
+    resolved["selected_candidate"] = selected
+    resolved["resolved_by"] = body.resolved_by
+    return {
+        "discrepancy_id": discrepancy_id,
+        "run_id": resolved.get("run_id"),
+        "status": DiscrepancyStatus.RESOLVED.value,
+        "reason": reason,
+        "selected_candidate": selected,
+        "resolved_by": body.resolved_by,
+        "demo_readonly": True,
+        "discrepancy": resolved,
+    }
+
+
 @app.post(f"{API_PREFIX}/discrepancies/{{discrepancy_id}}/resolve")
 @app.post(f"{API_PREFIX}/runs/{{run_id}}/discrepancies/{{discrepancy_id}}/resolve")
 def resolve_discrepancy(

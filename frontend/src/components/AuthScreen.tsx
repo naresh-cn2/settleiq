@@ -44,7 +44,7 @@ export function AuthScreen() {
       }
       // If successful, store the key and redirect to home
       api.auth.setKey(testKey)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed')
     } finally {

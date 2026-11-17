@@ -270,13 +270,9 @@ export const api = {
     },
     get: (id: string) => fetchApi<any>(`/discrepancies/${id}`),
     resolve: (id: string, reason: string, selectedCandidate?: string) =>
-      fetch(`${API_BASE}/discrepancies/${id}/resolve`, {
+      fetchApi<any>(`/discrepancies/${id}/resolve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ reason, selected_candidate: selectedCandidate }),
-      }).then(async r => {
-        if (!r.ok) throw new Error(await parseError(r))
-        return r.json()
       }),
   },
 

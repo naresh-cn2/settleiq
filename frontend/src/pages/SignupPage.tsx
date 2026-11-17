@@ -135,7 +135,7 @@ export function SignupPage() {
             </p>
             <p>
               Want to try without an account?{' '}
-              <Link to="/">Explore the public demo</Link>
+              <Link to="/auth">Explore the public demo</Link>
             </p>
           </div>
         </div>

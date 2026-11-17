@@ -179,7 +179,7 @@ export function ImportPage() {
       }
 
       await api.runs.create(payload as any)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err: any) {
       setValidationError(err.message || 'Failed to create run')
     } finally {
@@ -199,7 +199,7 @@ export function ImportPage() {
         </div>
         <button
           className="btn btn-primary"
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           data-testid="nav-dashboard"
         >
           Dashboard

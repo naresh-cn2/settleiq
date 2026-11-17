@@ -110,7 +110,7 @@ export function OverviewPage() {
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
             className="btn btn-primary"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/runs')}
             data-testid="nav-runs"
           >
             Runs
